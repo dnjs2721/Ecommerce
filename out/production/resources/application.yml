@@ -4,6 +4,24 @@ spring:
     url: jdbc:mysql://localhost:3306/ecommerce?serverTimezone=Asia/Seoul
     username: root
     password: root
+  mail:
+    host: smtp.naver.com # smtp ?? ??
+    port: 465
+    username: ${userName}
+    password: ${passWord}
+    properties:
+      mail:
+        smtp:
+          starttls:
+            enable: true
+          auth: true
+          ssl:
+            enable: true
+
+  data:
+    redis:
+      port: 6379
+      host: 127.0.0.1
 
   jpa:
     hibernate:

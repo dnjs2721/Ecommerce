@@ -16,16 +16,15 @@ public class UserService {
 
     @Transactional
     public Long join(User user) {
-        validateDuplicateMember(user);
         userRepository.save(user);
         return user.getId();
     }
 
-    private void validateDuplicateMember(User user) {
-        Optional<User> findUser = userRepository.findByEmail(user.getEmail());
+    public void validateDuplicateUser(String email) {
+        Optional<User> findUser = userRepository.findByEmail(email);
 
         if (findUser.isPresent()) {
-            throw new IllegalStateException("이미 가입된 이메일입니다.");
+            throw new IllegalStateException();
         }
     }
 }
