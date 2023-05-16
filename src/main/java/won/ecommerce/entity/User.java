@@ -5,17 +5,16 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.UniqueElements;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class User {
+public class User extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    @Column(unique = true)
+    private String nickname;
     private String email;
     private String password;
     private String pNum;
@@ -26,8 +25,9 @@ public class User {
     private UserStatus status;
 
     @Builder
-    public User(String name, String email, String password, String pNum, String birth, Address address, UserStatus status) {
+    public User(String name, String nickname, String email, String password, String pNum, String birth, Address address, UserStatus status) {
         this.name = name;
+        this.nickname = nickname;
         this.email = email;
         this.password = password;
         this.pNum = pNum;

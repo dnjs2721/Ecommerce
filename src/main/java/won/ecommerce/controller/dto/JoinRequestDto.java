@@ -1,4 +1,4 @@
-package won.ecommerce.service.dto;
+package won.ecommerce.controller.dto;
 
 import jakarta.persistence.Column;
 import jakarta.validation.constraints.Email;
@@ -10,6 +10,8 @@ import lombok.Data;
 public class JoinRequestDto {
     @NotEmpty(message = "사용자 이름(필수)")
     private String name;
+    @NotEmpty(message = "닉네임(필수)")
+    private String nickname;
     @NotEmpty(message = "이메일(필수)")
     @Email
     private String email;

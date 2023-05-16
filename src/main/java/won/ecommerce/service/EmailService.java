@@ -3,10 +3,14 @@ package won.ecommerce.service;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+import won.ecommerce.util.PropertyUtil;
+import won.ecommerce.util.RedisUtil;
 
 import java.io.UnsupportedEncodingException;
+import java.util.NoSuchElementException;
 import java.util.Random;
 
 @Service
@@ -37,7 +41,7 @@ public class EmailService {
     // 메일 양식 작성
     public MimeMessage createEmailForm(String email) throws MessagingException, UnsupportedEncodingException {
         createCode(); // 인증 코드 생성
-        String setFrom = "###"; // 보내는 사람
+        String setFrom = PropertyUtil.getProperty("fromEmail"); // 보내는 사람
         String title = "E-Commerce 이메일 인증 번호"; // 제목
 
         MimeMessage message = emailSender.createMimeMessage();
@@ -63,13 +67,14 @@ public class EmailService {
         return authNum;
     }
 
-    public int validateCode(String email, String code) {
+    public void validateCode(String email, String code) {
         String data = redisUtil.getData(email);
         if (data == null) {
-            return 0;
+            throw new NoSuchElementException("만료된 인증코드 혹은 잘못된 이메일 입니다.");
         }
-        if (data.equals(code)) {
-            return 1;
-        } else return 2;
+        if (!data.equals(code)) {
+            throw new IllegalArgumentException("잘못된 인증번호 입니다.");
+        }
+        redisUtil.deleteData(email);
     }
 }

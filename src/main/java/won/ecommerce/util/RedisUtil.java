@@ -1,4 +1,4 @@
-package won.ecommerce.service;
+package won.ecommerce.util;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
