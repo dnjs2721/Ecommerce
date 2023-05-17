@@ -1,9 +1,7 @@
 package won.ecommerce.controller;
 
-import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import net.nurigo.sdk.message.response.SingleMessageSentResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,129 +9,56 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import won.ecommerce.controller.dto.*;
-import won.ecommerce.entity.Address;
+import won.ecommerce.controller.dto.userDto.*;
 import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
-import won.ecommerce.service.EmailService;
-import won.ecommerce.service.MessageService;
 import won.ecommerce.service.UserService;
+import won.ecommerce.service.dto.JoinRequestDto;
 
-import java.io.UnsupportedEncodingException;
 import java.util.NoSuchElementException;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api")
+@RequestMapping("/api/users")
 public class UserController {
     private final UserService userService;
-    private final EmailService emailService;
-    private final MessageService messageService;
 
     /**
-     * 이메일 중복 검사
+     * 회원가입 - 일반 사용자
      */
-    @PostMapping("/members/checkDuplicationEmail")
-    public ResponseEntity<String> checkDuplicationEmail(@RequestBody @Valid EmailRequestDto request) {
-        try {
-            userService.validateDuplicateEmail(request.getEmail());
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-        return ResponseEntity.ok().body(request.getEmail() + " 은 사용가능 합니다.");
-    }
-
-    /**
-     * 닉네임 중복 검사
-     */
-    @PostMapping("/members/checkDuplicationNickname")
-    public ResponseEntity<String> checkDuplicationNickname(@RequestBody @Valid DuplicationNicknameRequestDto request) {
-        try {
-            userService.validateDuplicateNickname(request.getNickname());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-        return ResponseEntity.ok().body(request.getNickname() + " 은 사용가능 합니다.");
-    }
-
-    /**
-     * 인증코드 이메일 전송
-     */
-    @PostMapping("/members/email")
-    public ResponseEntity<String> sendEmail(@RequestBody @Valid EmailRequestDto request) throws MessagingException, UnsupportedEncodingException {
-        String authCode = emailService.sendAuthCodeByEmail(request.getEmail());
-        return ResponseEntity.ok().body(authCode);
-    }
-
-    /**
-     * 이메일 인증코드 검증
-     */
-    @PostMapping("/members/validateEmail")
-    public ResponseEntity<String> validateEmail(@RequestBody @Valid ValidateEmailRequestDto request) {
-        try {
-            emailService.validateCode(request.getEmail(), request.getAuthCode());
-            return ResponseEntity.ok().body(request.getEmail() + " 인증 성공");
-        } catch (NoSuchElementException e1) {
-            HttpHeaders headers = new HttpHeaders();
-            return new ResponseEntity<>(e1.getMessage(), headers, HttpStatus.NOT_FOUND);
-        } catch (IllegalArgumentException e2) {
-            return ResponseEntity.badRequest().body(e2.getMessage());
-        }
-    }
-
-    /**
-     * 인증코드 메시지 전송
-     */
-    @PostMapping("/members/message")
-    public ResponseEntity<String> sendMessage(@RequestBody @Valid MessageRequestDto request) {
-        SingleMessageSentResponse response = messageService.sendMessage(request.getPNum());
-        return ResponseEntity.ok().body(messageService.checkCode(request.getPNum()));
-    }
-
-    /**
-     * 메세지 인증코드 검증
-     */
-    @PostMapping("/members/validateMessage")
-    public ResponseEntity<String> validateMessage(@RequestBody @Valid ValidateMessageRequestDto request) {
-        try {
-            messageService.validateCode(request.getPNum(), request.getAuthCode());
-            return ResponseEntity.ok().body(request.getPNum() + " 인증 성공");
-        } catch (NoSuchElementException e1) {
-            HttpHeaders headers = new HttpHeaders();
-            return new ResponseEntity<>(e1.getMessage(), headers, HttpStatus.NOT_FOUND);
-        } catch (IllegalArgumentException e2) {
-            return ResponseEntity.badRequest().body(e2.getMessage());
-        }
-    }
-
-    /**
-     * 회원가입
-     */
-    @PostMapping("/members/join")
+    @PostMapping("/join")
     public ResponseEntity<String> joinUser(@RequestBody @Valid JoinRequestDto request) {
         try {
-            User user = User.builder()
-                    .name(request.getName())
-                    .nickname(request.getNickname())
-                    .email(request.getEmail())
-                    .password(request.getPassword())
-                    .pNum(request.getPNum())
-                    .birth(request.getBirth())
-                    .address(new Address(request.getRegion(), request.getCity(), request.getStreet(), request.getZipcode()))
-                    .status(UserStatus.COMMON)
-                    .build();
+            User user = userService.createdUser(request);
+            user.setStatus(UserStatus.COMMON);
             Long memberId = userService.join(user);
 
             return ResponseEntity.ok().body(memberId.toString() + " 회원가입 되었습니다.");
-        } catch (IllegalStateException | IllegalArgumentException e1) {
-            return ResponseEntity.badRequest().body(e1.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    /**
+     * 회원가입 - 관리자
+     */
+    @PostMapping("/joinAdmin")
+    public ResponseEntity<String> joinAdmin(@RequestBody @Valid JoinRequestDto request) {
+        try {
+            User admin = userService.createdUser(request);
+            admin.setStatus(UserStatus.ADMIN);
+            Long memberId = userService.join(admin);
+
+            return ResponseEntity.ok().body(memberId.toString() + " 회원가입 되었습니다.");
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     /**
      * 로그인
      */
-    @PostMapping("/members/login")
+    @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody @Valid LoginRequestDto request) {
         try {
             Long id = userService.login(request.getEmail(), request.getPassword());
@@ -149,7 +74,7 @@ public class UserController {
     /**
      * 아이디(이메일) 찾기
      */
-    @PostMapping("members/findEmail")
+    @PostMapping("/findEmail")
     public ResponseEntity<String> findEmail(@RequestBody @Valid FindEmailRequestDto request) {
         try {
             String email = userService.findEmailByNameAndPNum(request.getName(), request.getPNum());
@@ -163,7 +88,7 @@ public class UserController {
     /**
      * 비밀번호 변경
      */
-    @PostMapping("members/changePassword")
+    @PostMapping("/changePassword")
     public ResponseEntity<String> changePassword(@RequestBody @Valid ChangePasswordRequestDto request) {
         try {
             String email = userService.changePassword(request.getEmail(), request.getNewPassword());

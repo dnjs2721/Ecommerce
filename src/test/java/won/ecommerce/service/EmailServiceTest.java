@@ -22,7 +22,7 @@ class EmailServiceTest {
         //given
         String toEmail = "###@###.###";
 
-        emailService.sendEmail(toEmail);
+        emailService.sendAuthCode(toEmail);
     }
 
     @Test

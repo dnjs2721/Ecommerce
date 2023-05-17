@@ -11,5 +11,6 @@ public class Address {
     private String region;
     private String city;
     private String street;
+    private String detail;
     private String zipcode;
 }

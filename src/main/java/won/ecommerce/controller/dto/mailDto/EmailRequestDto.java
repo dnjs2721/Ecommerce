@@ -1,4 +1,4 @@
-package won.ecommerce.controller.dto;
+package won.ecommerce.controller.dto.mailDto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

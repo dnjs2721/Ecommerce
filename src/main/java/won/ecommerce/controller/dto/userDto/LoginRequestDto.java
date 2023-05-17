@@ -1,15 +1,15 @@
-package won.ecommerce.controller.dto;
+package won.ecommerce.controller.dto.userDto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class ValidateEmailRequestDto {
+public class LoginRequestDto {
     @Email
     @NotBlank(message = "이메일(필수)")
     private String email;
 
-    @NotBlank(message = "인증코드(필수)")
-    private String authCode;
+    @NotBlank(message = "비밀번호(필수)")
+    private String password;
 }

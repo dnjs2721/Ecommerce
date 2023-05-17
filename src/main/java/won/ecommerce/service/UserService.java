@@ -3,6 +3,8 @@ package won.ecommerce.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import won.ecommerce.service.dto.JoinRequestDto;
+import won.ecommerce.entity.Address;
 import won.ecommerce.entity.User;
 import won.ecommerce.repository.UserRepository;
 
@@ -22,8 +24,22 @@ public class UserService {
     public Long join(User user) {
         validateDuplicateEmail(user.getEmail());
         validateDuplicateNickname(user.getNickname());
+        validateDuplicatePNum(user.getPNum());
         userRepository.save(user);
         return user.getId();
+    }
+
+    // user 생성 - status 제외
+    public User createdUser(JoinRequestDto request) {
+        return User.builder()
+                .name(request.getName())
+                .nickname(request.getNickname())
+                .email(request.getEmail())
+                .password(request.getPassword())
+                .pNum(request.getPNum())
+                .birth(request.getBirth())
+                .address(new Address(request.getRegion(), request.getCity(), request.getStreet(), request.getDetail(), request.getZipcode()))
+                .build();
     }
 
     /**
@@ -54,7 +70,17 @@ public class UserService {
     public void validateDuplicateNickname(String nickname) {
         Optional<User> findUser = userRepository.findByNickname(nickname);
         if (findUser.isPresent()) {
-            throw new IllegalArgumentException("다른 사용자가 사용중인 닉네임입니다.");
+            throw new IllegalStateException("다른 사용자가 사용중인 닉네임입니다.");
+        }
+    }
+
+    /**
+     * 휴대폰 번호 중복 검사
+     */
+    public void validateDuplicatePNum(String pNum) {
+        Optional<User> findUser = userRepository.findBypNum(pNum);
+        if (findUser.isPresent()) {
+            throw new IllegalStateException("이미 등록된 휴대폰 번호입니다.");
         }
     }
 

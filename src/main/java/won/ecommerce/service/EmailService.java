@@ -24,7 +24,7 @@ public class EmailService {
     /**
      * 인증 코드 메일 전송
      */
-    public String sendAuthCodeByEmail(String email) throws MessagingException, UnsupportedEncodingException {
+    public String sendAuthCode(String email) throws MessagingException, UnsupportedEncodingException {
         String authCode = authCodeService.createCode(); // 인증 코드 생성
         String setFrom = ecommerceConfig.getFromEmail(); // 보내는 사람
         String title = "E-Commerce 이메일 인증 번호"; // 제목
