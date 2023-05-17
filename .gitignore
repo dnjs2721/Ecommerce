@@ -5,7 +5,8 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 **/src/main/generated/
-**/src/main/resources/properties/
+**/src/main/resources/application-api.yml
+**/src/main/resources/application-ecommerce.yml
 
 ### STS ###
 .apt_generated

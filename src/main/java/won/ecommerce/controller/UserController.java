@@ -3,6 +3,7 @@ package won.ecommerce.controller;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import net.nurigo.sdk.message.response.SingleMessageSentResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import won.ecommerce.entity.Address;
 import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
 import won.ecommerce.service.EmailService;
+import won.ecommerce.service.MessageService;
 import won.ecommerce.service.UserService;
 
 import java.io.UnsupportedEncodingException;
@@ -26,6 +28,7 @@ import java.util.NoSuchElementException;
 public class UserController {
     private final UserService userService;
     private final EmailService emailService;
+    private final MessageService messageService;
 
     /**
      * 이메일 중복 검사
@@ -54,11 +57,11 @@ public class UserController {
     }
 
     /**
-     * 이메일 전송
+     * 인증코드 이메일 전송
      */
     @PostMapping("/members/email")
     public ResponseEntity<String> sendEmail(@RequestBody @Valid EmailRequestDto request) throws MessagingException, UnsupportedEncodingException {
-        String authCode = emailService.sendEmail(request.getEmail());
+        String authCode = emailService.sendAuthCodeByEmail(request.getEmail());
         return ResponseEntity.ok().body(authCode);
     }
 
@@ -70,6 +73,31 @@ public class UserController {
         try {
             emailService.validateCode(request.getEmail(), request.getAuthCode());
             return ResponseEntity.ok().body(request.getEmail() + " 인증 성공");
+        } catch (NoSuchElementException e1) {
+            HttpHeaders headers = new HttpHeaders();
+            return new ResponseEntity<>(e1.getMessage(), headers, HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException e2) {
+            return ResponseEntity.badRequest().body(e2.getMessage());
+        }
+    }
+
+    /**
+     * 인증코드 메시지 전송
+     */
+    @PostMapping("/members/message")
+    public ResponseEntity<String> sendMessage(@RequestBody @Valid MessageRequestDto request) {
+        SingleMessageSentResponse response = messageService.sendMessage(request.getPNum());
+        return ResponseEntity.ok().body(messageService.checkCode(request.getPNum()));
+    }
+
+    /**
+     * 메세지 인증코드 검증
+     */
+    @PostMapping("/members/validateMessage")
+    public ResponseEntity<String> validateMessage(@RequestBody @Valid ValidateMessageRequestDto request) {
+        try {
+            messageService.validateCode(request.getPNum(), request.getAuthCode());
+            return ResponseEntity.ok().body(request.getPNum() + " 인증 성공");
         } catch (NoSuchElementException e1) {
             HttpHeaders headers = new HttpHeaders();
             return new ResponseEntity<>(e1.getMessage(), headers, HttpStatus.NOT_FOUND);
@@ -126,6 +154,20 @@ public class UserController {
         try {
             String email = userService.findEmailByNameAndPNum(request.getName(), request.getPNum());
             return ResponseEntity.ok().body(request.getName() + "님의 아이디(이메일)은 " + email + " 입니다.");
+        } catch (NoSuchElementException e) {
+            HttpHeaders headers = new HttpHeaders();
+            return new ResponseEntity<>(e.getMessage(), headers, HttpStatus.NOT_FOUND);
+        }
+    }
+
+    /**
+     * 비밀번호 변경
+     */
+    @PostMapping("members/changePassword")
+    public ResponseEntity<String> changePassword(@RequestBody @Valid ChangePasswordRequestDto request) {
+        try {
+            String email = userService.changePassword(request.getEmail(), request.getNewPassword());
+            return ResponseEntity.ok().body(email + " 님의 비밀번호가 성공적으로 변경 되었습니다.");
         } catch (NoSuchElementException e) {
             HttpHeaders headers = new HttpHeaders();
             return new ResponseEntity<>(e.getMessage(), headers, HttpStatus.NOT_FOUND);

@@ -15,7 +15,6 @@ import java.util.Optional;
 public class UserService {
     private final UserRepository userRepository;
 
-
     /**
      * 회원가입
      */
@@ -67,6 +66,16 @@ public class UserService {
         if (email == null) {
             throw new NoSuchElementException("가입되지 않은 회원 입니다. 이름 혹은 전화번호를 확인 해 주세요.");
         }
+        return email;
+    }
+
+    /**
+     * 비밀번호 변경
+     */
+    @Transactional
+    public String changePassword(String email, String newPassword) {
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new NoSuchElementException("가입되지 않은 이메일 입니다."));
+        user.changePassword(newPassword);
         return email;
     }
 }
