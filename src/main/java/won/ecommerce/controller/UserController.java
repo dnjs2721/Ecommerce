@@ -64,8 +64,7 @@ public class UserController {
             Long id = userService.login(request.getEmail(), request.getPassword());
             return ResponseEntity.ok().body(id.toString() + " 로그인 성공");
         } catch (NoSuchElementException e1) {
-            HttpHeaders headers = new HttpHeaders();
-            return new ResponseEntity<>(e1.getMessage(), headers, HttpStatus.NOT_FOUND);
+            return NoSuchElementException(e1);
         } catch (IllegalArgumentException e2) {
             return ResponseEntity.badRequest().body(e2.getMessage());
         }
@@ -80,8 +79,7 @@ public class UserController {
             String email = userService.findEmailByNameAndPNum(request.getName(), request.getPNum());
             return ResponseEntity.ok().body(request.getName() + "님의 아이디(이메일)은 " + email + " 입니다.");
         } catch (NoSuchElementException e) {
-            HttpHeaders headers = new HttpHeaders();
-            return new ResponseEntity<>(e.getMessage(), headers, HttpStatus.NOT_FOUND);
+            return NoSuchElementException(e);
         }
     }
 
@@ -94,8 +92,25 @@ public class UserController {
             String email = userService.changePassword(request.getEmail(), request.getNewPassword());
             return ResponseEntity.ok().body(email + " 님의 비밀번호가 성공적으로 변경 되었습니다.");
         } catch (NoSuchElementException e) {
-            HttpHeaders headers = new HttpHeaders();
-            return new ResponseEntity<>(e.getMessage(), headers, HttpStatus.NOT_FOUND);
+            return NoSuchElementException(e);
         }
+    }
+
+    /**
+     * 회원 탈퇴
+     */
+    @PostMapping("/deleteUser")
+    public ResponseEntity<String> deleteUser(@RequestBody @Valid DeleteUserRequestDto request) {
+        try {
+            String userName = userService.deleteUser(request.getEmail(), request.getPassword());
+            return ResponseEntity.ok().body(userName + " 님 정상적으로 회원탈퇴 되었습니다.");
+        } catch (NoSuchElementException e) {
+            return NoSuchElementException(e);
+        }
+    }
+
+    public ResponseEntity<String> NoSuchElementException(NoSuchElementException e) {
+        HttpHeaders headers = new HttpHeaders();
+        return new ResponseEntity<>(e.getMessage(), headers, HttpStatus.NOT_FOUND);
     }
 }

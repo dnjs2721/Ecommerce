@@ -2,6 +2,7 @@
 >### 개발환경
 - Language : JAVA
 - Framework : SprigBoot
+- SpringBoot Version : 3.0.6
 - DBMS : Spring-Data-Jpa, Redis, querydsl, MySQL
 - Build Version : Java 17
 - DevTool : Intelli J
@@ -27,12 +28,13 @@
    - 전화번호 인증 
 6. 비밀번호 변경 ✅
    - 이메일 인증
-7. 정보 수정
+7. 일반 사용자에서 판매자로 변경, 판매자에서 일반 사용자로 변경 ✅
+   - 관리자 승인
+8. 회원 탈퇴 ✅
+   - 패스워드 인증
+9. 정보 수정
     - 비밀번호 인증 -> 아이디, 비밀번호 제외 변경가능
-8. 일반 사용자에서 판매자로 변경
-    - 관리자 승인 필요
-9. 회원 탈퇴
-    - 패스워드 인증
+
 
 ### 판매자
 1. 상품등록, 삭제, 변경

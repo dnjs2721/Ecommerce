@@ -1,21 +1,26 @@
 package won.ecommerce.service;
 
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import won.ecommerce.entity.*;
+import won.ecommerce.repository.ChangeStatusLogRepository;
 import won.ecommerce.service.dto.JoinRequestDto;
-import won.ecommerce.entity.Address;
-import won.ecommerce.entity.User;
 import won.ecommerce.repository.UserRepository;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;
+
+import static won.ecommerce.entity.UserStatus.*;
 
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final ChangeStatusLogRepository changeStatusLogRepository;
+    private final EntityManager em;
 
     /**
      * 회원가입
@@ -46,7 +51,7 @@ public class UserService {
      * 로그인
      */
     public Long login(String email, String password) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new NoSuchElementException("가입되지 않은 이메일 입니다. 가입 후 로그인 해 주시길 바랍니다."));
+        User user = findUserByEmail(email);
         if (user.getPassword().equals(password)) {
             return user.getId();
         } else {
@@ -100,8 +105,26 @@ public class UserService {
      */
     @Transactional
     public String changePassword(String email, String newPassword) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new NoSuchElementException("가입되지 않은 이메일 입니다."));
+        User user = findUserByEmail(email);
         user.changePassword(newPassword);
         return email;
+    }
+
+    /**
+     * 회원 탈퇴
+     */
+    @Transactional
+    public String deleteUser(String email, String password) {
+        User user = findUserByEmail(email);
+        if (password.equals(user.getPassword())) {
+            userRepository.delete(user);
+            return user.getName();
+        } else {
+            throw new IllegalArgumentException("잘못된 패스워드 입니다.");
+        }
+    }
+
+    public User findUserByEmail(String email) {
+        return userRepository.findByEmail(email).orElseThrow(() -> new NoSuchElementException("가입되지 않은 이메일 입니다."));
     }
 }

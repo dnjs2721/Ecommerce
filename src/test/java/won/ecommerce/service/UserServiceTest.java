@@ -27,7 +27,7 @@ class UserServiceTest {
                 .password("test")
                 .pNum("test")
                 .birth("test")
-                .address(new Address("test", "test", "test", "test"))
+                .address(new Address("test", "test", "test", "test", "test"))
                 .status(UserStatus.COMMON)
                 .build();
 
@@ -37,7 +37,7 @@ class UserServiceTest {
                 .password("test")
                 .pNum("test")
                 .birth("test")
-                .address(new Address("test", "test", "test", "test"))
+                .address(new Address("test", "test", "test", "test", "test"))
                 .status(UserStatus.COMMON)
                 .build();
 

@@ -41,10 +41,14 @@ public class MailController {
             emailService.validateCode(request.getEmail(), request.getAuthCode());
             return ResponseEntity.ok().body(request.getEmail() + " 인증 성공");
         } catch (NoSuchElementException e1) {
-            HttpHeaders headers = new HttpHeaders();
-            return new ResponseEntity<>(e1.getMessage(), headers, HttpStatus.NOT_FOUND);
+            return NoSuchElementException(e1);
         } catch (IllegalArgumentException e2) {
             return ResponseEntity.badRequest().body(e2.getMessage());
         }
+    }
+
+    public ResponseEntity<String> NoSuchElementException(NoSuchElementException e) {
+        HttpHeaders headers = new HttpHeaders();
+        return new ResponseEntity<>(e.getMessage(), headers, HttpStatus.NOT_FOUND);
     }
 }
