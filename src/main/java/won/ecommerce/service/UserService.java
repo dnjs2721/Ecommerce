@@ -1,9 +1,13 @@
 package won.ecommerce.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.*;
+import won.ecommerce.repository.dto.SearchUsersDto;
+import won.ecommerce.repository.dto.UserSearchCondition;
 import won.ecommerce.service.dto.ChangeUserInfoRequestDto;
 import won.ecommerce.service.dto.JoinRequestDto;
 import won.ecommerce.repository.UserRepository;
@@ -169,6 +173,17 @@ public class UserService {
         } else {
             throw new IllegalArgumentException("잘못된 주소형태 입니다.");
         }
+    }
+
+    /**
+     * 사용자 조회 - 관리자
+     */
+    public Page<SearchUsersDto> searchUsers(Long id, UserSearchCondition condition, Pageable pageable) {
+        Optional<User> findAdmin = userRepository.findById(id);
+        if (findAdmin.isEmpty() || !findAdmin.get().getStatus().equals(UserStatus.ADMIN)) {
+            throw new NoSuchElementException("조회할 권한이 없습니다.");
+        }
+        return userRepository.searchUsersPage(condition, pageable);
     }
 
     public User findUserByEmail(String email) {

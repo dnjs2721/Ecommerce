@@ -1,6 +1,5 @@
 package won.ecommerce.repository.dto;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 import won.ecommerce.entity.LogStat;

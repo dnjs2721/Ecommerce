@@ -2,16 +2,17 @@ package won.ecommerce.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import won.ecommerce.controller.dto.userDto.*;
 import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
+import won.ecommerce.repository.dto.SearchUsersDto;
+import won.ecommerce.repository.dto.UserSearchCondition;
 import won.ecommerce.service.UserService;
 import won.ecommerce.service.dto.JoinRequestDto;
 import won.ecommerce.service.dto.ChangeUserInfoRequestDto;
@@ -125,6 +126,24 @@ public class UserController {
             return NoSuchElementException(e2);
         }
     }
+
+    /**
+     * 사용자 정보 조회 - 관리자
+     * http://localhost:8080/api/users/searchUsers/{id}?userStatus=SELLER
+     * /searchUsers/{id} -> id 로 관리자인지 확인
+     * userStatus 검색가능
+     */
+    @GetMapping("/searchUsers/{id}")
+    public ResponseEntity<?> searchUsers(@PathVariable("id") Long id, UserSearchCondition condition, Pageable pageable) {
+        try {
+            Page<SearchUsersDto> searchUsers = userService.searchUsers(id, condition, pageable);
+            return ResponseEntity.ok().body(searchUsers);
+        } catch (NoSuchElementException e) {
+            return NoSuchElementException(e);
+        }
+    }
+
+
 
     public ResponseEntity<String> NoSuchElementException(NoSuchElementException e) {
         HttpHeaders headers = new HttpHeaders();

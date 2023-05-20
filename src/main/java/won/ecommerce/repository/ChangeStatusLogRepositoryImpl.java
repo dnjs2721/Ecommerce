@@ -25,7 +25,7 @@ public class ChangeStatusLogRepositoryImpl implements ChangeStatusLogRepositoryC
     }
 
     @Override
-    public Page<SearchStatusLogDto> searchPage(StatusLogSearchCondition condition, Pageable pageable) {
+    public Page<SearchStatusLogDto> searchLogsPage(StatusLogSearchCondition condition, Pageable pageable) {
         List<SearchStatusLogDto> content = queryFactory
                 .select(new QSearchStatusLogDto(
                         changeStatusLog.id,

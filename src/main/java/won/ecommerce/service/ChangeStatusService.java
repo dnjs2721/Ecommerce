@@ -99,6 +99,6 @@ public class ChangeStatusService {
         if (findAdmin.isEmpty() || !findAdmin.get().getStatus().equals(UserStatus.ADMIN)) {
             throw new NoSuchElementException("조회할 권한이 없습니다.");
         }
-        return changeStatusLogRepository.searchPage(condition, pageable);
+        return changeStatusLogRepository.searchLogsPage(condition, pageable);
     }
 }
