@@ -6,6 +6,6 @@ import won.ecommerce.entity.LogStat;
 
 import java.util.Optional;
 
-public interface ChangeStatusLogRepository extends JpaRepository<ChangeStatusLog, Long> {
+public interface ChangeStatusLogRepository extends JpaRepository<ChangeStatusLog, Long>, ChangeStatusLogRepositoryCustom {
     Optional<ChangeStatusLog> findByUserIdAndLogStat(Long id, LogStat logStat);
 }

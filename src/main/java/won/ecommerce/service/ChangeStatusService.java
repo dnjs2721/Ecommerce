@@ -1,15 +1,17 @@
 package won.ecommerce.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.java.Log;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.ChangeStatusLog;
-import won.ecommerce.entity.LogStat;
 import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
 import won.ecommerce.repository.ChangeStatusLogRepository;
 import won.ecommerce.repository.UserRepository;
+import won.ecommerce.repository.dto.SearchStatusLogDto;
+import won.ecommerce.repository.dto.StatusLogSearchCondition;
 
 import java.time.LocalDateTime;
 import java.util.NoSuchElementException;
@@ -30,8 +32,8 @@ public class ChangeStatusService {
      * Status 변경 요청 작성
      */
     @Transactional
-    public Long createChangeStatusLog(String email) {
-        User user = userService.findUserByEmail(email);
+    public Long createChangeStatusLog(long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new NoSuchElementException("가입되지 않은 이메일 입니다."));
         UserStatus beforeStatus = user.getStatus();
         UserStatus requestStatus = null;
         if (beforeStatus.equals(COMMON)) {
@@ -87,5 +89,16 @@ public class ChangeStatusService {
         } else {
             throw new NoSuchElementException("존재하지 않는 회원의 요청입니다.");
         }
+    }
+
+    /**
+     * Status 변경 요청 로그 검색
+     */
+    public Page<SearchStatusLogDto> searchLogs(Long id, StatusLogSearchCondition condition, Pageable pageable) {
+        Optional<User> findAdmin = userRepository.findById(id);
+        if (findAdmin.isEmpty() || !findAdmin.get().getStatus().equals(UserStatus.ADMIN)) {
+            throw new NoSuchElementException("조회할 권한이 없습니다.");
+        }
+        return changeStatusLogRepository.searchPage(condition, pageable);
     }
 }
