@@ -40,6 +40,14 @@ public class User extends BaseTimeEntity {
         this.password = password;
     }
 
+    public void changeNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public void changeAddress(Address address) {
+        this.address = address;
+    }
+
     public void setStatus(UserStatus status) {
         this.status = status;
     }

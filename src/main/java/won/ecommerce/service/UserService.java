@@ -1,26 +1,23 @@
 package won.ecommerce.service;
 
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.*;
-import won.ecommerce.repository.ChangeStatusLogRepository;
+import won.ecommerce.service.dto.ChangeUserInfoRequestDto;
 import won.ecommerce.service.dto.JoinRequestDto;
 import won.ecommerce.repository.UserRepository;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import static won.ecommerce.entity.UserStatus.*;
+import static io.micrometer.common.util.StringUtils.*;
 
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
-    private final ChangeStatusLogRepository changeStatusLogRepository;
-    private final EntityManager em;
 
     /**
      * 회원가입
@@ -121,6 +118,56 @@ public class UserService {
             return user.getName();
         } else {
             throw new IllegalArgumentException("잘못된 패스워드 입니다.");
+        }
+    }
+
+    /**
+     * 정보 수정
+     * 닉네임, 주소
+     */
+    @Transactional
+    public void changeUserInfo(ChangeUserInfoRequestDto request) {
+        User user = findUserByEmail(request.getEmail()); // NoSuchElementException
+        if (request.getPassword().equals(user.getPassword())) {
+            Address address = changeUserInfoAddress(request.getRegion(), request.getCity(), request.getStreet(), request.getDetail(), request.getZipcode()); // IllegalArgumentException
+            if (request.getNickname() != null) {
+                String newNickname = changeUserInfoNickname(request.getNickname(), user.getNickname()); // IllegalStateException
+                user.changeNickname(newNickname);
+            }
+            if (address != null) {
+                user.changeAddress(address);
+            }
+        } else {
+            throw new IllegalArgumentException("잘못된 패스워드 입니다.");
+        }
+    }
+
+    /**
+     * 닉네임 검사
+     */
+    public String changeUserInfoNickname(String newNickname, String nickname) {
+        String ignoreNickname = "admin";
+        if (nickname.equals(newNickname)) {
+            throw new IllegalStateException("현재 사용중인 닉네임입니다.");
+        }
+        if (newNickname.toUpperCase().matches("(.*)"+ignoreNickname.toUpperCase()+"(.*)")
+                || newNickname.toLowerCase().matches("(.*)"+ignoreNickname.toLowerCase()+"(.*)") ) {
+            throw new IllegalStateException("사용할 수 없는 닉네임입니다.");
+        }
+        validateDuplicateNickname(newNickname); // IllegalStateException
+        return newNickname;
+    }
+
+    /**
+     * 주소 검사
+     */
+    public Address changeUserInfoAddress(String region, String city, String street, String detail, String zipcode) {
+        if (isBlank(region) && isBlank(city) && isBlank(street) && isBlank(detail) && isBlank(zipcode)) {
+            return null;
+        } else if (isNotBlank(region) && isNotBlank(city) && isNotBlank(street) && isNotBlank(detail) && isNotBlank(zipcode)) {
+            return new Address(region, city, street, detail, zipcode);
+        } else {
+            throw new IllegalArgumentException("잘못된 주소형태 입니다.");
         }
     }
 

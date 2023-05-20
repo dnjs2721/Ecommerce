@@ -14,6 +14,7 @@ import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
 import won.ecommerce.service.UserService;
 import won.ecommerce.service.dto.JoinRequestDto;
+import won.ecommerce.service.dto.ChangeUserInfoRequestDto;
 
 import java.util.NoSuchElementException;
 
@@ -106,6 +107,22 @@ public class UserController {
             return ResponseEntity.ok().body(userName + " 님 정상적으로 회원탈퇴 되었습니다.");
         } catch (NoSuchElementException e) {
             return NoSuchElementException(e);
+        }
+    }
+
+    /**
+     * 정보 수정
+     * 닉네임, 주소
+     */
+    @PostMapping("/changeUserInfo")
+    public ResponseEntity<String> changeUserInfo(@RequestBody @Valid ChangeUserInfoRequestDto request) {
+        try {
+            userService.changeUserInfo(request);
+            return ResponseEntity.ok().body("정보를 성공적으로 변경하였습니다.");
+        } catch (IllegalStateException | IllegalArgumentException e1) {
+            return ResponseEntity.badRequest().body(e1.getMessage());
+        } catch (NoSuchElementException e2) {
+            return NoSuchElementException(e2);
         }
     }
 
