@@ -7,12 +7,12 @@
     - **API** : `/api/mail/sendMail/{userEmail}`
     - **Method : GET**
     - **Request**
-    ```json
-    "userEmail" : userEmail 에게 랜덤 인증코드 발송
-    ```
+  ```jsonc
+  "userEmail" : userEmail 에게 랜덤 인증코드 발송
+  ```
     - **Response**
-        - 200 OK
-      ```json
+      - 200 OK
+      ```jsonc
       인증코드가 발송 되었습니다.
       ```
       ![mail](../IMG/mail.png)
@@ -24,7 +24,7 @@
     - **Method : POST**
     - **Body : raw (json)**
     - **Request**
-    ```json
+    ```jsonc
     {
       "email" : 사용자의 이메일,
       "authCode" : 인증코드
@@ -32,15 +32,15 @@
     ```
     - **Response**
       - 200 OK
-      ```json
+      ```jsonc
       {email} 인증 성공
       ```
       - 203 *NON_AUTHORITATIVE_INFORMATION*
-      ```json
+      ```jsonc
       잘못된 인증코드 입니다.
       ```
       - 404 *NOT_FOUND*
-      ```json
+      ```jsonc
       만료된 인증코드 혹은 잘못된 키 입니다.
       ```
 </details>
@@ -52,12 +52,12 @@
     - **API** : `/api/mail/sendMessage/{pNum}`
     - **Method : GET**
     - **Request**
-    ```json
+    ```jsonc
     "pNum" : pNum 에게 랜덤 인증코드 발송
     ```
     - **Response**
         - 200 OK
-      ```json
+      ```jsonc
       인증코드가 발송 되었습니다.
       ```
       ![message](../IMG/message.jpeg)  
@@ -69,7 +69,7 @@
     - **Method : POST**
     - **Body : raw (json)**
     - **Request**
-    ```json
+    ```jsonc
     {
       "pnum" : 사용자의 전화번호,
       "authCode" : 인증코드
@@ -77,15 +77,15 @@
     ```
     - **Response**
       - 200 OK
-      ```json
+      ```jsonc
       {pnum} 인증 성공
       ```
       - 203 *NON_AUTHORITATIVE_INFORMATION*
-      ```json
+      ```jsonc
       잘못된 인증코드 입니다.
       ```
       - 404 *NOT_FOUND*
-      ```json
+      ```jsonc
       만료된 인증코드 혹은 잘못된 키 입니다.
       ```
       
@@ -98,17 +98,17 @@
     - **API** : `/api/users/check/duplicationEmail/{userEmail`
     - **Method : GET**
     - **Request**
-    ```json
+    ```jsonc
     "userEmail" : Email 을 통하여 중복 체크
     ```
     - **Response**
       - 200 OK
-      ```json
+      ```jsonc
       {userEmail} 은 사용가능한 이메일입니다.
       이메일 인증을 해주세요.
       ```
       - 409 *CONFLICT*
-      ```json
+      ```jsonc
       이미 가입된 이메일입니다.
       ```
 <br/>
@@ -117,16 +117,16 @@
     - **API** : `/api/users/check/duplicationNickname/{nickname}`
     - **Method : GET**
     - **Request**
-    ```json
+    ```jsonc
     "nickname" : nickname 을 통하여 중복 체크
     ```
     - **Response**
       - 200 OK
-      ```json
+      ```jsonc
       {nickname} 은 사용가능한 닉네임입니다.
       ```
       - 409 *CONFLICT*
-      ```json
+      ```jsonc
       다른 사용자가 사용중인 닉네임입니다.
       ```
 <br/>
@@ -136,18 +136,18 @@
     - **Method : GET**
     - **Request**
   
-    ```json
+    ```jsonc
     "pNum" : pNum 을 통하여 중복 체크
     ```
   
     - **Response**
       - 200 OK
-      ```json
+      ```jsonc
       {pNum} 은 사용가능한 번호입니다.
       전화번호 인증을 해주세요.
       ```
       - 409 *CONFLICT*
-      ```json
+      ```jsonc
       이미 등록된 휴대폰 번호입니다.
       ```
 </details>
@@ -158,7 +158,7 @@
     - **Body :  raw (json)**
     - **Request**
 
-    ```json
+    ```jsonc
     {
       "name" : 이름,
       "nickname": 닉네임,
@@ -176,17 +176,17 @@
   
     - **Response**
         - 200 OK
-        ```json
+        ```jsonc
         {id} 회원가입 되었습니다.
         ```
         - 409 *CONFLICT*
-        ```json
+        ```jsonc
         이미 가입된 이메일입니다.
         ```
-        ```json
+        ```jsonc
         다른 사용자가 사용중인 닉네임입니다.
         ```
-        ```json
+        ```jsonc
         이미 등록된 휴대폰 번호입니다.
         ```
 <br/>
@@ -197,7 +197,7 @@
     - **Body :  raw (json)**
     - **Request**
 
-    ```json
+    ```jsonc
     {
       "email": user의 로그인 ID에 해당,
       "password": 비밀번호
@@ -206,15 +206,15 @@
   
     - **Response**
       - 200 OK
-      ```json
+      ```jsonc
       {id} 로그인 성공.
       ``` 
       - 401 *UNAUTHORIZED*
-      ```json
+      ```jsonc
       잘못된 패스워드 입니다.
       ```
       - 404 *NOT_FOUND*
-      ```json
+      ```jsonc
       가입되지 않은 이메일 입니다.
       ```
 <br/>
@@ -225,7 +225,7 @@
     - **Body :  raw (json)**
     - **Request**
 
-    ```json
+    ```jsonc
     {
       "name": 사용자 이름,
       "pnum": 사용자 전화번호
@@ -234,11 +234,11 @@
   
     - **Response**
       - 200 OK
-      ```json
+      ```jsonc
       {name}의 아이디(이메일)은 {email} 입니다.
       ```
       - 404 *NOT_FOUND*
-      ```json
+      ```jsonc
       가입되지 않은 회원 입니다. 이름 혹은 전화번호를 확인 해 주세요.
       ```
 <br/>
@@ -249,7 +249,7 @@
     - **Body :  raw (json)**
     - **Request**
 
-    ```json
+    ```jsonc
     {
       "email" : 사용자 email,
       "password" : 기존 비밀번호,
@@ -259,19 +259,19 @@
 
     - **Response**
       - 200 OK
-      ```json
+      ```jsonc
       {email} 님의 비밀번호가 성공적으로 변경 되었습니다.
       ```
       - 401 *UNAUTHORIZED*
-      ```json
+      ```jsonc
       잘못된 패스워드 입니다.
       ```
       - 404 *NOT_FOUND*
-      ```json
+      ```jsonc
       가입되지 않은 이메일 입니다.
       ```
       - 409 *CONFLICT*
-      ```json
+      ```jsonc
       현재 사용중인 패스워드와 같습니다.
       ```
 <br/>
@@ -282,7 +282,7 @@
     - **Body :  raw (json)**
     - **Request**
 
-    ```json
+    ```jsonc
     {
       "email": 사용자 이메일,
       "password": 패스워드
@@ -291,15 +291,15 @@
 
     - **Response**
       - 200 OK
-      ```json
+      ```jsonc
       {name} 님 정상적으로 회원탈퇴 되었습니다.
       ```
       - 401 *UNAUTHORIZED*
-      ```json
+      ```jsonc
       잘못된 패스워드 입니다.
       ```
       - 404 *NOT_FOUND*
-      ```json
+      ```jsonc
       가입되지 않은 이메일 입니다.
       ```
 <br/>
@@ -310,7 +310,7 @@
     - **Body :  raw (json)**
     - **Request**
 
-    ```json
+    ```jsonc
     {
       "email": 사용자 이메일,
       "password": 패스워드,
@@ -325,25 +325,25 @@
 
     - **Response**
       - 200 OK
-      ```json
+      ```jsonc
       정보를 성공적으로 변경하였습니다.
       ```
       - 401 *UNAUTHORIZED*
-      ```json
+      ```jsonc
       잘못된 패스워드 입니다.
       ```
       - 404 *NOT_FOUND*
-      ```json
+      ```jsonc
       가입되지 않은 이메일 입니다.
       ```
       - 409 *CONFLICT*
-      ```json
+      ```jsonc
       현재 사용중인 닉네임입니다.
       ```
-      ```json
+      ```jsonc
       사용할 수 없는 닉네임입니다.
       ```
-      ```json
+      ```jsonc
       잘못된 주소형태 입니다.
       ```
 <br/>
@@ -353,21 +353,21 @@
     - **Method : GET**
     - **Request**
   
-      ```json
+      ```jsonc
       "userId" : userId 를 통하여 중복 요청 체크
       ```
 
     - **Response**
       - 200 OK
-      ```json
+      ```jsonc
       {logId} 요청이 전송되었습니다.
       ```
       - 404 *NOT_FOUND*
-      ```json
+      ```jsonc
       가입되지 않은 회원입니다.
       ```
       - 409 *CONFLICT*
-      ```json
+      ```jsonc
       {logId} 이미 전송된 요청입니다.
       ```
 <br/>

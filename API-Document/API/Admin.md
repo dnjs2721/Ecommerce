@@ -1,4 +1,4 @@
-## 🙍🏻‍♂️ Admin ( 관리자 )
+## 👨🏻‍💻  Admin ( 관리자 )
 
 
 - 회원가입
@@ -7,7 +7,7 @@
     - **Body :  raw (json)**
     - **Request**
 
-    ```json
+    ```jsonc
     {
       "name" : 이름,
       "nickname": 닉네임,
@@ -25,17 +25,17 @@
 
     - **Response**
         - 200 OK
-        ```json
+        ```jsonc
         {id} 회원가입 되었습니다.
         ```
         - 409 *CONFLICT*
-        ```json
+        ```jsonc
         이미 가입된 이메일입니다.
         ```
-        ```json
+        ```jsonc
         다른 사용자가 사용중인 닉네임입니다.
         ```
-        ```json
+        ```jsonc
         이미 등록된 휴대폰 번호입니다.
         ```
 <br/>
@@ -44,7 +44,7 @@
     - **API** : `/api/admin/searchUsers/{id}?Params`
     - **Method : GET**
     - **Request**
-    ```json
+    ```jsonc
     "id" : id 를 통해 관리자인지 체크
     ```
     ```Params
@@ -57,11 +57,11 @@
     ```
     - **Response**
       - 200 OK
-      ```json
+      ```jsonc
       Page
       ```
       - 406 *NOT_ACCEPTABLE*
-      ```json
+      ```jsonc
       조회할 권한이 없습니다.
       ```
 <br/>
@@ -70,7 +70,7 @@
     - **API** : `/api/admin/searchChangeStatusLogs/{id}?Params`
     - **Method : GET**
     - **Request**
-    ```json
+    ```jsonc
     "id" : id 를 통해 관리자인지 체크
     ```
     ```Params
@@ -87,11 +87,11 @@
     ```
     - **Response**
       - 200 OK
-      ```json
+      ```jsonc
       Page
       ```
       - 406 *NOT_ACCEPTABLE*
-      ```json
+      ```jsonc
       조회할 권한이 없습니다.
       ```
 <br/>
@@ -101,10 +101,10 @@
     - **Method : POST**
     - **Body :  raw (json)**
     - **Request**
-    ```json
+    ```jsonc
     "logId" 를 통해 요청 선택
     ```
-    ```json
+    ```jsonc
     {
       "adminId" : 관리자 Id,
       "stat" : 처리 종류 -> OK, CANCEL
@@ -113,24 +113,24 @@
 
     - **Response**
       - 200 OK
-      ```json
+      ```jsonc
       요청이 성공적으로 처리되었습니다.
       ```
       - 404 *NOT_FOUND*
-      ```json
+      ```jsonc
       존재하지 않는 요청입니다.
       ```
-      ```json
+      ```jsonc
       존재하지 않는 회원의 요청입니다.
       ```
-      ```json
+      ```jsonc
       존재하지 않는 관리자입니다.
       ```
       - 406 *NOT_ACCEPTABLE*
-      ```json
+      ```jsonc
       조회할 권한이 없습니다.
       ```
       - 409 *CONFLICT*
-      ```json
+      ```jsonc
       이미 처리된 요청입니다.
       ```
