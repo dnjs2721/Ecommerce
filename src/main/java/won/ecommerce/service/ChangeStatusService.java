@@ -60,17 +60,31 @@ public class ChangeStatusService {
     }
 
     /**
+     * Status 변경 요청 로그 검색
+     */
+    public Page<SearchStatusLogDto> searchLogs(Long id, StatusLogSearchCondition condition, Pageable pageable) throws IllegalAccessException {
+        Optional<User> findAdmin = userRepository.findById(id);
+        if (findAdmin.isEmpty() || !findAdmin.get().getStatus().equals(UserStatus.ADMIN)) {
+            throw new IllegalAccessException("조회할 권한이 없습니다.");
+        }
+        return changeStatusLogRepository.searchLogsPage(condition, pageable);
+    }
+
+    /**원
      * Status 변경
      */
     @Transactional
-    public void changeStatus(Long logId, Long adminId, String stat) {
+    public void changeStatus(Long logId, Long adminId, String stat) throws IllegalAccessException {
         Optional<ChangeStatusLog> findLog = changeStatusLogRepository.findById(logId);
         Optional<User> findAdmin = userRepository.findById(adminId);
         if (findLog.isEmpty()) {
             throw new NoSuchElementException("존재하지 않는 요청입니다.");
         }
-        if (findAdmin.isEmpty() || !findAdmin.get().getStatus().equals(UserStatus.ADMIN)) {
+        if (findAdmin.isEmpty()) {
             throw new NoSuchElementException("존재하지 않는 관리자입니다.");
+        }
+        if (findAdmin.get().getStatus().equals(UserStatus.ADMIN)) {
+            throw new IllegalAccessException("조회할 권한이 없습니다.");
         }
         if (findLog.get().getLogStat().equals(OK) || findLog.get().getLogStat().equals(CANCEL)) {
             throw new IllegalStateException("이미 처리된 요청입니다.");
@@ -89,16 +103,5 @@ public class ChangeStatusService {
         } else {
             throw new NoSuchElementException("존재하지 않는 회원의 요청입니다.");
         }
-    }
-
-    /**
-     * Status 변경 요청 로그 검색
-     */
-    public Page<SearchStatusLogDto> searchLogs(Long id, StatusLogSearchCondition condition, Pageable pageable) {
-        Optional<User> findAdmin = userRepository.findById(id);
-        if (findAdmin.isEmpty() || !findAdmin.get().getStatus().equals(UserStatus.ADMIN)) {
-            throw new NoSuchElementException("조회할 권한이 없습니다.");
-        }
-        return changeStatusLogRepository.searchLogsPage(condition, pageable);
     }
 }

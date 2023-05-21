@@ -19,6 +19,8 @@ import won.ecommerce.service.dto.ChangeUserInfoRequestDto;
 
 import java.util.NoSuchElementException;
 
+import static org.springframework.http.HttpStatus.*;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
@@ -34,10 +36,9 @@ public class UserController {
             User user = userService.createdUser(request);
             user.setStatus(UserStatus.COMMON);
             Long memberId = userService.join(user);
-
             return ResponseEntity.ok().body(memberId.toString() + " 회원가입 되었습니다.");
         } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return createResponseEntity(e, CONFLICT); // 닉네임, 이메일, 휴대폰 번호 중복 예외
         }
     }
 
@@ -50,10 +51,9 @@ public class UserController {
             User admin = userService.createdUser(request);
             admin.setStatus(UserStatus.ADMIN);
             Long memberId = userService.join(admin);
-
             return ResponseEntity.ok().body(memberId.toString() + " 회원가입 되었습니다.");
         } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return createResponseEntity(e, CONFLICT); // 닉네임, 이메일, 휴대폰 번호 중복 예외
         }
     }
 
@@ -66,9 +66,9 @@ public class UserController {
             Long id = userService.login(request.getEmail(), request.getPassword());
             return ResponseEntity.ok().body(id.toString() + " 로그인 성공");
         } catch (NoSuchElementException e1) {
-            return NoSuchElementException(e1);
-        } catch (IllegalArgumentException e2) {
-            return ResponseEntity.badRequest().body(e2.getMessage());
+            return createResponseEntity(e1, NOT_FOUND); // 등록된 사용자 없음 예외
+        } catch (IllegalAccessException e2) {
+            return createResponseEntity(e2, UNAUTHORIZED); // 비밀번호 오류 예외
         }
     }
 
@@ -81,7 +81,7 @@ public class UserController {
             String email = userService.findEmailByNameAndPNum(request.getName(), request.getPNum());
             return ResponseEntity.ok().body(request.getName() + "님의 아이디(이메일)은 " + email + " 입니다.");
         } catch (NoSuchElementException e) {
-            return NoSuchElementException(e);
+            return createResponseEntity(e, NOT_FOUND); // 등록된 사용자 없음 예외
         }
     }
 
@@ -91,10 +91,12 @@ public class UserController {
     @PostMapping("/changePassword")
     public ResponseEntity<String> changePassword(@RequestBody @Valid ChangePasswordRequestDto request) {
         try {
-            String email = userService.changePassword(request.getEmail(), request.getNewPassword());
+            String email = userService.changePassword(request.getEmail(), request.getPassword(), request.getNewPassword());
             return ResponseEntity.ok().body(email + " 님의 비밀번호가 성공적으로 변경 되었습니다.");
-        } catch (NoSuchElementException e) {
-            return NoSuchElementException(e);
+        } catch (NoSuchElementException e1) {
+            return createResponseEntity(e1, NOT_FOUND); // 등록된 사용자 없음 예외
+        } catch (IllegalAccessException e2) {
+            return createResponseEntity(e2, UNAUTHORIZED); // 비밀번호 오류 예외
         }
     }
 
@@ -106,8 +108,10 @@ public class UserController {
         try {
             String userName = userService.deleteUser(request.getEmail(), request.getPassword());
             return ResponseEntity.ok().body(userName + " 님 정상적으로 회원탈퇴 되었습니다.");
-        } catch (NoSuchElementException e) {
-            return NoSuchElementException(e);
+        } catch (NoSuchElementException e1) {
+            return createResponseEntity(e1, NOT_FOUND); // 등록된 사용자 없음 예외
+        } catch (IllegalAccessException e2) {
+            return createResponseEntity(e2, UNAUTHORIZED); // 비밀번호 오류 예외
         }
     }
 
@@ -121,9 +125,11 @@ public class UserController {
             userService.changeUserInfo(request);
             return ResponseEntity.ok().body("정보를 성공적으로 변경하였습니다.");
         } catch (IllegalStateException | IllegalArgumentException e1) {
-            return ResponseEntity.badRequest().body(e1.getMessage());
+            return createResponseEntity(e1, CONFLICT); // 닉네임 중복, 사용불가 닉네임, 잘못된 주소형태 예외
         } catch (NoSuchElementException e2) {
-            return NoSuchElementException(e2);
+            return createResponseEntity(e2, NOT_FOUND); // 등록된 사용자 없음 예외
+        } catch (IllegalAccessException e3) {
+            return createResponseEntity(e3, UNAUTHORIZED); // 비밀번호 오류 예외
         }
     }
 
@@ -138,15 +144,13 @@ public class UserController {
         try {
             Page<SearchUsersDto> searchUsers = userService.searchUsers(id, condition, pageable);
             return ResponseEntity.ok().body(searchUsers);
-        } catch (NoSuchElementException e) {
-            return NoSuchElementException(e);
+        } catch (IllegalAccessException e) {
+            return createResponseEntity(e, NOT_ACCEPTABLE); // 권한 없음 예외
         }
     }
 
-
-
-    public ResponseEntity<String> NoSuchElementException(NoSuchElementException e) {
+    public ResponseEntity<String> createResponseEntity(Exception e, HttpStatus httpStatus) {
         HttpHeaders headers = new HttpHeaders();
-        return new ResponseEntity<>(e.getMessage(), headers, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(e.getMessage(), headers, httpStatus);
     }
 }

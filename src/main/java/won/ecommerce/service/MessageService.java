@@ -1,5 +1,6 @@
 package won.ecommerce.service;
 
+import jakarta.mail.AuthenticationFailedException;
 import net.nurigo.sdk.NurigoApp;
 import net.nurigo.sdk.message.model.Message;
 import net.nurigo.sdk.message.request.SingleMessageSendingRequest;
@@ -9,8 +10,6 @@ import org.springframework.stereotype.Service;
 import won.ecommerce.config.CoolSmsApiConfig;
 import won.ecommerce.config.EcommerceConfig;
 import won.ecommerce.util.RedisUtil;
-
-import java.util.NoSuchElementException;
 
 @Service
 public class MessageService {
@@ -31,7 +30,7 @@ public class MessageService {
     /**
      * 인증코드 메시지 전송
      */
-    public SingleMessageSentResponse sendMessage(String toPNum) {
+    public void sendMessage(String toPNum) {
         Message message = new Message();
         String authCode = authCodeService.createCode();
         String fromPNum = ecommerceConfig.getFromPNum();
@@ -44,22 +43,12 @@ public class MessageService {
 
         SingleMessageSentResponse response =
                 this.messageService.sendOne(new SingleMessageSendingRequest(message));
-        System.out.println("response = " + response);
-
-        return response;
-    }
-
-    /**
-     * 인증코드 확인
-     */
-    public String checkCode(String pNum) {
-        return redisUtil.getData(pNum);
     }
 
     /**
      * 인증코드 검증
      */
-    public void validateCode(String pNum, String code) {
+    public void validateCode(String pNum, String code) throws AuthenticationFailedException {
         redisUtil.validateCode(pNum, code);
     }
 }

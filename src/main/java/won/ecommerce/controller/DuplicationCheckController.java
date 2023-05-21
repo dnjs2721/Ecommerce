@@ -1,57 +1,61 @@
 package won.ecommerce.controller;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import won.ecommerce.controller.dto.duplicationCheckDto.*;
-import won.ecommerce.service.UserService;
+import org.springframework.web.bind.annotation.*;
+import won.ecommerce.service.DuplicationCheckService;
+
+import static org.springframework.http.HttpStatus.*;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users/check")
 public class DuplicationCheckController {
-    private final UserService userService;
+    private final DuplicationCheckService duplicationCheckService;
 
     /**
      * 이메일 중복 검사
      */
-    @PostMapping("/DuplicationEmail")
-    public ResponseEntity<String> checkDuplicationEmail(@RequestBody @Valid DuplicationEmailRequestDto request) {
+    @GetMapping("/DuplicationEmail/{userEmail}")
+    public ResponseEntity<String> checkDuplicationEmail(@PathVariable("userEmail") String userEmail) {
         try {
-            userService.validateDuplicateEmail(request.getEmail());
+            duplicationCheckService.validateDuplicateEmail(userEmail);
+            return ResponseEntity.ok().body(userEmail + " 은 사용가능한 이메일입니다.\n이메일 인증을 해주세요.");
         } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return createResponseEntity(e, CONFLICT); // 중복 예외
         }
-        return ResponseEntity.ok().body(request.getEmail() + " 은 사용가능 합니다.");
     }
 
     /**
      * 닉네임 중복 검사
      */
-    @PostMapping("/DuplicationNickname")
-    public ResponseEntity<String> checkDuplicationNickname(@RequestBody @Valid DuplicationNicknameRequestDto request) {
+    @GetMapping("/DuplicationNickname/{nickname}")
+    public ResponseEntity<String> checkDuplicationNickname(@PathVariable("nickname") String nickname) {
         try {
-            userService.validateDuplicateNickname(request.getNickname());
+            duplicationCheckService.validateDuplicateNickname(nickname);
+            return ResponseEntity.ok().body(nickname + " 은 사용가능한 닉네임입니다.");
         } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return createResponseEntity(e, CONFLICT); // 중복 예외
         }
-        return ResponseEntity.ok().body(request.getNickname() + " 은 사용가능 합니다.");
     }
 
     /**
      * 휴대폰 번호 중복 검사
      */
-    @PostMapping("/DuplicationPNum")
-    public ResponseEntity<String> checkDuplicationPNum(@RequestBody @Valid DuplicationPNumRequestDto request) {
+    @GetMapping ("/DuplicationPNum/{pNum}")
+    public ResponseEntity<String> checkDuplicationPNum(@PathVariable("pNum") String pNum) {
         try {
-            userService.validateDuplicatePNum(request.getPNum());
+            duplicationCheckService.validateDuplicatePNum(pNum);
+            return ResponseEntity.ok().body(pNum + " 은 사용가능한 번호입니다.\n전화번호 인증을 해주세요.");
         } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return createResponseEntity(e, CONFLICT); // 중복 예외
         }
-        return ResponseEntity.ok().body(request.getPNum() + " 은 사용가능 합니다.");
+    }
+
+    public ResponseEntity<String> createResponseEntity(Exception e, HttpStatus httpStatus) {
+        HttpHeaders headers = new HttpHeaders();
+        return new ResponseEntity<>(e.getMessage(), headers, httpStatus);
     }
 }

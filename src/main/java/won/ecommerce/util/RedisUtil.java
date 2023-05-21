@@ -1,6 +1,8 @@
 package won.ecommerce.util;
 
+import jakarta.mail.AuthenticationFailedException;
 import lombok.RequiredArgsConstructor;
+import org.apache.catalina.authenticator.NonLoginAuthenticator;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -33,13 +35,13 @@ public class RedisUtil {
     }
 
     // 인증 코드 검증
-    public void validateCode(String key, String value) {
+    public void validateCode(String key, String value) throws AuthenticationFailedException {
         String data = this.getData(key);
         if (data == null) {
             throw new NoSuchElementException("만료된 인증코드 혹은 잘못된 키 입니다.");
         }
         if (!data.equals(value)) {
-            throw new IllegalArgumentException("잘못된 인증코드 입니다.");
+            throw new AuthenticationFailedException("잘못된 인증코드 입니다.");
         }
         this.deleteData(key);
     }

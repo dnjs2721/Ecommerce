@@ -10,7 +10,8 @@ public class ChangePasswordRequestDto {
     @Email
     @NotBlank(message = "이메일(필수)")
     private String email;
-
+    @NotBlank(message = "기존 비밀번호(필수)")
+    private String password;
     @NotBlank(message = "새 비밀번호(필수)")
     private String newPassword;
 }

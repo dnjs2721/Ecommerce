@@ -1,5 +1,6 @@
 package won.ecommerce.service;
 
+import jakarta.mail.AuthenticationFailedException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,7 @@ public class EmailService {
     /**
      * 인증 코드 메일 전송
      */
-    public String sendAuthCode(String email) throws MessagingException, UnsupportedEncodingException {
+    public void sendAuthCode(String email) throws MessagingException {
         String authCode = authCodeService.createCode(); // 인증 코드 생성
         String setFrom = ecommerceConfig.getFromEmail(); // 보내는 사람
         String title = "E-Commerce 이메일 인증 번호"; // 제목
@@ -39,14 +40,12 @@ public class EmailService {
         emailSender.send(message);
         // 레디스 등록 제한시간 5분
         redisUtil.setDataExpire(email, authCode, 60*5L);
-
-        return authCode;
     }
 
     /**
      * 인증번호 검증
      */
-    public void validateCode(String email, String code) {
+    public void validateCode(String email, String code) throws AuthenticationFailedException {
         redisUtil.validateCode(email, code);
     }
 

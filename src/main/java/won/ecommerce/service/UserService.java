@@ -22,71 +22,29 @@ import static io.micrometer.common.util.StringUtils.*;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final DuplicationCheckService duplicationCheckService;
 
     /**
      * 회원가입
      */
     @Transactional
     public Long join(User user) {
-        validateDuplicateEmail(user.getEmail());
-        validateDuplicateNickname(user.getNickname());
-        validateDuplicatePNum(user.getPNum());
+        duplicationCheckService.validateDuplicateEmail(user.getEmail());
+        duplicationCheckService.validateDuplicateNickname(user.getNickname());
+        duplicationCheckService.validateDuplicatePNum(user.getPNum());
         userRepository.save(user);
         return user.getId();
-    }
-
-    // user 생성 - status 제외
-    public User createdUser(JoinRequestDto request) {
-        return User.builder()
-                .name(request.getName())
-                .nickname(request.getNickname())
-                .email(request.getEmail())
-                .password(request.getPassword())
-                .pNum(request.getPNum())
-                .birth(request.getBirth())
-                .address(new Address(request.getRegion(), request.getCity(), request.getStreet(), request.getDetail(), request.getZipcode()))
-                .build();
     }
 
     /**
      * 로그인
      */
-    public Long login(String email, String password) {
+    public Long login(String email, String password) throws IllegalAccessException {
         User user = findUserByEmail(email);
         if (user.getPassword().equals(password)) {
             return user.getId();
         } else {
-            throw new IllegalArgumentException("잘못된 패스워드 입니다.");
-        }
-    }
-
-    /**
-     * 이메일 중복 검사
-     */
-    public void validateDuplicateEmail(String email) {
-        Optional<User> findUser = userRepository.findByEmail(email);
-        if (findUser.isPresent()) {
-            throw new IllegalStateException("이미 가입된 이메일입니다.");
-        }
-    }
-
-    /**
-     * 닉네임 중복 검사
-     */
-    public void validateDuplicateNickname(String nickname) {
-        Optional<User> findUser = userRepository.findByNickname(nickname);
-        if (findUser.isPresent()) {
-            throw new IllegalStateException("다른 사용자가 사용중인 닉네임입니다.");
-        }
-    }
-
-    /**
-     * 휴대폰 번호 중복 검사
-     */
-    public void validateDuplicatePNum(String pNum) {
-        Optional<User> findUser = userRepository.findBypNum(pNum);
-        if (findUser.isPresent()) {
-            throw new IllegalStateException("이미 등록된 휴대폰 번호입니다.");
+            throw new IllegalAccessException("잘못된 패스워드 입니다.");
         }
     }
 
@@ -105,23 +63,27 @@ public class UserService {
      * 비밀번호 변경
      */
     @Transactional
-    public String changePassword(String email, String newPassword) {
+    public String changePassword(String email, String password, String newPassword) throws IllegalAccessException {
         User user = findUserByEmail(email);
-        user.changePassword(newPassword);
-        return email;
+        if (user.getPassword().equals(password)) {
+            user.changePassword(newPassword);
+            return email;
+        } else {
+            throw new IllegalAccessException("잘못된 패스워드 입니다.");
+        }
     }
 
     /**
      * 회원 탈퇴
      */
     @Transactional
-    public String deleteUser(String email, String password) {
+    public String deleteUser(String email, String password) throws IllegalAccessException {
         User user = findUserByEmail(email);
         if (password.equals(user.getPassword())) {
             userRepository.delete(user);
             return user.getName();
         } else {
-            throw new IllegalArgumentException("잘못된 패스워드 입니다.");
+            throw new IllegalAccessException("잘못된 패스워드 입니다.");
         }
     }
 
@@ -130,20 +92,31 @@ public class UserService {
      * 닉네임, 주소
      */
     @Transactional
-    public void changeUserInfo(ChangeUserInfoRequestDto request) {
+    public void changeUserInfo(ChangeUserInfoRequestDto request) throws IllegalAccessException {
         User user = findUserByEmail(request.getEmail()); // NoSuchElementException
         if (request.getPassword().equals(user.getPassword())) {
-            Address address = changeUserInfoAddress(request.getRegion(), request.getCity(), request.getStreet(), request.getDetail(), request.getZipcode()); // IllegalArgumentException
+            Address address = changeUserInfoAddress(request.getRegion(), request.getCity(), request.getStreet(), request.getDetail(), request.getZipcode()); // IllegalArgumentException, 주소 형태 확인
             if (request.getNickname() != null) {
-                String newNickname = changeUserInfoNickname(request.getNickname(), user.getNickname()); // IllegalStateException
+                String newNickname = changeUserInfoNickname(request.getNickname(), user.getNickname()); // IllegalStateException,닉네임 사용가능 유무 확인
                 user.changeNickname(newNickname);
             }
             if (address != null) {
                 user.changeAddress(address);
             }
         } else {
-            throw new IllegalArgumentException("잘못된 패스워드 입니다.");
+            throw new IllegalAccessException("잘못된 패스워드 입니다.");
         }
+    }
+
+    /**
+     * 사용자 조회 - 관리자
+     */
+    public Page<SearchUsersDto> searchUsers(Long id, UserSearchCondition condition, Pageable pageable) throws IllegalAccessException {
+        Optional<User> findAdmin = userRepository.findById(id);
+        if (findAdmin.isEmpty() || !findAdmin.get().getStatus().equals(UserStatus.ADMIN)) {
+            throw new IllegalAccessException("조회할 권한이 없습니다.");
+        }
+        return userRepository.searchUsersPage(condition, pageable);
     }
 
     /**
@@ -158,7 +131,7 @@ public class UserService {
                 || newNickname.toLowerCase().matches("(.*)"+ignoreNickname.toLowerCase()+"(.*)") ) {
             throw new IllegalStateException("사용할 수 없는 닉네임입니다.");
         }
-        validateDuplicateNickname(newNickname); // IllegalStateException
+        duplicationCheckService.validateDuplicateNickname(newNickname); // IllegalStateException
         return newNickname;
     }
 
@@ -175,18 +148,21 @@ public class UserService {
         }
     }
 
-    /**
-     * 사용자 조회 - 관리자
-     */
-    public Page<SearchUsersDto> searchUsers(Long id, UserSearchCondition condition, Pageable pageable) {
-        Optional<User> findAdmin = userRepository.findById(id);
-        if (findAdmin.isEmpty() || !findAdmin.get().getStatus().equals(UserStatus.ADMIN)) {
-            throw new NoSuchElementException("조회할 권한이 없습니다.");
-        }
-        return userRepository.searchUsersPage(condition, pageable);
-    }
-
+    // 사용중인 이메일인지 검사 메소드
     public User findUserByEmail(String email) {
         return userRepository.findByEmail(email).orElseThrow(() -> new NoSuchElementException("가입되지 않은 이메일 입니다."));
+    }
+
+    // user 생성 - status 제외
+    public User createdUser(JoinRequestDto request) {
+        return User.builder()
+                .name(request.getName())
+                .nickname(request.getNickname())
+                .email(request.getEmail())
+                .password(request.getPassword())
+                .pNum(request.getPNum())
+                .birth(request.getBirth())
+                .address(new Address(request.getRegion(), request.getCity(), request.getStreet(), request.getDetail(), request.getZipcode()))
+                .build();
     }
 }

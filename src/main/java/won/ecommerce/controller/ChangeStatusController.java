@@ -10,13 +10,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import won.ecommerce.controller.dto.chagngeStatusDto.ChangeStatusRequestDto;
-import won.ecommerce.controller.dto.chagngeStatusDto.CreateChangeStatusLogRequestDto;
 import won.ecommerce.repository.dto.SearchStatusLogDto;
 import won.ecommerce.repository.dto.StatusLogSearchCondition;
 import won.ecommerce.service.ChangeStatusService;
 
-import java.util.List;
 import java.util.NoSuchElementException;
+
+import static org.springframework.http.HttpStatus.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,30 +29,15 @@ public class ChangeStatusController {
     /**
      * Status 변경 요청 작성
      */
-    @PostMapping("/createChangeStatusLog")
-    public ResponseEntity<String> createChangeStatusLog(@RequestBody @Valid CreateChangeStatusLogRequestDto request) {
+    @GetMapping("/createChangeStatusLog/{userId}")
+    public ResponseEntity<String> createChangeStatusLog(@PathVariable("userId") Long userId) {
         try {
-            Long logId = changeStatusService.createChangeStatusLog(request.getId());
+            Long logId = changeStatusService.createChangeStatusLog(userId);
             return ResponseEntity.ok().body("[" + logId.toString() + "]" + " 요청이 전송되었습니다.");
         } catch (NoSuchElementException e1) {
-            return NoSuchElementException(e1);
+            return createResponseEntity(e1, NOT_FOUND); // 등록된 사용자 없음 예외
         } catch (IllegalStateException e2) {
-            return ResponseEntity.badRequest().body(e2.getMessage());
-        }
-    }
-
-    /**
-     * Status 변경
-     */
-    @PostMapping("/changeStatus")
-    public ResponseEntity<String> changeStatus(@RequestBody @Valid ChangeStatusRequestDto request) {
-        try {
-            changeStatusService.changeStatus(request.getLogId(), request.getAdminId(), request.getStat());
-            return ResponseEntity.ok().body("요청이 성공적으로 처리되었습니다.");
-        } catch (NoSuchElementException e1) {
-            return NoSuchElementException(e1);
-        } catch (IllegalStateException e2) {
-            return ResponseEntity.badRequest().body(e2.getMessage());
+            return createResponseEntity(e2, CONFLICT); // 이미 등록된 요청 예외
         }
     }
 
@@ -67,13 +52,30 @@ public class ChangeStatusController {
         try {
             Page<SearchStatusLogDto> searchLogs = changeStatusService.searchLogs(id, condition, pageable);
             return ResponseEntity.ok().body(searchLogs);
-        } catch (NoSuchElementException e) {
-            return NoSuchElementException(e);
+        } catch (IllegalAccessException e) {
+            return createResponseEntity(e, NOT_ACCEPTABLE); // 권환 없음 예외
         }
     }
 
-    public ResponseEntity<String> NoSuchElementException(NoSuchElementException e) {
+    /**
+     * Status 변경
+     */
+    @PostMapping("/changeStatus")
+    public ResponseEntity<String> changeStatus(@RequestBody @Valid ChangeStatusRequestDto request) {
+        try {
+            changeStatusService.changeStatus(request.getLogId(), request.getAdminId(), request.getStat());
+            return ResponseEntity.ok().body("요청이 성공적으로 처리되었습니다.");
+        } catch (NoSuchElementException e1) {
+            return createResponseEntity(e1, NOT_FOUND); // 존재하지 않는 요청, 관리자, 회원 에외
+        } catch (IllegalStateException e2) {
+            return createResponseEntity(e2, CONFLICT); // 이미 처리된 요청
+        } catch (IllegalAccessException e3) {
+            return createResponseEntity(e3, NOT_ACCEPTABLE); // 권환 없음 예외
+        }
+    }
+
+    public ResponseEntity<String> createResponseEntity(Exception e, HttpStatus httpStatus) {
         HttpHeaders headers = new HttpHeaders();
-        return new ResponseEntity<>(e.getMessage(), headers, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(e.getMessage(), headers, httpStatus);
     }
 }
