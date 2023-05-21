@@ -82,6 +82,8 @@ public class UserController {
             return createResponseEntity(e1, NOT_FOUND); // 등록된 사용자 없음 예외
         } catch (IllegalAccessException e2) {
             return createResponseEntity(e2, UNAUTHORIZED); // 비밀번호 오류 예외
+        } catch (IllegalStateException e3) {
+            return createResponseEntity(e3, CONFLICT); // 동일한 패스워드 예외
         }
     }
 

@@ -50,7 +50,7 @@ public class AdminController {
 
     /**
      * 사용자 정보 조회 - 관리자
-     * http://localhost:8080/api/users/searchUsers/{id}?userStatus=SELLER
+     * http://localhost:8080/api/admin/searchUsers/{id}?userStatus=SELLER
      * /searchUsers/{id} -> id 로 관리자인지 확인
      * userStatus 검색가능
      */
@@ -66,7 +66,7 @@ public class AdminController {
 
     /**
      * COMMON-SELLER, SELLER-COMMON 변경 요청 로그 검색
-     * http://localhost:8080/api/users/searchChangeStatusLogs/{id}?userId=2&adminId=1&timeGoe=2023-05-20T02:33:00&timeLoe=2023-05-20T02:36:30&logStat=WAIT&size=3&page=0
+     * http://localhost:8080/api/admin/searchChangeStatusLogs/{id}?userId=2&adminId=1&timeGoe=2023-05-20T02:33:00&timeLoe=2023-05-20T02:36:30&logStat=WAIT&size=3&page=0
      * /searchChangeStatusLogs/{id} -> id 로 관리자인지 확인
      * adminId, userId, timeGoe, timeLoe, logStat, size, page 지정 가능 -> 동적쿼리
      */

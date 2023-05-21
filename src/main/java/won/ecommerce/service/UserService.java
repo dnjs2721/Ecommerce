@@ -71,6 +71,9 @@ public class UserService {
     public String changePassword(String email, String password, String newPassword) throws IllegalAccessException {
         User user = findUserByEmail(email);
         if (user.getPassword().equals(password)) {
+            if (user.getPassword().equals(newPassword)) {
+                throw new IllegalStateException("현재 사용중인 패스워드와 같습니다.");
+            }
             user.changePassword(newPassword);
             return email;
         } else {
@@ -118,7 +121,7 @@ public class UserService {
      */
     @Transactional
     public Long createChangeStatusLog(long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new NoSuchElementException("가입되지 않은 이메일 입니다."));
+        User user = userRepository.findById(userId).orElseThrow(() -> new NoSuchElementException("가입되지 않은 회원입니다."));
         UserStatus beforeStatus = user.getStatus();
         UserStatus requestStatus = null;
         if (beforeStatus.equals(COMMON)) {
