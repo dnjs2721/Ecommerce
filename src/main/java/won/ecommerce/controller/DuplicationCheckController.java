@@ -18,7 +18,7 @@ public class DuplicationCheckController {
     /**
      * 이메일 중복 검사
      */
-    @GetMapping("/DuplicationEmail/{userEmail}")
+    @GetMapping("/duplicationEmail/{userEmail}")
     public ResponseEntity<String> checkDuplicationEmail(@PathVariable("userEmail") String userEmail) {
         try {
             duplicationCheckService.validateDuplicateEmail(userEmail);
@@ -31,7 +31,7 @@ public class DuplicationCheckController {
     /**
      * 닉네임 중복 검사
      */
-    @GetMapping("/DuplicationNickname/{nickname}")
+    @GetMapping("/duplicationNickname/{nickname}")
     public ResponseEntity<String> checkDuplicationNickname(@PathVariable("nickname") String nickname) {
         try {
             duplicationCheckService.validateDuplicateNickname(nickname);
@@ -44,7 +44,7 @@ public class DuplicationCheckController {
     /**
      * 휴대폰 번호 중복 검사
      */
-    @GetMapping ("/DuplicationPNum/{pNum}")
+    @GetMapping ("/duplicationPNum/{pNum}")
     public ResponseEntity<String> checkDuplicationPNum(@PathVariable("pNum") String pNum) {
         try {
             duplicationCheckService.validateDuplicatePNum(pNum);

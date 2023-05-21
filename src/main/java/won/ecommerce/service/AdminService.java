@@ -11,56 +11,35 @@ import won.ecommerce.entity.UserStatus;
 import won.ecommerce.repository.ChangeStatusLogRepository;
 import won.ecommerce.repository.UserRepository;
 import won.ecommerce.repository.dto.SearchStatusLogDto;
+import won.ecommerce.repository.dto.SearchUsersDto;
 import won.ecommerce.repository.dto.StatusLogSearchCondition;
+import won.ecommerce.repository.dto.UserSearchCondition;
 
 import java.time.LocalDateTime;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static won.ecommerce.entity.LogStat.*;
-import static won.ecommerce.entity.UserStatus.COMMON;
-import static won.ecommerce.entity.UserStatus.SELLER;
 
 @Service
 @RequiredArgsConstructor
-public class ChangeStatusService {
+public class AdminService {
     private final ChangeStatusLogRepository changeStatusLogRepository;
     private final UserRepository userRepository;
-    private final UserService userService;
 
     /**
-     * Status 변경 요청 작성
+     * 사용자 조회 - 관리자
      */
-    @Transactional
-    public Long createChangeStatusLog(long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new NoSuchElementException("가입되지 않은 이메일 입니다."));
-        UserStatus beforeStatus = user.getStatus();
-        UserStatus requestStatus = null;
-        if (beforeStatus.equals(COMMON)) {
-            requestStatus = SELLER;
-        } else if (beforeStatus.equals(SELLER)) {
-            requestStatus = COMMON;
+    public Page<SearchUsersDto> searchUsers(Long id, UserSearchCondition condition, Pageable pageable) throws IllegalAccessException {
+        Optional<User> findAdmin = userRepository.findById(id);
+        if (findAdmin.isEmpty() || !findAdmin.get().getStatus().equals(UserStatus.ADMIN)) {
+            throw new IllegalAccessException("조회할 권한이 없습니다.");
         }
-
-        Optional<ChangeStatusLog> findLog = changeStatusLogRepository.findByUserIdAndLogStat(user.getId(), WAIT);
-        if (findLog.isPresent()) {
-            throw new IllegalStateException("이미 전송된 요청입니다.");
-        }
-
-        ChangeStatusLog log = ChangeStatusLog.builder()
-                .userId(user.getId())
-                .beforeStat(beforeStatus)
-                .requestStat(requestStatus)
-                .logStat(WAIT)
-                .build();
-
-        changeStatusLogRepository.save(log);
-
-        return log.getId();
+        return userRepository.searchUsersPage(condition, pageable);
     }
 
     /**
-     * Status 변경 요청 로그 검색
+     * COMMON-SELLER, SELLER-COMMON 변경 요청 로그 검색
      */
     public Page<SearchStatusLogDto> searchLogs(Long id, StatusLogSearchCondition condition, Pageable pageable) throws IllegalAccessException {
         Optional<User> findAdmin = userRepository.findById(id);
@@ -70,8 +49,8 @@ public class ChangeStatusService {
         return changeStatusLogRepository.searchLogsPage(condition, pageable);
     }
 
-    /**원
-     * Status 변경
+    /**
+     * COMMON-SELLER, SELLER-COMMON 변경
      */
     @Transactional
     public void changeStatus(Long logId, Long adminId, String stat) throws IllegalAccessException {
@@ -83,7 +62,7 @@ public class ChangeStatusService {
         if (findAdmin.isEmpty()) {
             throw new NoSuchElementException("존재하지 않는 관리자입니다.");
         }
-        if (findAdmin.get().getStatus().equals(UserStatus.ADMIN)) {
+        if (!findAdmin.get().getStatus().equals(UserStatus.ADMIN)) {
             throw new IllegalAccessException("조회할 권한이 없습니다.");
         }
         if (findLog.get().getLogStat().equals(OK) || findLog.get().getLogStat().equals(CANCEL)) {

@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.*;
+import won.ecommerce.repository.ChangeStatusLogRepository;
 import won.ecommerce.repository.dto.SearchUsersDto;
 import won.ecommerce.repository.dto.UserSearchCondition;
 import won.ecommerce.service.dto.ChangeUserInfoRequestDto;
@@ -16,12 +17,16 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static io.micrometer.common.util.StringUtils.*;
+import static won.ecommerce.entity.LogStat.WAIT;
+import static won.ecommerce.entity.UserStatus.COMMON;
+import static won.ecommerce.entity.UserStatus.SELLER;
 
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final ChangeStatusLogRepository changeStatusLogRepository;
     private final DuplicationCheckService duplicationCheckService;
 
     /**
@@ -109,14 +114,34 @@ public class UserService {
     }
 
     /**
-     * 사용자 조회 - 관리자
+     * COMMON-SELLER, SELLER-COMMON 변경 요청 작성
      */
-    public Page<SearchUsersDto> searchUsers(Long id, UserSearchCondition condition, Pageable pageable) throws IllegalAccessException {
-        Optional<User> findAdmin = userRepository.findById(id);
-        if (findAdmin.isEmpty() || !findAdmin.get().getStatus().equals(UserStatus.ADMIN)) {
-            throw new IllegalAccessException("조회할 권한이 없습니다.");
+    @Transactional
+    public Long createChangeStatusLog(long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new NoSuchElementException("가입되지 않은 이메일 입니다."));
+        UserStatus beforeStatus = user.getStatus();
+        UserStatus requestStatus = null;
+        if (beforeStatus.equals(COMMON)) {
+            requestStatus = SELLER;
+        } else if (beforeStatus.equals(SELLER)) {
+            requestStatus = COMMON;
         }
-        return userRepository.searchUsersPage(condition, pageable);
+
+        Optional<ChangeStatusLog> findLog = changeStatusLogRepository.findByUserIdAndLogStat(user.getId(), WAIT);
+        if (findLog.isPresent()) {
+            throw new IllegalStateException("[" + findLog.get().getId() + "]" + "이미 전송된 요청입니다.");
+        }
+
+        ChangeStatusLog log = ChangeStatusLog.builder()
+                .userId(user.getId())
+                .beforeStat(beforeStatus)
+                .requestStat(requestStatus)
+                .logStat(WAIT)
+                .build();
+
+        changeStatusLogRepository.save(log);
+
+        return log.getId();
     }
 
     /**
