@@ -6,6 +6,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -24,8 +27,11 @@ public class User extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private UserStatus status;
 
+    @OneToMany(mappedBy = "id")
+    private final List<Item> sellItems = new ArrayList<>();
+
     @Builder
-    public User(String name, String nickname, String email, String password, String pNum, String birth, Address address, UserStatus status) {
+    public User(String name, String nickname, String email, String password, String pNum, String birth, Address address) {
         this.name = name;
         this.nickname = nickname;
         this.email = email;
@@ -33,7 +39,6 @@ public class User extends BaseTimeEntity {
         this.pNum = pNum;
         this.birth = birth;
         this.address = address;
-        this.status = status;
     }
 
     public void changePassword(String password) {

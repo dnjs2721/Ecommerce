@@ -26,7 +26,6 @@ class UserTest {
                 .pNum("test")
                 .birth("test")
                 .address(new Address("test", "test", "test", "test", "test"))
-                .status(UserStatus.COMMON)
                 .build();
 
         em.persist(user);

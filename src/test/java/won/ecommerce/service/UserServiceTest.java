@@ -28,7 +28,6 @@ class UserServiceTest {
                 .pNum("test")
                 .birth("test")
                 .address(new Address("test", "test", "test", "test", "test"))
-                .status(UserStatus.COMMON)
                 .build();
 
         User user1 = User.builder()
@@ -38,7 +37,6 @@ class UserServiceTest {
                 .pNum("test")
                 .birth("test")
                 .address(new Address("test", "test", "test", "test", "test"))
-                .status(UserStatus.COMMON)
                 .build();
 
         userService.join(user);
