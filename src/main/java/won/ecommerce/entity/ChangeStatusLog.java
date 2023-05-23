@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 import static jakarta.persistence.EnumType.*;
+import static won.ecommerce.entity.LogStat.CANCEL;
+import static won.ecommerce.entity.LogStat.OK;
 
 @Entity
 @Getter
@@ -41,15 +43,18 @@ public class ChangeStatusLog extends BaseTimeEntity{
         this.logStat = logStat;
     }
 
-    public void setAdminId(Long adminId) {
-        this.adminId = adminId;
-    }
-
-    public void setProcessingTime(LocalDateTime processingTime) {
-        this.processingTime = processingTime;
-    }
-
     public void setLogStat(LogStat logStat) {
         this.logStat = logStat;
+    }
+
+    public void changeStatus(User user, String stat, Long adminId) {
+        if (stat.equals("OK")) {
+            user.setStatus(this.getRequestStat());
+            this.setLogStat(OK);
+        } else {
+            this.setLogStat(CANCEL);
+        }
+        this.adminId = adminId;
+        this.processingTime = LocalDateTime.now();
     }
 }

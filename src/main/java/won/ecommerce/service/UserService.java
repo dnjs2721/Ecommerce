@@ -1,14 +1,9 @@
 package won.ecommerce.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.*;
-import won.ecommerce.repository.ChangeStatusLogRepository;
-import won.ecommerce.repository.dto.SearchUsersDto;
-import won.ecommerce.repository.dto.UserSearchCondition;
 import won.ecommerce.service.dto.ChangeUserInfoRequestDto;
 import won.ecommerce.service.dto.JoinRequestDto;
 import won.ecommerce.repository.UserRepository;
@@ -17,17 +12,14 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static io.micrometer.common.util.StringUtils.*;
-import static won.ecommerce.entity.LogStat.WAIT;
-import static won.ecommerce.entity.UserStatus.COMMON;
-import static won.ecommerce.entity.UserStatus.SELLER;
 
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
-    private final ChangeStatusLogRepository changeStatusLogRepository;
     private final DuplicationCheckService duplicationCheckService;
+    private final ChangeStatusLogService changeStatusLogService;
 
     /**
      * 회원가입
@@ -121,30 +113,8 @@ public class UserService {
      */
     @Transactional
     public Long createChangeStatusLog(long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new NoSuchElementException("가입되지 않은 회원입니다."));
-        UserStatus beforeStatus = user.getStatus();
-        UserStatus requestStatus = null;
-        if (beforeStatus.equals(COMMON)) {
-            requestStatus = SELLER;
-        } else if (beforeStatus.equals(SELLER)) {
-            requestStatus = COMMON;
-        }
-
-        Optional<ChangeStatusLog> findLog = changeStatusLogRepository.findByUserIdAndLogStat(user.getId(), WAIT);
-        if (findLog.isPresent()) {
-            throw new IllegalStateException("[" + findLog.get().getId() + "]" + "이미 전송된 요청입니다.");
-        }
-
-        ChangeStatusLog log = ChangeStatusLog.builder()
-                .userId(user.getId())
-                .beforeStat(beforeStatus)
-                .requestStat(requestStatus)
-                .logStat(WAIT)
-                .build();
-
-        changeStatusLogRepository.save(log);
-
-        return log.getId();
+        User user = findUserById(userId);
+        return changeStatusLogService.createChangeStatusLog(user);
     }
 
     /**
@@ -179,6 +149,11 @@ public class UserService {
     // 사용중인 이메일인지 검사 메소드
     public User findUserByEmail(String email) {
         return userRepository.findByEmail(email).orElseThrow(() -> new NoSuchElementException("가입되지 않은 이메일 입니다."));
+    }
+
+    // 가입된 회원 검증 메서드
+    public User findUserById(Long id) {
+        return userRepository.findById(id).orElseThrow(() -> new NoSuchElementException("가입되지 않은 회원입니다."));
     }
 
     // user 생성 - status 제외

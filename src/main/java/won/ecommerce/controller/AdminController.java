@@ -75,8 +75,10 @@ public class AdminController {
         try {
             Page<SearchStatusLogDto> searchLogs = adminService.searchLogs(id, condition, pageable);
             return ResponseEntity.ok().body(searchLogs);
-        } catch (IllegalAccessException e) {
-            return createResponseEntity(e, NOT_ACCEPTABLE); // 권환 없음 예외
+        } catch (IllegalAccessException e1) {
+            return createResponseEntity(e1, NOT_ACCEPTABLE); // 권환 없음 예외
+        } catch (NoSuchElementException e2) {
+            return createResponseEntity(e2, NOT_FOUND);
         }
     }
 

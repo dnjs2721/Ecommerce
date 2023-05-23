@@ -6,13 +6,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Item {
+public class Item extends BaseTimeEntity{
     @Id
     @GeneratedValue
     private Long id;
@@ -33,7 +30,7 @@ public class Item {
         this.stockQuantity = stockQuantity;
     }
 
-    public void addCategory(Category category) {
+    public void setCategory(Category category) {
         this.category = category;
         category.getItems().add(this);
     }

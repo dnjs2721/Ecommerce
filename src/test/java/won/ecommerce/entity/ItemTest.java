@@ -9,8 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 @SpringBootTest
 @Transactional
 @Rollback(value = false)
@@ -39,8 +37,8 @@ class ItemTest {
 
         Category mechanicalKeyboard = em.find(Category.class, 3L);// 카테고리 기계식 키보드
         Category lowNoiseKeyboard = em.find(Category.class, 2L);
-        keyChronK2.addCategory(mechanicalKeyboard);
-        keyChronK10.addCategory(lowNoiseKeyboard);
+        keyChronK2.setCategory(mechanicalKeyboard);
+        keyChronK10.setCategory(lowNoiseKeyboard);
         em.persist(keyChronK2);
         em.persist(keyChronK10);
         System.out.println("--------------------------------");
