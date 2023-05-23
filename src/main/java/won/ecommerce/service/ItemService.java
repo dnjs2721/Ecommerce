@@ -18,10 +18,10 @@ public class ItemService {
     private final CategoryService categoryService;
 
     @Transactional
-    public Long createItem(Long sellerId, ItemCreateRequestDto request) {
-        User seller = userService.findUserById(sellerId);
-        if (seller.getStatus().equals(UserStatus.SELLER)) {
-            throw new IllegalStateException("판매자가 아닙니다. 먼저 판매자 신청을 해주세요.");
+    public Item createItem(Long sellerId, ItemCreateRequestDto request) throws IllegalAccessException {
+        User seller = userService.findUserById(sellerId); // NoSuchElementException 가입되지 않은 회원 에외
+        if (!seller.getStatus().equals(UserStatus.SELLER)) {
+            throw new IllegalAccessException("판매자가 아닙니다. 먼저 판매자 신청을 해주세요.");
         }
         Item sellItem = Item.builder()
                 .name(request.getName())
@@ -29,11 +29,12 @@ public class ItemService {
                 .stockQuantity(request.getStockQuantity())
                 .build();
 
-        Category category = categoryService.findCategoryById(request.getCategoryId());
+        Category category = categoryService.findCategoryById(request.getCategoryId()); // NoSuchElementException 등록되지 않은 카테고리
         sellItem.setCategory(category);
 
         sellItem.setSeller(seller);
 
-        return sellItem.getId();
+        itemRepository.save(sellItem);
+        return sellItem;
     }
 }

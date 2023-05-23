@@ -2,8 +2,6 @@ package won.ecommerce.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,8 +9,6 @@ import org.springframework.web.bind.annotation.*;
 import won.ecommerce.controller.dto.userDto.*;
 import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
-import won.ecommerce.repository.dto.SearchUsersDto;
-import won.ecommerce.repository.dto.UserSearchCondition;
 import won.ecommerce.service.UserService;
 import won.ecommerce.service.dto.JoinRequestDto;
 import won.ecommerce.service.dto.ChangeUserInfoRequestDto;
