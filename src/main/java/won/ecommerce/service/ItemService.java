@@ -10,6 +10,8 @@ import won.ecommerce.entity.UserStatus;
 import won.ecommerce.repository.ItemRepository;
 import won.ecommerce.service.dto.ItemCreateRequestDto;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class ItemService {
@@ -29,6 +31,8 @@ public class ItemService {
                 .stockQuantity(request.getStockQuantity())
                 .build();
 
+        duplicationItemCheck(seller, request.getName()); // IllegalStateException 중복 아이템 예외
+
         Category category = categoryService.findCategoryById(request.getCategoryId()); // NoSuchElementException 등록되지 않은 카테고리
         sellItem.setCategory(category);
 
@@ -36,5 +40,12 @@ public class ItemService {
 
         itemRepository.save(sellItem);
         return sellItem;
+    }
+
+    public void duplicationItemCheck(User seller, String itemName) {
+        Optional<Item> bySellerAndName = itemRepository.findBySellerAndName(seller, itemName);
+        if (bySellerAndName.isPresent()) {
+            throw new IllegalStateException("이미 판매자가 판매중인 상품입니다.");
+        }
     }
 }

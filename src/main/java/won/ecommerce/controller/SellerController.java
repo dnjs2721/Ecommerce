@@ -12,8 +12,7 @@ import won.ecommerce.service.dto.ItemCreateRequestDto;
 
 import java.util.NoSuchElementException;
 
-import static org.springframework.http.HttpStatus.NOT_ACCEPTABLE;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,6 +29,8 @@ public class SellerController {
             return createResponseEntity(e1, NOT_FOUND);
         } catch (IllegalAccessException e2) {
             return createResponseEntity(e2, NOT_ACCEPTABLE);
+        } catch (IllegalStateException e3) {
+            return createResponseEntity(e3, CONFLICT);
         }
     }
 
