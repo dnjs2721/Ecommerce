@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.ChangeStatusLog;
 import won.ecommerce.entity.LogStat;
 import won.ecommerce.entity.User;
@@ -36,7 +35,7 @@ public class ChangeStatusLogService {
         } else if (beforeStatus.equals(SELLER)) {
             requestStatus = COMMON;
         }
-        findLogByUserIdAndLogStat(user.getId(), WAIT);
+        checkDuplicateRequest(user.getId(), WAIT);
 
         ChangeStatusLog log = ChangeStatusLog.builder()
                 .userId(user.getId())
@@ -71,7 +70,7 @@ public class ChangeStatusLogService {
     /**
      * 변경 요청 중복 검사
      */
-    public void findLogByUserIdAndLogStat(Long userId, LogStat stat) {
+    public void checkDuplicateRequest(Long userId, LogStat stat) {
         Optional<ChangeStatusLog> findLog = changeStatusLogRepository.findByUserIdAndLogStat(userId, stat);
         if (findLog.isPresent()) {
             throw new IllegalStateException("[" + findLog.get().getId() + "]" + "이미 전송된 요청입니다.");

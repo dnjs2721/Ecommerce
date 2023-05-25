@@ -89,7 +89,7 @@ public class AdminController {
     @PostMapping("/changeStatus/{logId}")
     public ResponseEntity<String> changeStatus(@PathVariable("logId") Long logId, @RequestBody @Valid ChangeStatusRequestDto request) {
         try {
-            adminService.changeStatus(logId, request.getAdminId(), request.getStat());
+            adminService.changeStatus(logId, request.getAdminId(), request.getStat(), request.getCancelReason());
             return ResponseEntity.ok().body("요청이 성공적으로 처리되었습니다.");
         } catch (NoSuchElementException e1) {
             return createResponseEntity(e1, NOT_FOUND); // 존재하지 않는 요청, 관리자, 회원 에외

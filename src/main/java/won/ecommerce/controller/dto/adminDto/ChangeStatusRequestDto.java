@@ -11,4 +11,6 @@ public class ChangeStatusRequestDto {
 
     @NotBlank(message = "응답(필수)")
     String stat;
+
+    String cancelReason;
 }

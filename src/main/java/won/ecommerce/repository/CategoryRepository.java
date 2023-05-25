@@ -1,4 +1,4 @@
-package won.ecommerce.repository.dto;
+package won.ecommerce.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import won.ecommerce.entity.Category;

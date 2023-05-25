@@ -3,7 +3,7 @@ package won.ecommerce.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import won.ecommerce.entity.Category;
-import won.ecommerce.repository.dto.CategoryRepository;
+import won.ecommerce.repository.CategoryRepository;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;

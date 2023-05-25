@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.ChangeStatusLog;
 import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
-import won.ecommerce.repository.ChangeStatusLogRepository;
 import won.ecommerce.repository.UserRepository;
 import won.ecommerce.repository.dto.SearchStatusLogDto;
 import won.ecommerce.repository.dto.SearchUsersDto;
@@ -44,7 +43,7 @@ public class AdminService {
      * COMMON-SELLER, SELLER-COMMON 변경
      */
     @Transactional
-    public void changeStatus(Long logId, Long adminId, String stat) throws IllegalAccessException {
+    public void changeStatus(Long logId, Long adminId, String stat, String reason) throws IllegalAccessException {
         ChangeStatusLog findLog = changeStatusLogService.checkChangeStatusLog(logId);
         findUserByIdAndCheckAdmin(adminId);
 
@@ -52,7 +51,7 @@ public class AdminService {
         if (findUser.isEmpty()) {
             throw new NoSuchElementException("존재하지 않는 회원의 요청입니다.");
         }
-        findLog.changeStatus(findUser.get(), stat, adminId);
+        findLog.changeStatus(findUser.get(), stat, adminId, reason);
     }
 
     // 관리자 존재 유무, 권한 확인

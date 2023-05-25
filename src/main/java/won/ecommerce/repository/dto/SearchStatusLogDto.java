@@ -21,9 +21,10 @@ public class SearchStatusLogDto {
     private LogStat logStat;
     private Long adminId;
     private LocalDateTime processingTime;
+    private String cancelReason;
 
     @QueryProjection
-    public SearchStatusLogDto(Long logId, Long userId, LocalDateTime createdDate, LocalDateTime lastModifiedDate, UserStatus beforeStat, UserStatus requestStat, LogStat logStat, Long adminId, LocalDateTime processingTime) {
+    public SearchStatusLogDto(Long logId, Long userId, LocalDateTime createdDate, LocalDateTime lastModifiedDate, UserStatus beforeStat, UserStatus requestStat, LogStat logStat, Long adminId, LocalDateTime processingTime, String cancelReason) {
         this.logId = logId;
         this.userId = userId;
         this.createdDate = createdDate;
@@ -33,5 +34,6 @@ public class SearchStatusLogDto {
         this.logStat = logStat;
         this.adminId = adminId;
         this.processingTime = processingTime;
+        this.cancelReason = cancelReason;
     }
 }

@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 import static jakarta.persistence.EnumType.*;
 import static won.ecommerce.entity.LogStat.CANCEL;
@@ -19,40 +20,33 @@ public class ChangeStatusLog extends BaseTimeEntity{
     @Id
     @GeneratedValue
     private Long id;
-
     private Long userId;
-
     @Enumerated(STRING)
     private UserStatus beforeStat;
     @Enumerated(STRING)
     private UserStatus requestStat;
-
-    private Long adminId;
-
     @Enumerated(STRING)
     private LogStat logStat;
-
+    private Long adminId;
     private LocalDateTime processingTime;
 
+    private String cancelReason;
+
     @Builder
-    public ChangeStatusLog(Long id, Long userId, UserStatus beforeStat, UserStatus requestStat, LogStat logStat) {
-        this.id = id;
+    public ChangeStatusLog(Long userId, UserStatus beforeStat, UserStatus requestStat, LogStat logStat) {
         this.userId = userId;
         this.beforeStat = beforeStat;
         this.requestStat = requestStat;
         this.logStat = logStat;
     }
 
-    public void setLogStat(LogStat logStat) {
-        this.logStat = logStat;
-    }
-
-    public void changeStatus(User user, String stat, Long adminId) {
+    public void changeStatus(User user, String stat, Long adminId, String cancelReason) {
         if (stat.equals("OK")) {
             user.setStatus(this.getRequestStat());
-            this.setLogStat(OK);
+            this.logStat = OK;
         } else {
-            this.setLogStat(CANCEL);
+            this.logStat = CANCEL;
+            this.cancelReason = Objects.requireNonNullElse(cancelReason, "취소");
         }
         this.adminId = adminId;
         this.processingTime = LocalDateTime.now();

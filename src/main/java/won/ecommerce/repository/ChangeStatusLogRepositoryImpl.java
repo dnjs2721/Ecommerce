@@ -36,7 +36,8 @@ public class ChangeStatusLogRepositoryImpl implements ChangeStatusLogRepositoryC
                         changeStatusLog.requestStat,
                         changeStatusLog.logStat,
                         changeStatusLog.adminId,
-                        changeStatusLog.processingTime
+                        changeStatusLog.processingTime,
+                        changeStatusLog.cancelReason
                 ))
                 .from(changeStatusLog)
                 .where(userIdEq(condition.getUserId()),

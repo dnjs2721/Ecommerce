@@ -6,7 +6,7 @@ import won.ecommerce.entity.User;
 
 import java.util.Optional;
 
-public interface ItemRepository extends JpaRepository<Item, Long> {
+public interface ItemRepository extends JpaRepository<Item, Long>, ItemRepositoryCustom {
     Optional<Item> findBySellerAndName(User seller, String itemName);
 
 }
