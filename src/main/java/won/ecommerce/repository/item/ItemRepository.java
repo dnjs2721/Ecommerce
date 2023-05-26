@@ -1,4 +1,4 @@
-package won.ecommerce.repository;
+package won.ecommerce.repository.item;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import won.ecommerce.entity.Item;

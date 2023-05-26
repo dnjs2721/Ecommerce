@@ -39,4 +39,18 @@ public class Item extends BaseTimeEntity{
         this.seller = user;
         user.getSellItems().add(this);
     }
+
+    public void changePrice(int price) {
+        this.price = price;
+    }
+
+    public void changeStockQuantity(int stockQuantity) {
+        this.stockQuantity = stockQuantity;
+    }
+
+    public void changeCategory(Category category) {
+        this.category.getItems().remove(this);
+        this.category = category;
+        category.getItems().add(this);
+    }
 }

@@ -1,4 +1,4 @@
-package won.ecommerce.repository;
+package won.ecommerce.repository.changeStatusLog;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -8,9 +8,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import won.ecommerce.entity.LogStat;
-import won.ecommerce.repository.dto.QSearchStatusLogDto;
-import won.ecommerce.repository.dto.SearchStatusLogDto;
-import won.ecommerce.repository.dto.StatusLogSearchCondition;
+import won.ecommerce.repository.dto.search.statusLog.QSearchStatusLogDto;
+import won.ecommerce.repository.dto.search.statusLog.SearchStatusLogDto;
+import won.ecommerce.repository.dto.search.statusLog.StatusLogSearchCondition;
 
 import java.time.LocalDateTime;
 import java.util.List;

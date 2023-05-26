@@ -1,6 +1,5 @@
-package won.ecommerce.repository;
+package won.ecommerce.repository.item;
 
-import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -8,14 +7,9 @@ import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
-import org.springframework.util.StringUtils;
-import won.ecommerce.entity.Category;
-import won.ecommerce.entity.QCategory;
-import won.ecommerce.entity.QItem;
-import won.ecommerce.entity.QUser;
-import won.ecommerce.repository.dto.ItemSearchCondition;
-import won.ecommerce.repository.dto.QSearchItemDto;
-import won.ecommerce.repository.dto.SearchItemDto;
+import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
+import won.ecommerce.repository.dto.search.item.QSearchItemDto;
+import won.ecommerce.repository.dto.search.item.SearchItemDto;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,7 +17,6 @@ import java.util.List;
 import static org.springframework.util.StringUtils.*;
 import static won.ecommerce.entity.QCategory.*;
 import static won.ecommerce.entity.QItem.*;
-import static won.ecommerce.entity.QUser.*;
 
 public class ItemRepositoryCustomImpl implements ItemRepositoryCustom{
     private final JPAQueryFactory queryFactory;

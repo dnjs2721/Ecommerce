@@ -6,10 +6,9 @@ import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.*;
 import won.ecommerce.service.dto.ChangeUserInfoRequestDto;
 import won.ecommerce.service.dto.JoinRequestDto;
-import won.ecommerce.repository.UserRepository;
+import won.ecommerce.repository.user.UserRepository;
 
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 import static io.micrometer.common.util.StringUtils.*;
 
@@ -100,9 +99,7 @@ public class UserService {
                 String newNickname = changeUserInfoNickname(request.getNickname(), user.getNickname()); // IllegalStateException,닉네임 사용가능 유무 확인
                 user.changeNickname(newNickname);
             }
-            if (address != null) {
-                user.changeAddress(address);
-            }
+            if (address != null) user.changeAddress(address);
         } else {
             throw new IllegalAccessException("잘못된 패스워드 입니다.");
         }

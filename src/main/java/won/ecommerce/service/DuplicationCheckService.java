@@ -3,7 +3,7 @@ package won.ecommerce.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import won.ecommerce.entity.User;
-import won.ecommerce.repository.UserRepository;
+import won.ecommerce.repository.user.UserRepository;
 
 import java.util.Optional;
 

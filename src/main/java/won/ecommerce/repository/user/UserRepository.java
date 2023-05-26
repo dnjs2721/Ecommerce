@@ -1,4 +1,4 @@
-package won.ecommerce.repository;
+package won.ecommerce.repository.user;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import won.ecommerce.entity.User;

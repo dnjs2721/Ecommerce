@@ -8,11 +8,11 @@ import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.ChangeStatusLog;
 import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
-import won.ecommerce.repository.UserRepository;
-import won.ecommerce.repository.dto.SearchStatusLogDto;
-import won.ecommerce.repository.dto.SearchUsersDto;
-import won.ecommerce.repository.dto.StatusLogSearchCondition;
-import won.ecommerce.repository.dto.UserSearchCondition;
+import won.ecommerce.repository.user.UserRepository;
+import won.ecommerce.repository.dto.search.statusLog.SearchStatusLogDto;
+import won.ecommerce.repository.dto.search.user.SearchUsersDto;
+import won.ecommerce.repository.dto.search.statusLog.StatusLogSearchCondition;
+import won.ecommerce.repository.dto.search.user.UserSearchCondition;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;

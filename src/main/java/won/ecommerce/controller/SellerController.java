@@ -9,9 +9,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import won.ecommerce.entity.Item;
-import won.ecommerce.repository.dto.ItemSearchCondition;
-import won.ecommerce.repository.dto.SearchItemDto;
+import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
+import won.ecommerce.repository.dto.search.item.SearchItemDto;
 import won.ecommerce.service.SellerService;
+import won.ecommerce.service.dto.ChangeItemInfoRequestDto;
 import won.ecommerce.service.dto.ItemCreateRequestDto;
 
 import java.util.NoSuchElementException;
@@ -24,6 +25,9 @@ import static org.springframework.http.HttpStatus.*;
 public class SellerController {
     private final SellerService sellerService;
 
+    /**
+     * 상품 등록
+     */
     @PostMapping("/addItem/{sellerId}")
     public ResponseEntity<String> addItem(@RequestBody @Valid ItemCreateRequestDto request, @PathVariable("sellerId") Long sellerId) {
         try {
@@ -38,10 +42,34 @@ public class SellerController {
         }
     }
 
+    /**
+     * 판매자 판매 상품 조회
+     */
     @GetMapping("/itemSearch/{sellerId}")
     public ResponseEntity<?> searchItems(@PathVariable("sellerId") Long sellerId, ItemSearchCondition condition, Pageable pageable) {
-        Page<SearchItemDto> searchItems = sellerService.searchItems(sellerId, condition, pageable);
-        return ResponseEntity.ok().body(searchItems);
+        try {
+            Page<SearchItemDto> searchItems = sellerService.searchItems(sellerId, condition, pageable);
+            return ResponseEntity.ok().body(searchItems);
+        } catch (IllegalAccessException e1) {
+            return createResponseEntity(e1, NOT_ACCEPTABLE);
+        } catch (NoSuchElementException e2) {
+            return createResponseEntity(e2, NOT_FOUND);
+        }
+    }
+
+    /**
+     * 상품 정보 변경
+     */
+    @PostMapping("/changeItemInfo/{sellerId}")
+    public ResponseEntity<String> changeItemInfo(@PathVariable("sellerId") Long sellerId, @RequestBody @Valid ChangeItemInfoRequestDto request) {
+        try {
+            Item item = sellerService.changeItemInfo(sellerId, request);
+            return ResponseEntity.ok().body(item.getName() + "의 정보가 변경되었습니다.");
+        } catch (IllegalAccessException e1) {
+            return createResponseEntity(e1, NOT_ACCEPTABLE);
+        } catch (NoSuchElementException e2) {
+            return createResponseEntity(e2, NOT_FOUND);
+        }
     }
 
     public ResponseEntity<String> createResponseEntity(Exception e, HttpStatus httpStatus) {

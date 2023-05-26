@@ -8,9 +8,9 @@ import won.ecommerce.entity.ChangeStatusLog;
 import won.ecommerce.entity.LogStat;
 import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
-import won.ecommerce.repository.ChangeStatusLogRepository;
-import won.ecommerce.repository.dto.SearchStatusLogDto;
-import won.ecommerce.repository.dto.StatusLogSearchCondition;
+import won.ecommerce.repository.changeStatusLog.ChangeStatusLogRepository;
+import won.ecommerce.repository.dto.search.statusLog.SearchStatusLogDto;
+import won.ecommerce.repository.dto.search.statusLog.StatusLogSearchCondition;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;

@@ -1,4 +1,4 @@
-package won.ecommerce.repository.dto;
+package won.ecommerce.repository.dto.search.user;
 
 import lombok.Data;
 import won.ecommerce.entity.UserStatus;

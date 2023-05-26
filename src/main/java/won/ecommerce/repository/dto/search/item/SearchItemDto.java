@@ -1,4 +1,4 @@
-package won.ecommerce.repository.dto;
+package won.ecommerce.repository.dto.search.item;
 
 import com.querydsl.core.annotations.QueryProjection;
 import lombok.Data;

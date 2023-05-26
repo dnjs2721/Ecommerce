@@ -1,4 +1,4 @@
-package won.ecommerce.repository.dto;
+package won.ecommerce.repository.dto.search.user;
 
 import com.querydsl.core.annotations.QueryProjection;
 import jakarta.persistence.*;
