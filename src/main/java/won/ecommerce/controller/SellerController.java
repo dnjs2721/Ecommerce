@@ -8,6 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import won.ecommerce.controller.dto.itemDto.DeleteItemRequestDto;
 import won.ecommerce.entity.Item;
 import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
 import won.ecommerce.repository.dto.search.item.SearchItemDto;
@@ -65,6 +66,18 @@ public class SellerController {
         try {
             Item item = sellerService.changeItemInfo(sellerId, request);
             return ResponseEntity.ok().body(item.getName() + "의 정보가 변경되었습니다.");
+        } catch (IllegalAccessException e1) {
+            return createResponseEntity(e1, NOT_ACCEPTABLE);
+        } catch (NoSuchElementException e2) {
+            return createResponseEntity(e2, NOT_FOUND);
+        }
+    }
+
+    @PostMapping("/deleteItem/{sellerId}")
+    public ResponseEntity<String> deleteItem(@PathVariable("sellerId") Long sellerId, @RequestBody @Valid DeleteItemRequestDto request) {
+        try {
+            String itemName = sellerService.deleteItem(sellerId, request.getItemId());
+            return ResponseEntity.ok().body(itemName + " 이(가) 삭제되었습니다.");
         } catch (IllegalAccessException e1) {
             return createResponseEntity(e1, NOT_ACCEPTABLE);
         } catch (NoSuchElementException e2) {

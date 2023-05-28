@@ -1,14 +1,9 @@
 package won.ecommerce.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import retrofit2.http.PUT;
 import won.ecommerce.entity.*;
-import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
-import won.ecommerce.repository.dto.search.item.SearchItemDto;
 import won.ecommerce.repository.item.ItemRepository;
 import won.ecommerce.service.dto.ChangeItemInfoRequestDto;
 import won.ecommerce.service.dto.ItemCreateRequestDto;
@@ -35,7 +30,7 @@ public class ItemService {
 
         duplicationItemCheck(seller, request.getName()); // IllegalStateException 중복 아이템 예외
 
-        Category category = categoryService.findCategoryById(request.getCategoryId()); // NoSuchElementException 등록되지 않은 카테고리
+        Category category = categoryService.checkCategory(request.getCategoryId()); // NoSuchElementException 등록되지 않은 카테고리
         sellItem.setCategory(category);
         sellItem.setSeller(seller);
 
@@ -48,11 +43,7 @@ public class ItemService {
      * 상풍 정보 변경
      */
     public Item changeItemInfo(Long sellerId, ChangeItemInfoRequestDto request) throws IllegalAccessException {
-        Optional<Item> findItem = itemRepository.findById(request.getItemId());
-        if (findItem.isEmpty()) {
-            throw new NoSuchElementException("존재하지 않는 상품입니다.");
-        }
-        Item item = findItem.get();
+        Item item = checkItem(request.getItemId());
         if (!item.getSeller().getId().equals(sellerId)) {
             throw new IllegalAccessException("판매자의 상품이 아닙니다.");
         }
@@ -62,11 +53,32 @@ public class ItemService {
         if (request.getChangePrice() != null) item.changePrice(request.getChangePrice());
         if (request.getChangeStockQuantity() != null) item.changeStockQuantity(request.getChangeStockQuantity());
         if (request.getChangeCategoryId() != null){
-            Category category = categoryService.findCategoryById(request.getChangeCategoryId()); // NoSuchElementException 없는 카테고리 예외
+            Category category = categoryService.checkCategory(request.getChangeCategoryId()); // NoSuchElementException 없는 카테고리 예외
             item.changeCategory(category);
         }
-
         return item;
+    }
+
+    /**
+     * 상품 삭제
+     */
+    public String deleteItem(Long sellerId, Long itemId) throws IllegalAccessException {
+        Item item = checkItem(itemId);
+        if (!item.getSeller().getId().equals(sellerId)) {
+            throw new IllegalAccessException("판매자의 상품이 아닙니다.");
+        }
+        String name = item.getName();
+        itemRepository.delete(item);
+        return name;
+    }
+
+    // 아이템 존재 확인
+    public Item checkItem(Long itemId) {
+        Optional<Item> findItem = itemRepository.findById(itemId);
+        if (findItem.isEmpty()) {
+            throw new NoSuchElementException("존재하지 않는 상품입니다.");
+        }
+        return findItem.get();
     }
 
     // 중복 상품 조회

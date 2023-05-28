@@ -49,6 +49,15 @@ public class SellerService {
         return itemService.changeItemInfo(sellerId, request); // NoSuchElementException 존재하지 않는 상품. IllegalAccessException 판매자의 상품이 아닐 떄 예외`
     }
 
+    /**
+     * 상품 삭제
+     */
+    @Transactional
+    public String deleteItem(Long sellerId, Long itemId) throws IllegalAccessException {
+        User seller = checkSeller(sellerId);
+        return itemService.deleteItem(sellerId, itemId);
+    }
+
 
     // 판매자 확인
     public User checkSeller(Long sellerId) throws IllegalAccessException {
