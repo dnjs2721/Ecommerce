@@ -1,9 +1,15 @@
 package won.ecommerce.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.*;
+import won.ecommerce.repository.dto.search.OrderCondition;
+import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
+import won.ecommerce.repository.dto.search.item.ItemSearchFromCommonCondition;
+import won.ecommerce.repository.dto.search.item.SearchItemDto;
+import won.ecommerce.repository.dto.search.item.SearchItemFromCommonDto;
 import won.ecommerce.repository.item.ItemRepository;
 import won.ecommerce.service.dto.ChangeItemInfoRequestDto;
 import won.ecommerce.service.dto.ItemCreateRequestDto;
@@ -15,7 +21,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ItemService {
     private final ItemRepository itemRepository;
-    private final UserService userService;
     private final CategoryService categoryService;
 
     /**
@@ -37,6 +42,20 @@ public class ItemService {
         itemRepository.save(sellItem);
 
         return sellItem;
+    }
+
+    /**
+     * 상품 조회 - 판매자 본인것만
+     */
+    public Page<SearchItemDto> searchItems(Long sellerId, ItemSearchCondition condition, Pageable pageable){
+        return itemRepository.searchItemPage(sellerId, condition, pageable);
+    }
+
+    /**
+     * 상품 조회 - 일반 사용자
+     */
+    public Page<SearchItemFromCommonDto> searchItemFromCommon(ItemSearchFromCommonCondition condition, OrderCondition orderCondition, Pageable pageable) {
+        return itemRepository.searchItemPageFromCommon(condition, orderCondition,pageable);
     }
 
     /**

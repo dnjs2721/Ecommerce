@@ -2,6 +2,8 @@ package won.ecommerce.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +11,9 @@ import org.springframework.web.bind.annotation.*;
 import won.ecommerce.controller.dto.userDto.*;
 import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
+import won.ecommerce.repository.dto.search.OrderCondition;
+import won.ecommerce.repository.dto.search.item.ItemSearchFromCommonCondition;
+import won.ecommerce.repository.dto.search.item.SearchItemFromCommonDto;
 import won.ecommerce.service.UserService;
 import won.ecommerce.service.dto.JoinRequestDto;
 import won.ecommerce.service.dto.ChangeUserInfoRequestDto;
@@ -129,6 +134,15 @@ public class UserController {
         } catch (IllegalStateException e2) {
             return createResponseEntity(e2, CONFLICT); // 이미 등록된 요청 예외
         }
+    }
+
+    /**
+     * 상품 조회
+     */
+    @GetMapping("/searchItem")
+    public ResponseEntity<?> searchItem(ItemSearchFromCommonCondition condition, OrderCondition orderCondition, Pageable pageable) {
+        Page<SearchItemFromCommonDto> findItems = userService.searchItems(condition, orderCondition, pageable);
+        return ResponseEntity.ok().body(findItems);
     }
 
     public ResponseEntity<String> createResponseEntity(Exception e, HttpStatus httpStatus) {

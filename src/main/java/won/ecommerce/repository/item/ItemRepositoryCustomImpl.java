@@ -1,5 +1,7 @@
 package won.ecommerce.repository.item;
 
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -7,16 +9,17 @@ import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
-import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
-import won.ecommerce.repository.dto.search.item.QSearchItemDto;
-import won.ecommerce.repository.dto.search.item.SearchItemDto;
+import won.ecommerce.repository.dto.search.OrderCondition;
+import won.ecommerce.repository.dto.search.item.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.util.StringUtils.*;
 import static won.ecommerce.entity.QCategory.*;
 import static won.ecommerce.entity.QItem.*;
+import static won.ecommerce.entity.QUser.*;
 
 public class ItemRepositoryCustomImpl implements ItemRepositoryCustom{
     private final JPAQueryFactory queryFactory;
@@ -70,6 +73,51 @@ public class ItemRepositoryCustomImpl implements ItemRepositoryCustom{
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
 
+    @Override
+    public Page<SearchItemFromCommonDto> searchItemPageFromCommon(ItemSearchFromCommonCondition condition, OrderCondition orderCondition, Pageable pageable) {
+        List<SearchItemFromCommonDto> content = queryFactory
+                .select(new QSearchItemFromCommonDto(
+                        new QSellerInfoDto(
+                                user.nickname,
+                                user.email,
+                                user.pNum),
+                        category.name,
+                        item.name,
+                        item.price
+                ))
+                .from(item)
+                .leftJoin(item.seller, user)
+                .leftJoin(item.category, category)
+                .where(item.stockQuantity.goe(1),
+                        itemNameEq(condition.getItemName()),
+                        sellerNickNameEq(condition.getSellerNickName()),
+                        priceGoe(condition.getPriceGoe()),
+                        priceLoe(condition.getPriceLoe()),
+                        categoryEQ(condition.getCategory()))
+                .orderBy(createOrderSpecifier(orderCondition).toArray(OrderSpecifier[]::new))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        JPAQuery<Long> countQuery = queryFactory
+                .select(item.count())
+                .from(item)
+                .leftJoin(item.seller, user)
+                .leftJoin(item.category, category)
+                .where(item.stockQuantity.goe(1),
+                        itemNameEq(condition.getItemName()),
+                        sellerNickNameEq(condition.getSellerNickName()),
+                        priceGoe(condition.getPriceGoe()),
+                        priceLoe(condition.getPriceLoe()),
+                        categoryEQ(condition.getCategory()));
+
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
+    private BooleanExpression sellerNickNameEq(String sellerNickName) {
+        return hasText(sellerNickName) ? item.seller.nickname.like("%" + sellerNickName + "%") : null;
+    }
+
     private BooleanExpression createTimeLoe(LocalDateTime timeLoe) {
         return timeLoe != null ? item.createdDate.loe(timeLoe) : null;
     }
@@ -99,6 +147,32 @@ public class ItemRepositoryCustomImpl implements ItemRepositoryCustom{
     }
 
     private BooleanExpression itemNameEq(String itemName) {
-        return hasText(itemName) ? item.name.eq(itemName) : null;
+        return hasText(itemName) ? item.name.like("%"+itemName+"%") : null;
+    }
+
+    public List<OrderSpecifier<?>> createOrderSpecifier(OrderCondition orderCondition) {
+        List<OrderSpecifier<?>> orderSpecifiers = new ArrayList<>();
+
+        checkOrderCondition(orderSpecifiers, orderCondition.getOrderName1(), orderCondition.getOrderDirect1());
+        checkOrderCondition(orderSpecifiers, orderCondition.getOrderName2(), orderCondition.getOrderDirect2());
+        checkOrderCondition(orderSpecifiers, orderCondition.getOrderName3(), orderCondition.getOrderDirect3());
+        return orderSpecifiers;
+    }
+    public void checkOrderCondition(List<OrderSpecifier<?>> orderSpecifiers,String orderName, String orderDirect) {
+        if (hasText(orderName)) {
+            if (orderName.equals("price")) {
+                if (hasText(orderDirect) && orderDirect.equals("ASC")) {
+                    orderSpecifiers.add(new OrderSpecifier<>(Order.ASC, item.price));
+                } else {
+                    orderSpecifiers.add(new OrderSpecifier<>(Order.DESC, item.price));
+                }
+            } else if (orderName.equals("name")) {
+                if (hasText(orderDirect) && orderDirect.equals("ASC")) {
+                    orderSpecifiers.add(new OrderSpecifier<>(Order.ASC, item.name));
+                } else {
+                    orderSpecifiers.add(new OrderSpecifier<>(Order.DESC, item.name));
+                }
+            }
+        }
     }
 }

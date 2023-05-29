@@ -1,9 +1,14 @@
 package won.ecommerce.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.*;
+import won.ecommerce.repository.dto.search.OrderCondition;
+import won.ecommerce.repository.dto.search.item.ItemSearchFromCommonCondition;
+import won.ecommerce.repository.dto.search.item.SearchItemFromCommonDto;
 import won.ecommerce.service.dto.ChangeUserInfoRequestDto;
 import won.ecommerce.service.dto.JoinRequestDto;
 import won.ecommerce.repository.user.UserRepository;
@@ -19,6 +24,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final DuplicationCheckService duplicationCheckService;
     private final ChangeStatusLogService changeStatusLogService;
+    private final ItemService itemService;
 
     /**
      * 회원가입
@@ -141,6 +147,13 @@ public class UserService {
         } else {
             throw new IllegalArgumentException("잘못된 주소형태 입니다.");
         }
+    }
+
+    /**
+     * 상품 조회
+     */
+    public Page<SearchItemFromCommonDto> searchItems(ItemSearchFromCommonCondition condition, OrderCondition orderCondition, Pageable pageable) {
+        return itemService.searchItemFromCommon(condition, orderCondition, pageable);
     }
 
     // 사용중인 이메일인지 검사 메소드

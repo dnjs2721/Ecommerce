@@ -21,7 +21,6 @@ import java.util.Optional;
 public class SellerService {
     private final ItemService itemService;
     private final UserService userService;
-    private final ItemRepository itemRepository;
 
     /**
      * 판매 상품 등록
@@ -33,11 +32,11 @@ public class SellerService {
     }
 
     /**
-     * 판매 상품 확인
+     * 판매자 본인 상품 조회
      */
     public Page<SearchItemDto> searchItems(Long sellerId, ItemSearchCondition condition, Pageable pageable) throws IllegalAccessException {
         User seller = checkSeller(sellerId); // NoSuchElementException 가입되지 않은 회원, 변경 정보없음 에외, IllegalAccessException 판매자 아닐 때 예외
-        return itemRepository.searchItemPage(sellerId, condition, pageable);
+        return itemService.searchItems(sellerId, condition, pageable);
     }
 
     /**
