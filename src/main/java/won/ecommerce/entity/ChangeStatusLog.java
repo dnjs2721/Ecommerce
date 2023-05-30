@@ -10,8 +10,8 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 import static jakarta.persistence.EnumType.*;
-import static won.ecommerce.entity.LogStat.CANCEL;
-import static won.ecommerce.entity.LogStat.OK;
+import static won.ecommerce.entity.LogStatus.CANCEL;
+import static won.ecommerce.entity.LogStatus.OK;
 
 @Entity
 @Getter
@@ -26,14 +26,14 @@ public class ChangeStatusLog extends BaseTimeEntity{
     @Enumerated(STRING)
     private UserStatus requestStat;
     @Enumerated(STRING)
-    private LogStat logStat;
+    private LogStatus logStat;
     private Long adminId;
     private LocalDateTime processingTime;
 
     private String cancelReason;
 
     @Builder
-    public ChangeStatusLog(Long userId, UserStatus beforeStat, UserStatus requestStat, LogStat logStat) {
+    public ChangeStatusLog(Long userId, UserStatus beforeStat, UserStatus requestStat, LogStatus logStat) {
         this.userId = userId;
         this.beforeStat = beforeStat;
         this.requestStat = requestStat;

@@ -1,5 +1,5 @@
 package won.ecommerce.entity;
 
-public enum LogStat {
+public enum LogStatus {
     OK, CANCEL, WAIT
 }

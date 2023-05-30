@@ -115,7 +115,7 @@ public class ItemRepositoryCustomImpl implements ItemRepositoryCustom{
     }
 
     private BooleanExpression sellerNickNameEq(String sellerNickName) {
-        return hasText(sellerNickName) ? item.seller.nickname.like("%" + sellerNickName + "%") : null;
+        return hasText(sellerNickName) ? user.nickname.like("%" + sellerNickName + "%") : null;
     }
 
     private BooleanExpression createTimeLoe(LocalDateTime timeLoe) {

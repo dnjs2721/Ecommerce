@@ -67,6 +67,8 @@ public class InitController {
             redSwitch.addParentCategory(switches);
             brownSwitch.addParentCategory(switches);
             blueSwitch.addParentCategory(switches);
+
+
         }
 
         public Category createCategory(String name) {

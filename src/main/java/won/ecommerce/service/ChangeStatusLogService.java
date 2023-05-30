@@ -5,7 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import won.ecommerce.entity.ChangeStatusLog;
-import won.ecommerce.entity.LogStat;
+import won.ecommerce.entity.LogStatus;
 import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
 import won.ecommerce.repository.changeStatusLog.ChangeStatusLogRepository;
@@ -15,7 +15,7 @@ import won.ecommerce.repository.dto.search.statusLog.StatusLogSearchCondition;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import static won.ecommerce.entity.LogStat.*;
+import static won.ecommerce.entity.LogStatus.*;
 import static won.ecommerce.entity.UserStatus.COMMON;
 import static won.ecommerce.entity.UserStatus.SELLER;
 
@@ -70,7 +70,7 @@ public class ChangeStatusLogService {
     /**
      * 변경 요청 중복 검사
      */
-    public void checkDuplicateRequest(Long userId, LogStat stat) {
+    public void checkDuplicateRequest(Long userId, LogStatus stat) {
         Optional<ChangeStatusLog> findLog = changeStatusLogRepository.findByUserIdAndLogStat(userId, stat);
         if (findLog.isPresent()) {
             throw new IllegalStateException("[" + findLog.get().getId() + "]" + "이미 전송된 요청입니다.");

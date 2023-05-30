@@ -12,14 +12,18 @@ import org.springframework.web.bind.annotation.*;
 import won.ecommerce.controller.dto.adminDto.ChangeStatusRequestDto;
 import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
+import won.ecommerce.repository.dto.search.SubCategoryItemDto;
 import won.ecommerce.repository.dto.search.statusLog.SearchStatusLogDto;
 import won.ecommerce.repository.dto.search.user.SearchUsersDto;
 import won.ecommerce.repository.dto.search.statusLog.StatusLogSearchCondition;
 import won.ecommerce.repository.dto.search.user.UserSearchCondition;
 import won.ecommerce.service.AdminService;
+import won.ecommerce.service.CategoryService;
 import won.ecommerce.service.UserService;
 import won.ecommerce.service.dto.JoinRequestDto;
 
+import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import static org.springframework.http.HttpStatus.*;
@@ -97,6 +101,21 @@ public class AdminController {
             return createResponseEntity(e2, CONFLICT); // 이미 처리된 요청
         } catch (IllegalAccessException e3) {
             return createResponseEntity(e3, NOT_ACCEPTABLE); // 권환 없음 예외
+        }
+    }
+
+    /**
+     * 자식 카테고리 상품 조회
+     */
+    @GetMapping("/checkSubCategoryItem/{adminId}/{parentCategoryId}")
+    public ResponseEntity<?> checkSubCategoryItem(@PathVariable("parentCategoryId") Long parentCategoryId, @PathVariable("adminId") Long adminId) {
+        try {
+            List<SubCategoryItemDto> find = adminService.checkSubCategoryItem(adminId, parentCategoryId);
+            return ResponseEntity.ok().body(find);
+        } catch (NoSuchElementException e1) {
+            return createResponseEntity(e1, NOT_FOUND);
+        } catch (IllegalAccessException e2) {
+            return createResponseEntity(e2, NOT_ACCEPTABLE);
         }
     }
 

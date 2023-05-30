@@ -12,6 +12,7 @@ import won.ecommerce.config.EcommerceConfig;
 import won.ecommerce.util.RedisUtil;
 
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -47,6 +48,11 @@ public class EmailService {
      */
     public void validateCode(String email, String code) throws AuthenticationFailedException {
         redisUtil.validateCode(email, code);
+    }
+
+    public void sendSubCategoryWarningMail(String email, String sellerName, List<String> itemsName) throws MessagingException {
+        String setFrom = ecommerceConfig.getFromEmail();
+        String title = "카테고리 변경으로 인한 경고 메일";
     }
 
     /**

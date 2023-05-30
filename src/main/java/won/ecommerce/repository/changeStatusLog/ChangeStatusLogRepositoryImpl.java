@@ -7,7 +7,7 @@ import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
-import won.ecommerce.entity.LogStat;
+import won.ecommerce.entity.LogStatus;
 import won.ecommerce.repository.dto.search.statusLog.QSearchStatusLogDto;
 import won.ecommerce.repository.dto.search.statusLog.SearchStatusLogDto;
 import won.ecommerce.repository.dto.search.statusLog.StatusLogSearchCondition;
@@ -63,7 +63,7 @@ public class ChangeStatusLogRepositoryImpl implements ChangeStatusLogRepositoryC
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
 
-    private BooleanExpression stateEq(LogStat logStat) {
+    private BooleanExpression stateEq(LogStatus logStat) {
         return logStat != null ? changeStatusLog.logStat.eq(logStat) : null;
     }
 
