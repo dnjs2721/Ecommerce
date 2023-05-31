@@ -7,7 +7,7 @@ build/
 **/src/main/generated/
 **/src/main/resources/application-api.yml
 **/src/main/resources/application-ecommerce.yml
-**/src/main/java/won/ecommerce/InitController.java
+**/src/main/java/won/ecommerce/controller/InitController.java
 
 ### STS ###
 .apt_generated
