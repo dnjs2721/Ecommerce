@@ -1,9 +1,9 @@
 package won.ecommerce.repository.category;
 
-import won.ecommerce.repository.dto.search.SubCategoryItemDto;
+import won.ecommerce.repository.dto.search.categoryItem.CategoryItemDto;
 
 import java.util.List;
 
 public interface CategoryRepositoryCustom {
-    List<SubCategoryItemDto> subCategoryItem(List<Long> subCategoryIds);
+    List<CategoryItemDto> categoryItem(List<Long> subCategoryIds);
 }

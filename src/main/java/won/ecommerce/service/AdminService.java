@@ -1,24 +1,25 @@
 package won.ecommerce.service;
 
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import won.ecommerce.entity.Category;
 import won.ecommerce.entity.ChangeStatusLog;
 import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
-import won.ecommerce.repository.dto.search.SubCategoryItemDto;
+import won.ecommerce.repository.dto.search.categoryItem.CategoryItemDto;
 import won.ecommerce.repository.user.UserRepository;
 import won.ecommerce.repository.dto.search.statusLog.SearchStatusLogDto;
 import won.ecommerce.repository.dto.search.user.SearchUsersDto;
 import won.ecommerce.repository.dto.search.statusLog.StatusLogSearchCondition;
 import won.ecommerce.repository.dto.search.user.UserSearchCondition;
-import won.ecommerce.service.dto.CategoryCreateRequestDto;
+import won.ecommerce.service.dto.category.CategoryCreateRequestDto;
+import won.ecommerce.service.dto.category.CategoryItemMailElementDto;
 
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +27,7 @@ public class AdminService {
     private final UserRepository userRepository;
     private final ChangeStatusLogService changeStatusLogService;
     private final CategoryService categoryService;
+    private final EmailService mailService;
 
     /**
      * 사용자 조회 - 관리자
@@ -63,21 +65,47 @@ public class AdminService {
      */
     @Transactional
     public void createCategory(Long adminId, CategoryCreateRequestDto request) throws IllegalAccessException {
-        checkAdmin(adminId);
-        categoryService.createCategory(request); //NoSuchElementException 부모 카테고리 없음, IllegalStateException 중보된 카테고리 이름
+        checkAdmin(adminId); // IllegalAccessException 권한 없음
+        categoryService.createCategory(request); //NoSuchElementException 부모 카테고리 없음, IllegalStateException 중복된 카테고리 이름
     }
 
     /**
-     * 자식 카테고리 상품 조회
+     * 카테고리 상품 조회
      */
-    public List<SubCategoryItemDto> checkSubCategoryItem(Long adminId, Long parentCategoryId) throws IllegalAccessException {
-        checkAdmin(adminId);
-        return categoryService.checkSubCategoryItem(parentCategoryId);
+    public List<CategoryItemDto> checkCategoryItem(Long adminId, Category category) throws IllegalAccessException {
+        checkAdmin(adminId); // IllegalAccessException 권한 없음
+        return categoryService.checkCategoryItem(category); // NoSuchElementException 자신, 자식 모두 등록된 상품이 없을때
     }
 
     /**
-     * 자식 카테고리 상품의 판매자에게 메일 전송
+     * 카테고리 상품의 판매자에게 메일 전송
      */
+    public List<String> sendMailByCategoryItem(Long adminId, Category category) throws IllegalAccessException, MessagingException {
+        // 관리자 권한 확인과, 자신, 자식에 등록된 상품을 조회한다.
+        // IllegalAccessException 권한 없음, NoSuchElementException 자신, 자식 모두 등록된 상품이 없을때
+        List<CategoryItemDto> findItems = checkCategoryItem(adminId, category);
+
+        // db 에서 가지고 온 데이터를 가공
+        Map<Long, CategoryItemMailElementDto> elementMap = categoryService.categoryItemMailElement(findItems);
+
+        // Key 들(판매자 id)를 통해 반복문 실행
+        Set<Long> sellerIds = elementMap.keySet();
+        // 판매자 이름을 담기위한 List
+        List<String> sellerNames = new ArrayList<>();
+
+        for (Long sellerId : sellerIds) {
+            CategoryItemMailElementDto element = elementMap.get(sellerId); // 판매자 id 를 통해 해당하는 Value(Dto) 를 가지고 온다.
+            String sellerName = element.getSellerName();
+            String sellerEmail = element.getSellerEmail();
+            // 판매자에게 경고 메일 전송
+            mailService.sendCategoryWarningMail(sellerEmail, category.getName(), sellerName, element.getItemsName());
+            // 메일 발송한 사용자 이름 저장
+            sellerNames.add(sellerName);
+        }
+
+        // 사용자 이름 반환
+        return sellerNames;
+    }
 
     // 관리자 존재 유무, 권한 확인
     public void checkAdmin(Long id) throws IllegalAccessException {

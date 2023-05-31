@@ -2,8 +2,8 @@ package won.ecommerce.repository.category;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
-import won.ecommerce.repository.dto.search.QSubCategoryItemDto;
-import won.ecommerce.repository.dto.search.SubCategoryItemDto;
+import won.ecommerce.repository.dto.search.categoryItem.CategoryItemDto;
+import won.ecommerce.repository.dto.search.categoryItem.QCategoryItemDto;
 
 import java.util.List;
 
@@ -20,10 +20,12 @@ public class CategoryRepositoryCustomImpl implements CategoryRepositoryCustom{
     }
 
     @Override
-    public List<SubCategoryItemDto> subCategoryItem(List<Long> subCategoryIds) {
+    public List<CategoryItemDto> categoryItem(List<Long> subCategoryIds) {
         return queryFactory
-                .select(new QSubCategoryItemDto(
+                .select(new QCategoryItemDto(
                         user.id,
+                        user.name,
+                        user.email,
                         category.name,
                         item.id,
                         item.name

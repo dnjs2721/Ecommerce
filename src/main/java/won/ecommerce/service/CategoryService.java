@@ -3,11 +3,12 @@ package won.ecommerce.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.Category;
-import won.ecommerce.entity.Item;
 import won.ecommerce.repository.category.CategoryRepository;
-import won.ecommerce.repository.dto.search.SubCategoryItemDto;
-import won.ecommerce.service.dto.CategoryCreateRequestDto;
+import won.ecommerce.repository.dto.search.categoryItem.CategoryItemDto;
+import won.ecommerce.service.dto.category.CategoryCreateRequestDto;
+import won.ecommerce.service.dto.category.CategoryItemMailElementDto;
 
 import java.util.*;
 
@@ -21,49 +22,60 @@ public class CategoryService {
      * 카테고리 생성
      */
     public void createCategory(CategoryCreateRequestDto request) {
-        Category category = checkDuplicateCategory(request.getName());
-        Category parentCategory = checkCategory(request.getParentId());
+        checkDuplicateCategory(request.getName()); // IllegalStateException 중복된 카테고리 이름
+        Category parentCategory = checkCategory(request.getParentId()); // NoSuchElementException 부모 카테고리 없음
+        Category category = new Category(request.getName());
         category.addParentCategory(parentCategory);
         categoryRepository.save(category);
     }
 
     /**
-     * 하위 카테고리 상품 체크
+     * 카테고리 상품 체크
      */
-    public  List<SubCategoryItemDto> checkSubCategoryItem(Long parentCategoryId) {
-        Category category = checkCategory(parentCategoryId);
-        List<Long> childIds = checkChildCategories(category);
-        List<SubCategoryItemDto> subCategoryItems = categoryRepository.subCategoryItem(childIds);
+    public  List<CategoryItemDto> checkCategoryItem(Category category) {
+        List<Long> childIds = checkChildCategories(category); // 자식 카테고리 있는지 검사
+        childIds.add(category.getId()); // 자신의 카테고리 id 추가, 자식 카테고리가 없다면 자신의 카테고리만 검색
 
-        if (!subCategoryItems.isEmpty()) {
-            return subCategoryItems;
+        List<CategoryItemDto> categoryItems = categoryRepository.categoryItem(childIds);
+        // sellerId, sellerName, sellerEmail
+        // categoryName
+        // itemId, itemName
+        // 이 담긴 Dto 를 상품 갯수만큼의 size 를 가진 List 로 반환
+
+        if (!categoryItems.isEmpty()) {
+            return categoryItems;
         } else {
-            throw new NoSuchElementException("카테고리에 등록된 상품이 없습니다.");
+            throw new NoSuchElementException("카테고리에 등록된 상품이 없습니다.");  // 자신, 자식 모두 등록된 상품이 없다면
         }
     }
 
     /**
-     * 하위 카테고리 상품 메일 전송 Element
+     * 카테고리 상품 메일 전송 Element
      */
-    public Map<Long, List<String>> subCategoryItemMailElement(List<SubCategoryItemDto> subCategoryItems) {
-        Map<Long, List<String>> sellerIdAndItemsName = new HashMap<>();
-        for (SubCategoryItemDto subCategoryItem : subCategoryItems) {
-            if (!sellerIdAndItemsName.containsKey(subCategoryItem.getSellerId())) {
-                sellerIdAndItemsName.put(subCategoryItem.getSellerId(), new ArrayList<>(List.of(subCategoryItem.getItemName())));
-            } else {
-                sellerIdAndItemsName.get(subCategoryItem.getSellerId()).add(subCategoryItem.getItemName());
+    public Map<Long, CategoryItemMailElementDto> categoryItemMailElement(List<CategoryItemDto> categoryItems) {
+        // Map 을 통해 sellerId 를 기준으로 데이터 가공
+        Map<Long, CategoryItemMailElementDto> sellerInfoAndItemName = new HashMap<>();
+        for (CategoryItemDto categoryItem : categoryItems) {
+            Long sellerId = categoryItem.getSellerId();
+            // 만약 Key 에 sellerId 가 없다면 새로운 Key 를 생성하고 판매자 이름과, 이메일, 상품 이름을 가진 Dto 를 Value 로 설정
+            if (!sellerInfoAndItemName.containsKey(sellerId)) {
+                sellerInfoAndItemName.put(sellerId, new CategoryItemMailElementDto(
+                        categoryItem.getSellerName(), categoryItem.getSellerEmail(), categoryItem.getItemName()));
+            } else { // Key 에 이미 sellerId 가 있다면 상품 이름 리스트에 현재 상품의 이름을 추가한다.
+                sellerInfoAndItemName.get(sellerId).getItemsName().add(categoryItem.getItemName());
             }
         }
-        return sellerIdAndItemsName;
+        // 판매자 Id 를 기준으로 가공된 데이터를 반환
+        return sellerInfoAndItemName;
     }
 
     /**
      * 하위 카테고리 상품 전체 id
      */
-    public  List<Long> subCategoryItemsId(List<SubCategoryItemDto> subCategoryItems) {
+    public  List<Long> categoryItemsId(List<CategoryItemDto> categoryItems) {
         List<Long> itemIds = new ArrayList<>();
-        for (SubCategoryItemDto subCategoryItem : subCategoryItems) {
-            itemIds.add(subCategoryItem.getItemId());
+        for (CategoryItemDto categoryItem : categoryItems) {
+            itemIds.add(categoryItem.getItemId());
         }
         return itemIds;
     }
@@ -78,14 +90,14 @@ public class CategoryService {
     }
 
     // 카테고리 이름 중복 확인
-    public Category checkDuplicateCategory(String categoryName) {
+    public void checkDuplicateCategory(String categoryName) {
         Optional<Category> findCategory = categoryRepository.findByName(categoryName);
         if (findCategory.isPresent()) {
             throw new IllegalStateException("이미 존재하는 카테고리 이름입니다.");
         }
-        return findCategory.get();
     }
 
+    // 자식 카테고리들의 Id를 반환
     public List<Long> checkChildCategories(Category category) {
         List<Category> child = category.getChild();
         List<Long> childIds = new ArrayList<>();
@@ -94,14 +106,4 @@ public class CategoryService {
         }
         return childIds;
     }
-
-    public List<Long> checkIncludeItemsByCategory(Category category) {
-        List<Item> items = category.getItems();
-        List<Long> itemsIds = new ArrayList<>();
-        for (Item item : items) {
-            itemsIds.add(item.getId());
-        }
-        return itemsIds;
-    }
-
 }

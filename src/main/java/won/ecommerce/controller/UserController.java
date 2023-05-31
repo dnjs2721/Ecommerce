@@ -11,12 +11,12 @@ import org.springframework.web.bind.annotation.*;
 import won.ecommerce.controller.dto.userDto.*;
 import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
-import won.ecommerce.repository.dto.search.OrderCondition;
+import won.ecommerce.repository.dto.search.item.OrderCondition;
 import won.ecommerce.repository.dto.search.item.ItemSearchFromCommonCondition;
 import won.ecommerce.repository.dto.search.item.SearchItemFromCommonDto;
 import won.ecommerce.service.UserService;
-import won.ecommerce.service.dto.JoinRequestDto;
-import won.ecommerce.service.dto.ChangeUserInfoRequestDto;
+import won.ecommerce.service.dto.user.JoinRequestDto;
+import won.ecommerce.service.dto.user.ChangeUserInfoRequestDto;
 
 import java.util.NoSuchElementException;
 

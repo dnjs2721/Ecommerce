@@ -13,8 +13,8 @@ import won.ecommerce.entity.Item;
 import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
 import won.ecommerce.repository.dto.search.item.SearchItemDto;
 import won.ecommerce.service.SellerService;
-import won.ecommerce.service.dto.ChangeItemInfoRequestDto;
-import won.ecommerce.service.dto.ItemCreateRequestDto;
+import won.ecommerce.service.dto.item.ChangeItemInfoRequestDto;
+import won.ecommerce.service.dto.item.ItemCreateRequestDto;
 
 import java.util.NoSuchElementException;
 

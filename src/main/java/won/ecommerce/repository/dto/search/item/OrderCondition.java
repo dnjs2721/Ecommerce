@@ -1,4 +1,4 @@
-package won.ecommerce.repository.dto.search;
+package won.ecommerce.repository.dto.search.item;
 
 import lombok.Data;
 

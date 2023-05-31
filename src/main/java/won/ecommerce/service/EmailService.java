@@ -11,7 +11,6 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import won.ecommerce.config.EcommerceConfig;
 import won.ecommerce.util.RedisUtil;
 
-import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 @Service
@@ -35,7 +34,7 @@ public class EmailService {
         message.addRecipients(MimeMessage.RecipientType.TO, email);
         message.setSubject(title);
         message.setFrom(setFrom);
-        message.setText(setContext("mail", authCode), "utf-8", "html");
+        message.setText(setContextByAuthCode(authCode), "utf-8", "html");
 
         // 메시지 전송
         emailSender.send(message);
@@ -50,17 +49,36 @@ public class EmailService {
         redisUtil.validateCode(email, code);
     }
 
-    public void sendSubCategoryWarningMail(String email, String sellerName, List<String> itemsName) throws MessagingException {
+    /**
+     * 카테고리 내 상품의 판매자에게 메일 전송
+     */
+    public void sendCategoryWarningMail(String email, String categoryName, String sellerName, List<String> itemsName) throws MessagingException {
         String setFrom = ecommerceConfig.getFromEmail();
-        String title = "카테고리 변경으로 인한 경고 메일";
+        String title = "[E-Commerce] 카테고리 변경으로 인한 경고 메일";
+
+        MimeMessage message = emailSender.createMimeMessage();
+        message.addRecipients(MimeMessage.RecipientType.TO, email);
+        message.setSubject(title);
+        message.setFrom(setFrom);
+        message.setText(setContextByWarning(categoryName, sellerName, itemsName.toString()), "utf-8", "html");
+
+        emailSender.send(message);
     }
 
     /**
-     * 타임리프 context 설정
+     * 타임리프 context 설정 - 인증번호
      */
-    public String setContext(String template, String code) {
+    public String setContextByAuthCode(String code) {
         Context context = new Context();
         context.setVariable("code", code);
-        return templateEngine.process(template, context);
+        return templateEngine.process("mail", context);
+    }
+
+    public String setContextByWarning(String categoryName, String sellerName, String itemsName) {
+        Context context = new Context();
+        context.setVariable("categoryName", categoryName);
+        context.setVariable("sellerName", sellerName);
+        context.setVariable("item", itemsName);
+        return templateEngine.process("warning", context);
     }
 }

@@ -5,14 +5,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import won.ecommerce.entity.*;
-import won.ecommerce.repository.dto.search.OrderCondition;
+import won.ecommerce.repository.dto.search.item.OrderCondition;
 import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
 import won.ecommerce.repository.dto.search.item.ItemSearchFromCommonCondition;
 import won.ecommerce.repository.dto.search.item.SearchItemDto;
 import won.ecommerce.repository.dto.search.item.SearchItemFromCommonDto;
 import won.ecommerce.repository.item.ItemRepository;
-import won.ecommerce.service.dto.ChangeItemInfoRequestDto;
-import won.ecommerce.service.dto.ItemCreateRequestDto;
+import won.ecommerce.service.dto.item.ChangeItemInfoRequestDto;
+import won.ecommerce.service.dto.item.ItemCreateRequestDto;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;

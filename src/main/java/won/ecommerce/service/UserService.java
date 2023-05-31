@@ -6,11 +6,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.*;
-import won.ecommerce.repository.dto.search.OrderCondition;
+import won.ecommerce.repository.dto.search.item.OrderCondition;
 import won.ecommerce.repository.dto.search.item.ItemSearchFromCommonCondition;
 import won.ecommerce.repository.dto.search.item.SearchItemFromCommonDto;
-import won.ecommerce.service.dto.ChangeUserInfoRequestDto;
-import won.ecommerce.service.dto.JoinRequestDto;
+import won.ecommerce.service.dto.user.ChangeUserInfoRequestDto;
+import won.ecommerce.service.dto.user.JoinRequestDto;
 import won.ecommerce.repository.user.UserRepository;
 
 import java.util.NoSuchElementException;

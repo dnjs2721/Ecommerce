@@ -8,13 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.Item;
 import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
-import won.ecommerce.repository.item.ItemRepository;
 import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
 import won.ecommerce.repository.dto.search.item.SearchItemDto;
-import won.ecommerce.service.dto.ChangeItemInfoRequestDto;
-import won.ecommerce.service.dto.ItemCreateRequestDto;
-
-import java.util.Optional;
+import won.ecommerce.service.dto.item.ChangeItemInfoRequestDto;
+import won.ecommerce.service.dto.item.ItemCreateRequestDto;
 
 @Service
 @RequiredArgsConstructor

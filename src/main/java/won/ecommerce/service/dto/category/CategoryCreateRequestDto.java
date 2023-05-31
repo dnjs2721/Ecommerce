@@ -1,4 +1,4 @@
-package won.ecommerce.service.dto;
+package won.ecommerce.service.dto.category;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
