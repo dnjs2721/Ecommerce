@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.*;
+import won.ecommerce.repository.dto.search.categoryItem.CategoryItemDto;
 import won.ecommerce.repository.dto.search.item.OrderCondition;
 import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
 import won.ecommerce.repository.dto.search.item.ItemSearchFromCommonCondition;
@@ -14,6 +16,8 @@ import won.ecommerce.repository.item.ItemRepository;
 import won.ecommerce.service.dto.item.ChangeItemInfoRequestDto;
 import won.ecommerce.service.dto.item.ItemCreateRequestDto;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -89,6 +93,20 @@ public class ItemService {
         String name = item.getName();
         itemRepository.delete(item);
         return name;
+    }
+
+    /**
+     * 카테고리 내 상품 카테고리 일괄 변경
+     */
+    public List<String> batchChangeItemCategory(List<CategoryItemDto> categoryItems, Category changeCategory) {
+        List<String> itemNames = new ArrayList<>();
+        List<Long> itemIds = new ArrayList<>();
+        for (CategoryItemDto categoryItem : categoryItems) {
+            itemIds.add(categoryItem.getItemId());
+            itemNames.add(categoryItem.getItemName());
+        }
+        itemRepository.batchUpdateItemCategory(itemIds, changeCategory);
+        return itemNames;
     }
 
     // 아이템 존재 확인

@@ -50,7 +50,7 @@ public class EmailService {
     }
 
     /**
-     * 카테고리 내 상품의 판매자에게 메일 전송
+     * 카테고리 내 상품의 판매자에게 경고 메일 전송
      */
     public void sendCategoryWarningMail(String email, String categoryName, String sellerName, List<String> itemsName) throws MessagingException {
         String setFrom = ecommerceConfig.getFromEmail();
@@ -61,6 +61,23 @@ public class EmailService {
         message.setSubject(title);
         message.setFrom(setFrom);
         message.setText(setContextByWarning(categoryName, sellerName, itemsName.toString()), "utf-8", "html");
+
+        emailSender.send(message);
+    }
+
+    /**
+     * 카테고리 내 상품의 판매자에게 안내 메일 전송
+     */
+    public void sendCategoryNoticeMail(String email, String categoryName, String changeCategoryName, String sellerName, List<String> itemNames) throws MessagingException {
+
+        String setFrom = ecommerceConfig.getFromEmail();
+        String title = "[E-Commerce] 카테고리 변경으로 인한 안내 메일";
+
+        MimeMessage message = emailSender.createMimeMessage();
+        message.addRecipients(MimeMessage.RecipientType.TO, email);
+        message.setSubject(title);
+        message.setFrom(setFrom);
+        message.setText(setContextByNotice(categoryName, changeCategoryName, sellerName, itemNames.toString()), "utf-8", "html");
 
         emailSender.send(message);
     }
@@ -80,5 +97,14 @@ public class EmailService {
         context.setVariable("sellerName", sellerName);
         context.setVariable("item", itemsName);
         return templateEngine.process("warning", context);
+    }
+
+    private String setContextByNotice(String categoryName, String changeCategoryName, String sellerName, String itemNames) {
+        Context context = new Context();
+        context.setVariable("categoryName", categoryName);
+        context.setVariable("changeCategoryName", changeCategoryName);
+        context.setVariable("sellerName", sellerName);
+        context.setVariable("item", itemNames);
+        return templateEngine.process("notice", context);
     }
 }

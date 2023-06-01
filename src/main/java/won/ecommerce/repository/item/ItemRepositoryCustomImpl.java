@@ -9,6 +9,7 @@ import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
+import won.ecommerce.entity.Category;
 import won.ecommerce.repository.dto.search.item.OrderCondition;
 import won.ecommerce.repository.dto.search.item.*;
 
@@ -49,7 +50,7 @@ public class ItemRepositoryCustomImpl implements ItemRepositoryCustom{
                         priceLoe(condition.getPriceLoe()),
                         stockQuantityGoe(condition.getStockQuantityGoe()),
                         stockQuantityLoe(condition.getStockQuantityLoe()),
-                        categoryEQ(condition.getCategory()),
+                        categoryEQ(condition.getCategoryId()),
                         createTimeGoe(condition.getTimeGoe()),
                         createTimeLoe(condition.getTimeLoe()))
                 .offset(pageable.getOffset())
@@ -66,7 +67,7 @@ public class ItemRepositoryCustomImpl implements ItemRepositoryCustom{
                         priceLoe(condition.getPriceLoe()),
                         stockQuantityGoe(condition.getStockQuantityGoe()),
                         stockQuantityLoe(condition.getStockQuantityLoe()),
-                        categoryEQ(condition.getCategory()),
+                        categoryEQ(condition.getCategoryId()),
                         createTimeGoe(condition.getTimeGoe()),
                         createTimeLoe(condition.getTimeLoe()));
 
@@ -93,7 +94,7 @@ public class ItemRepositoryCustomImpl implements ItemRepositoryCustom{
                         sellerNickNameEq(condition.getSellerNickName()),
                         priceGoe(condition.getPriceGoe()),
                         priceLoe(condition.getPriceLoe()),
-                        categoryEQ(condition.getCategory()))
+                        categoryEQ(condition.getCategoryId()))
                 .orderBy(createOrderSpecifier(orderCondition).toArray(OrderSpecifier[]::new))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -109,9 +110,18 @@ public class ItemRepositoryCustomImpl implements ItemRepositoryCustom{
                         sellerNickNameEq(condition.getSellerNickName()),
                         priceGoe(condition.getPriceGoe()),
                         priceLoe(condition.getPriceLoe()),
-                        categoryEQ(condition.getCategory()));
+                        categoryEQ(condition.getCategoryId()));
 
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
+    @Override
+    public void batchUpdateItemCategory(List<Long> itemIds, Category category) {
+        queryFactory
+                .update(item)
+                .set(item.category, category)
+                .where(item.id.in(itemIds))
+                .execute();
     }
 
     private BooleanExpression sellerNickNameEq(String sellerNickName) {
@@ -126,8 +136,8 @@ public class ItemRepositoryCustomImpl implements ItemRepositoryCustom{
         return timeGoe != null ? item.createdDate.goe(timeGoe) : null;
     }
 
-    private BooleanExpression categoryEQ(String category) {
-        return hasText(category) ? item.category.name.eq(category) : null;
+    private BooleanExpression categoryEQ(Long categoryId) {
+        return categoryId != null ? item.category.id.eq(categoryId) : null;
     }
 
     private BooleanExpression stockQuantityLoe(Integer stockQuantityLoe) {

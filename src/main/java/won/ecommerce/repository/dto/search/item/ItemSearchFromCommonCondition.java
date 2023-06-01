@@ -11,5 +11,5 @@ public class ItemSearchFromCommonCondition {
     private String itemName;
     private Integer priceGoe;
     private Integer priceLoe;
-    private String category;
+    private Long categoryId;
 }

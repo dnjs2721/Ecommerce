@@ -10,7 +10,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import won.ecommerce.controller.dto.adminDto.BatchChangeItemCategoryRequestDto;
 import won.ecommerce.controller.dto.adminDto.ChangeStatusRequestDto;
+import won.ecommerce.controller.dto.adminDto.DeleteCategoryRequestDto;
 import won.ecommerce.entity.Category;
 import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
@@ -155,6 +157,38 @@ public class AdminController {
             return createResponseEntity(e2, NOT_ACCEPTABLE); // IllegalAccessException 권한 없음
         }
     }
+
+    /**
+     * 카테고리 내 상품 카테고리 일괄 변경 후 메일 발송
+     */
+    @PostMapping("/batchChangeItemCategory/{adminId}")
+    public ResponseEntity<?> batchChangeItemCategory(@PathVariable("adminId") Long adminId, @RequestBody @Valid BatchChangeItemCategoryRequestDto request) throws MessagingException {
+        try {
+            Category category = categoryService.checkCategory(request.getCategoryId());
+            Category changeCategory = categoryService.checkCategory(request.getChangeCategoryId());
+            List<String> changeItemList = adminService.batchChangeItemCategory(adminId, category, changeCategory);
+            return ResponseEntity.ok().body(changeItemList.toString() + "\n[" + category.getName() + "] 에서 [" + changeCategory.getName() + "] 로 변경 완료");
+        } catch (NoSuchElementException e1) {
+            return createResponseEntity(e1, NOT_FOUND); // NoSuchElementException 자신, 자식 모두 등록된 상품이 없을때, 카테고리가 없을 때
+        } catch (IllegalAccessException e2) {
+            return createResponseEntity(e2, NOT_ACCEPTABLE); // IllegalAccessException 권한 없음
+        }
+    }
+
+    @PostMapping("/deleteCategory/{adminId}")
+    public ResponseEntity<String> deleteCategory(@PathVariable("adminId") Long adminId, @RequestBody @Valid DeleteCategoryRequestDto request) {
+        try {
+            String deleteCategoryName = adminService.deleteCategory(adminId, request.getCategoryId());
+            return ResponseEntity.ok().body(deleteCategoryName + " 이(가) 삭제되었습니다.");
+        } catch (IllegalAccessException e1) {
+            return createResponseEntity(e1, NOT_ACCEPTABLE);
+        } catch (IllegalStateException e2) {
+            return createResponseEntity(e2, CONFLICT);
+        } catch (NoSuchElementException e3) {
+            return createResponseEntity(e3, NOT_FOUND);
+        }
+    }
+
 
     public ResponseEntity<String> createResponseEntity(Exception e, HttpStatus httpStatus) {
         HttpHeaders headers = new HttpHeaders();

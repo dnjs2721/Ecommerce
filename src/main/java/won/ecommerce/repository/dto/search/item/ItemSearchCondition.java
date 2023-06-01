@@ -12,7 +12,7 @@ public class ItemSearchCondition {
     private Integer priceLoe;
     private Integer stockQuantityGoe;
     private Integer stockQuantityLoe;
-    private String category;
+    private Long categoryId;
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime timeGoe;
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")

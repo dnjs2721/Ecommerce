@@ -23,9 +23,11 @@ public class CategoryService {
      */
     public void createCategory(CategoryCreateRequestDto request) {
         checkDuplicateCategory(request.getName()); // IllegalStateException 중복된 카테고리 이름
-        Category parentCategory = checkCategory(request.getParentId()); // NoSuchElementException 부모 카테고리 없음
         Category category = new Category(request.getName());
-        category.addParentCategory(parentCategory);
+        if (request.getParentId() != null) {
+            Category parentCategory = checkCategory(request.getParentId()); // NoSuchElementException 부모 카테고리 없음
+            category.addParentCategory(parentCategory);
+        }
         categoryRepository.save(category);
     }
 
@@ -34,9 +36,8 @@ public class CategoryService {
      */
     public  List<CategoryItemDto> checkCategoryItem(Category category) {
         List<Long> childIds = checkChildCategories(category); // 자식 카테고리 있는지 검사
-        childIds.add(category.getId()); // 자신의 카테고리 id 추가, 자식 카테고리가 없다면 자신의 카테고리만 검색
 
-        List<CategoryItemDto> categoryItems = categoryRepository.categoryItem(childIds);
+        List<CategoryItemDto> categoryItems = categoryRepository.categoryItem(childIds, category.getId());  // 자신의 카테고리 id 추가, 자식 카테고리가 없다면 자신의 카테고리만 검색
         // sellerId, sellerName, sellerEmail
         // categoryName
         // itemId, itemName
@@ -70,15 +71,26 @@ public class CategoryService {
     }
 
     /**
-     * 하위 카테고리 상품 전체 id
+     * 카테고리 삭제
      */
-    public  List<Long> categoryItemsId(List<CategoryItemDto> categoryItems) {
-        List<Long> itemIds = new ArrayList<>();
-        for (CategoryItemDto categoryItem : categoryItems) {
-            itemIds.add(categoryItem.getItemId());
+    public String deleteCategory(Long categoryId) {
+        Category category = checkCategory(categoryId); // NoSuchElementException 카테고리 존재 확인
+        List<Long> childIds = checkChildCategories(category);
+
+        List<CategoryItemDto> categoryItems = categoryRepository.categoryItem(childIds, categoryId); // 자신의 카테고리 id 추가, 자식 카테고리가 없다면 자신의 카테고리만 검색
+        if (!categoryItems.isEmpty()) {
+            throw new IllegalStateException("카테고리 내에 등록된 상품이 있습니다. 변경 혹은 삭제후 다시 시도해 주세요.");
         }
-        return itemIds;
+
+        if (!childIds.isEmpty()) { // 외래키 제약조건을 해결하기 위해 자식 카테고리가 있다면 자식 카테고리부터 일괄 삭제
+            categoryRepository.deleteAllByIdInBatch(childIds);
+        }
+
+        categoryRepository.deleteById(categoryId); // 카테고리 삭제
+
+        return category.getName();
     }
+
 
     // 카테고리 존재 확인
     public Category checkCategory(Long id) {
