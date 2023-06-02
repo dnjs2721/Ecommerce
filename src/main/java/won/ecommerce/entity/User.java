@@ -26,9 +26,11 @@ public class User extends BaseTimeEntity {
     private Address address;
     @Enumerated(EnumType.STRING)
     private UserStatus status;
-
-    @OneToMany(mappedBy = "id")
+    @OneToMany(mappedBy = "seller")
     private final List<Item> sellItems = new ArrayList<>();
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shoppingCartId")
+    private ShoppingCart shoppingCart;
 
     @Builder
     public User(String name, String nickname, String email, String password, String pNum, String birth, Address address) {
@@ -55,5 +57,9 @@ public class User extends BaseTimeEntity {
 
     public void setStatus(UserStatus status) {
         this.status = status;
+    }
+
+    public void setShoppingCart(ShoppingCart shoppingCart) {
+        this.shoppingCart = shoppingCart;
     }
 }

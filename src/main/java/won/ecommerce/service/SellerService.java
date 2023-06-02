@@ -14,6 +14,7 @@ import won.ecommerce.service.dto.item.ChangeItemInfoRequestDto;
 import won.ecommerce.service.dto.item.ItemCreateRequestDto;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class SellerService {
     private final ItemService itemService;
