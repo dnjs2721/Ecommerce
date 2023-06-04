@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import won.ecommerce.entity.Category;
+import won.ecommerce.entity.QShoppingCartItem;
 import won.ecommerce.repository.dto.search.item.OrderCondition;
 import won.ecommerce.repository.dto.search.item.*;
 
@@ -20,6 +21,7 @@ import java.util.List;
 import static org.springframework.util.StringUtils.*;
 import static won.ecommerce.entity.QCategory.*;
 import static won.ecommerce.entity.QItem.*;
+import static won.ecommerce.entity.QShoppingCartItem.*;
 import static won.ecommerce.entity.QUser.*;
 
 public class ItemRepositoryCustomImpl implements ItemRepositoryCustom{
@@ -121,6 +123,22 @@ public class ItemRepositoryCustomImpl implements ItemRepositoryCustom{
                 .update(item)
                 .set(item.category, category)
                 .where(item.id.in(itemIds))
+                .execute();
+    }
+
+    @Override
+    public void changePrice(Long itemId, int price) {
+        queryFactory
+                .update(item)
+                .set(item.price, price)
+                .where(item.id.eq(itemId))
+                .execute();
+
+        queryFactory
+                .update(shoppingCartItem)
+                .set(shoppingCartItem.itemPrice, price)
+                .set(shoppingCartItem.totalItemPrice, shoppingCartItem.itemCount.multiply(price))
+                .where(shoppingCartItem.item.id.eq(itemId))
                 .execute();
     }
 

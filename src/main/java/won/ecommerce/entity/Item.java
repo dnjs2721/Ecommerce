@@ -6,6 +6,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -23,6 +26,9 @@ public class Item extends BaseTimeEntity{
     @JoinColumn(name = "category_id")
     private Category category;
 
+    @OneToMany(mappedBy = "item")
+    private final List<ShoppingCartItem> shoppingCartItems = new ArrayList<>();
+
     @Builder
     public Item(String name, int price, int stockQuantity) {
         this.name = name;
@@ -38,10 +44,6 @@ public class Item extends BaseTimeEntity{
     public void setSeller(User user) {
         this.seller = user;
         user.getSellItems().add(this);
-    }
-
-    public void changePrice(int price) {
-        this.price = price;
     }
 
     public void changeStockQuantity(int stockQuantity) {

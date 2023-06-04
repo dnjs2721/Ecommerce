@@ -15,4 +15,5 @@ public interface ItemRepositoryCustom {
     Page<SearchItemDto> searchItemPage(Long sellerId, ItemSearchCondition condition, Pageable pageable);
     Page<SearchItemFromCommonDto> searchItemPageFromCommon(ItemSearchFromCommonCondition condition, OrderCondition orderCondition, Pageable pageable);
     void batchUpdateItemCategory(List<Long> itemIds, Category category);
+    void changePrice(Long itemId, int price);
 }

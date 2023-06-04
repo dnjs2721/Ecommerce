@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.*;
 import won.ecommerce.repository.dto.search.categoryItem.CategoryItemDto;
 import won.ecommerce.repository.dto.search.item.OrderCondition;
@@ -26,6 +25,7 @@ import java.util.Optional;
 public class ItemService {
     private final ItemRepository itemRepository;
     private final CategoryService categoryService;
+    private final ShoppingCartService shoppingCartService;
 
     /**
      * 상품 생성
@@ -73,7 +73,9 @@ public class ItemService {
         if (request.getChangePrice() == null && request.getChangeStockQuantity() == null && request.getChangeCategoryId() == null) {
             throw new NoSuchElementException("변경할 정보가 없습니다.");
         }
-        if (request.getChangePrice() != null) item.changePrice(request.getChangePrice());
+        if (request.getChangePrice() != null){
+            itemRepository.changePrice(item.getId(), request.getChangePrice()); // 쿼리 최적화
+        }
         if (request.getChangeStockQuantity() != null) item.changeStockQuantity(request.getChangeStockQuantity());
         if (request.getChangeCategoryId() != null){
             Category category = categoryService.checkCategory(request.getChangeCategoryId()); // NoSuchElementException 없는 카테고리 예외
@@ -89,6 +91,10 @@ public class ItemService {
         Item item = checkItem(itemId);
         if (!item.getSeller().getId().equals(sellerId)) {
             throw new IllegalAccessException("판매자의 상품이 아닙니다.");
+        }
+        List<ShoppingCartItem> shoppingCartItems = item.getShoppingCartItems();
+        if (!shoppingCartItems.isEmpty()) {
+            shoppingCartService.deleteAllItemsByList(shoppingCartItems);
         }
         String name = item.getName();
         itemRepository.delete(item);

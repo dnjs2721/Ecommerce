@@ -48,7 +48,7 @@ public class AdminController {
     @PostMapping("/join")
     public ResponseEntity<String> joinAdmin(@RequestBody @Valid JoinRequestDto request) {
         try {
-            User admin = userService.createdUser(request);
+            User admin = userService.createUser(request);
             admin.setStatus(UserStatus.ADMIN);
             Long memberId = userService.join(admin);
             return ResponseEntity.ok().body(memberId.toString() + " 회원가입 되었습니다.");

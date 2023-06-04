@@ -20,4 +20,13 @@ public class ShoppingCart {
 
     @OneToMany(mappedBy = "shoppingCart")
     private final List<ShoppingCartItem> shoppingCartItems = new ArrayList<>();
+
+    public int getTotalPrice() {
+        List<ShoppingCartItem> findItems = this.getShoppingCartItems();
+        int totalPrice = 0;
+        for (ShoppingCartItem shoppingCartItem : findItems) {
+            totalPrice += shoppingCartItem.getTotalItemPrice();
+        }
+        return totalPrice;
+    }
 }

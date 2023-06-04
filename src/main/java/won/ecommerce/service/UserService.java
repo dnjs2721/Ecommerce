@@ -25,6 +25,7 @@ public class UserService {
     private final DuplicationCheckService duplicationCheckService;
     private final ChangeStatusLogService changeStatusLogService;
     private final ItemService itemService;
+    private final ShoppingCartService shoppingCartService;
 
     /**
      * 회원가입
@@ -42,7 +43,7 @@ public class UserService {
      * 로그인
      */
     public Long login(String email, String password) throws IllegalAccessException {
-        User user = findUserByEmail(email);
+        User user = checkUserByEmail(email);
         if (user.getPassword().equals(password)) {
             return user.getId();
         } else {
@@ -66,7 +67,7 @@ public class UserService {
      */
     @Transactional
     public String changePassword(String email, String password, String newPassword) throws IllegalAccessException {
-        User user = findUserByEmail(email);
+        User user = checkUserByEmail(email);
         if (user.getPassword().equals(password)) {
             if (user.getPassword().equals(newPassword)) {
                 throw new IllegalStateException("현재 사용중인 패스워드와 같습니다.");
@@ -83,8 +84,9 @@ public class UserService {
      */
     @Transactional
     public String deleteUser(String email, String password) throws IllegalAccessException {
-        User user = findUserByEmail(email);
+        User user = checkUserByEmail(email);
         if (password.equals(user.getPassword())) {
+            shoppingCartService.deleteShoppingCart(user.getShoppingCart());
             userRepository.delete(user);
             return user.getName();
         } else {
@@ -98,7 +100,7 @@ public class UserService {
      */
     @Transactional
     public void changeUserInfo(ChangeUserInfoRequestDto request) throws IllegalAccessException {
-        User user = findUserByEmail(request.getEmail()); // NoSuchElementException
+        User user = checkUserByEmail(request.getEmail()); // NoSuchElementException
         if (request.getPassword().equals(user.getPassword())) {
             Address address = changeUserInfoAddress(request.getRegion(), request.getCity(), request.getStreet(), request.getDetail(), request.getZipcode()); // IllegalArgumentException, 주소 형태 확인
             if (request.getNickname() != null) {
@@ -116,9 +118,54 @@ public class UserService {
      */
     @Transactional
     public Long createChangeStatusLog(long userId) {
-        User user = findUserById(userId);
+        User user = checkUserById(userId);
         return changeStatusLogService.createChangeStatusLog(user);
     }
+
+    /**
+     * 상품 조회
+     */
+    public Page<SearchItemFromCommonDto> searchItems(ItemSearchFromCommonCondition condition, OrderCondition orderCondition, Pageable pageable) {
+        return itemService.searchItemFromCommon(condition, orderCondition, pageable);
+    }
+
+    /**
+     * 장바구니 상품 추가
+     */
+    @Transactional
+    public String addShoppingCartItem(Long userId, Long itemId, Integer itemCount) {
+        User user = checkUserById(userId); // NoSuchElementException
+        Item item = itemService.checkItem(itemId); // NoSuchElementException
+        shoppingCartService.addItem(user.getShoppingCart(), item, itemCount);
+        return item.getName();
+    }
+
+    /**
+     * 장바구니 상품 삭제
+     */
+    @Transactional
+    public String deleteShoppingCartItem(Long userId, Long itemId, Integer itemCount) {
+        User user = checkUserById(userId); // NoSuchElementException
+        Item item = itemService.checkItem(itemId); // NoSuchElementException
+        shoppingCartService.deleteItem(user.getShoppingCart().getId(), itemId, itemCount);
+        return item.getName();
+    }
+
+    /**
+     * 장바구니 상품 전체 삭제
+     */
+    @Transactional
+    public String deleteAllShoppingCartItem(Long userId) {
+        User user = checkUserById(userId); //NoSuchElementException
+        shoppingCartService.deleteAllItems(user.getShoppingCart()); //NoSuchElementException
+        return user.getName();
+    }
+
+    public int getShoppingCartTotalPrice(Long userId) {
+        User user = checkUserById(userId);
+        return shoppingCartService.getTotalPrice(user.getShoppingCart());
+    }
+
 
     /**
      * 닉네임 검사
@@ -149,26 +196,20 @@ public class UserService {
         }
     }
 
-    /**
-     * 상품 조회
-     */
-    public Page<SearchItemFromCommonDto> searchItems(ItemSearchFromCommonCondition condition, OrderCondition orderCondition, Pageable pageable) {
-        return itemService.searchItemFromCommon(condition, orderCondition, pageable);
-    }
-
     // 사용중인 이메일인지 검사 메소드
-    public User findUserByEmail(String email) {
+    public User checkUserByEmail(String email) {
         return userRepository.findByEmail(email).orElseThrow(() -> new NoSuchElementException("가입되지 않은 이메일 입니다."));
     }
 
     // 가입된 회원 검증 메서드
-    public User findUserById(Long id) {
+    public User checkUserById(Long id) {
         return userRepository.findById(id).orElseThrow(() -> new NoSuchElementException("가입되지 않은 회원입니다."));
     }
 
     // user 생성 - status 제외
-    public User createdUser(JoinRequestDto request) {
-        return User.builder()
+    public User createUser(JoinRequestDto request) {
+        ShoppingCart shoppingCart = shoppingCartService.createShoppingCart();
+        User user = User.builder()
                 .name(request.getName())
                 .nickname(request.getNickname())
                 .email(request.getEmail())
@@ -177,5 +218,7 @@ public class UserService {
                 .birth(request.getBirth())
                 .address(new Address(request.getRegion(), request.getCity(), request.getStreet(), request.getDetail(), request.getZipcode()))
                 .build();
+        user.setShoppingCart(shoppingCart);
+        return user;
     }
 }

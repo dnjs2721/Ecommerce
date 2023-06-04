@@ -58,7 +58,7 @@ public class SellerService {
 
     // 판매자 확인
     public User checkSeller(Long sellerId) throws IllegalAccessException {
-        User seller = userService.findUserById(sellerId); // NoSuchElementException 가입되지 않은 회원 에외
+        User seller = userService.checkUserById(sellerId); // NoSuchElementException 가입되지 않은 회원 에외
         if (!seller.getStatus().equals(UserStatus.SELLER)) {
             throw new IllegalAccessException("판매자가 아닙니다. 먼저 판매자 신청을 해주세요.");
         }
