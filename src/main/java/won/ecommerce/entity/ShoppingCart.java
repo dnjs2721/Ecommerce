@@ -10,7 +10,7 @@ import java.util.List;
 @Entity
 @Getter
 @NoArgsConstructor
-public class ShoppingCart {
+public class ShoppingCart extends BaseTimeEntity{
     @Id
     @GeneratedValue
     private Long id;

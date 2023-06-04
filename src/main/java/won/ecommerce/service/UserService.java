@@ -9,6 +9,7 @@ import won.ecommerce.entity.*;
 import won.ecommerce.repository.dto.search.item.OrderCondition;
 import won.ecommerce.repository.dto.search.item.ItemSearchFromCommonCondition;
 import won.ecommerce.repository.dto.search.item.SearchItemFromCommonDto;
+import won.ecommerce.repository.dto.search.shoppingCart.SearchShoppingCartDto;
 import won.ecommerce.service.dto.user.ChangeUserInfoRequestDto;
 import won.ecommerce.service.dto.user.JoinRequestDto;
 import won.ecommerce.repository.user.UserRepository;
@@ -135,7 +136,7 @@ public class UserService {
     @Transactional
     public String addShoppingCartItem(Long userId, Long itemId, Integer itemCount) {
         User user = checkUserById(userId); // NoSuchElementException
-        Item item = itemService.checkItem(itemId); // NoSuchElementException
+        Item item = itemService.checkItem(itemId); // NoSuchElementException 상품 없음
         shoppingCartService.addItem(user.getShoppingCart(), item, itemCount);
         return item.getName();
     }
@@ -146,7 +147,7 @@ public class UserService {
     @Transactional
     public String deleteShoppingCartItem(Long userId, Long itemId, Integer itemCount) {
         User user = checkUserById(userId); // NoSuchElementException
-        Item item = itemService.checkItem(itemId); // NoSuchElementException
+        Item item = itemService.checkItem(itemId); // NoSuchElementException 상품 없음
         shoppingCartService.deleteItem(user.getShoppingCart().getId(), itemId, itemCount);
         return item.getName();
     }
@@ -157,13 +158,24 @@ public class UserService {
     @Transactional
     public String deleteAllShoppingCartItem(Long userId) {
         User user = checkUserById(userId); //NoSuchElementException
-        shoppingCartService.deleteAllItems(user.getShoppingCart()); //NoSuchElementException
+        shoppingCartService.deleteAllItems(user.getShoppingCart()); //NoSuchElementException 등록된 상품 없음
         return user.getName();
     }
 
+    /**
+     * 장바구니 전체 가격 조회
+     */
     public int getShoppingCartTotalPrice(Long userId) {
-        User user = checkUserById(userId);
+        User user = checkUserById(userId); //NoSuchElementException
         return shoppingCartService.getTotalPrice(user.getShoppingCart());
+    }
+
+    /**
+     * 장바구니 전체 상품 조회
+     */
+    public Page<SearchShoppingCartDto> getShoppingCartItems(Long userId, Pageable pageable) {
+        User user = checkUserById(userId); //NoSuchElementException
+        return shoppingCartService.getShoppingCartItems(user.getShoppingCart().getId(), pageable);
     }
 
 

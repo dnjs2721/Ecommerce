@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ShoppingCartItem {
+public class ShoppingCartItem extends BaseTimeEntity {
     @Id
     @GeneratedValue
     private Long id;

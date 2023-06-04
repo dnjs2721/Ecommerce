@@ -1,9 +1,12 @@
 package won.ecommerce.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.*;
+import won.ecommerce.repository.dto.search.shoppingCart.SearchShoppingCartDto;
 import won.ecommerce.repository.shoppingCart.ShoppingCartItemRepository;
 import won.ecommerce.repository.shoppingCart.ShoppingCartRepository;
 
@@ -71,7 +74,7 @@ public class ShoppingCartService {
     public void deleteAllItems(ShoppingCart shoppingCart) {
         List<ShoppingCartItem> shoppingCartItems = shoppingCart.getShoppingCartItems();
         if (shoppingCartItems.isEmpty()) {
-            throw new NoSuchElementException("장바구니가 이미 비워져있습니다.");
+            throw new NoSuchElementException("장바구니가에 담긴 상품이 없습니다.");
         }
         deleteAllItemsByList(shoppingCartItems);
     }
@@ -96,8 +99,12 @@ public class ShoppingCartService {
     }
 
     /**
-     *
+     * 장바구니 전체 상품 조회
      */
+    public Page<SearchShoppingCartDto> getShoppingCartItems(Long shoppingCartId, Pageable pageable) {
+        return shoppingCartItemRepository.searchShoppingCart(shoppingCartId, pageable);
+    }
+
 
     public ShoppingCartItem findShoppingCartItem(Long shoppingCartId, Long itemId) {
         Optional<ShoppingCartItem> findShoppingCartItem = shoppingCartItemRepository.findByShoppingCartIdAndItemId(shoppingCartId, itemId);

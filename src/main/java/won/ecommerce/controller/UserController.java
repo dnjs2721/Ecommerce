@@ -8,13 +8,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import retrofit2.http.Path;
+import won.ecommerce.controller.dto.shoppingCartDto.ShoppingCartItemRequestDto;
 import won.ecommerce.controller.dto.userDto.*;
 import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
 import won.ecommerce.repository.dto.search.item.OrderCondition;
 import won.ecommerce.repository.dto.search.item.ItemSearchFromCommonCondition;
 import won.ecommerce.repository.dto.search.item.SearchItemFromCommonDto;
+import won.ecommerce.repository.dto.search.shoppingCart.SearchShoppingCartDto;
 import won.ecommerce.service.UserService;
 import won.ecommerce.service.dto.user.JoinRequestDto;
 import won.ecommerce.service.dto.user.ChangeUserInfoRequestDto;
@@ -144,58 +145,6 @@ public class UserController {
     public ResponseEntity<?> searchItem(ItemSearchFromCommonCondition condition, OrderCondition orderCondition, Pageable pageable) {
         Page<SearchItemFromCommonDto> findItems = userService.searchItems(condition, orderCondition, pageable);
         return ResponseEntity.ok().body(findItems);
-    }
-
-    /**
-     * 장바구니 상품 추가
-     */
-    @PostMapping("/addShoppingCartItem/{userId}")
-    public ResponseEntity<String> addShoppingCartItem(@PathVariable("userId") Long userId, @RequestBody @Valid ShoppingCartItemRequestDto request) {
-        try {
-            String itemName = userService.addShoppingCartItem(userId, request.getItemId(), request.getItemCount());
-            return ResponseEntity.ok().body(itemName + " 이(가) 장바구니에 추가 되었습니다.");
-        } catch (NoSuchElementException e) {
-            return createResponseEntity(e, NOT_FOUND);
-        }
-    }
-
-    /**
-     * 장바구니 상품 삭제
-     */
-    @PostMapping("/deleteShoppingCartItem/{userId}")
-    public ResponseEntity<String> deleteShoppingCartItem(@PathVariable("userId") Long userId, @RequestBody @Valid ShoppingCartItemRequestDto request) {
-        try {
-            String itemName = userService.deleteShoppingCartItem(userId, request.getItemId(), request.getItemCount());
-            return ResponseEntity.ok().body(itemName + " 이(가) 장바구니에서 삭제 되었습니다.");
-        } catch (NoSuchElementException e) {
-            return createResponseEntity(e, NOT_FOUND);
-        }
-    }
-
-    /**
-     * 장바구니 상품 전체 삭제
-     */
-    @PostMapping("/deleteAllShoppingCartItem/{userId}")
-    public ResponseEntity<String> deleteAllShoppingCartItem(@PathVariable("userId") Long userId) {
-        try {
-            String userName = userService.deleteAllShoppingCartItem(userId);
-            return ResponseEntity.ok().body(userName + " 님의 장바구니가 비워졌습니다.");
-        } catch (NoSuchElementException e) {
-            return createResponseEntity(e, NOT_FOUND);
-        }
-    }
-
-    /**
-     * 장바구니 전체 가격 조회
-     */
-    @GetMapping("/getShoppingCartTotalPrice/{userId}")
-    public ResponseEntity<String> getShoppingCartTotalPrice(@PathVariable("userId") Long userId) {
-        try {
-            int shoppingCartTotalPrice = userService.getShoppingCartTotalPrice(userId);
-            return ResponseEntity.ok().body(shoppingCartTotalPrice + " 원");
-        } catch (NoSuchElementException e) {
-            return createResponseEntity(e, NOT_FOUND);
-        }
     }
 
     public ResponseEntity<String> createResponseEntity(Exception e, HttpStatus httpStatus) {

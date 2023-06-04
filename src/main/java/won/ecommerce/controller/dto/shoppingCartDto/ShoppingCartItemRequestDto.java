@@ -1,4 +1,4 @@
-package won.ecommerce.controller.dto.userDto;
+package won.ecommerce.controller.dto.shoppingCartDto;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
