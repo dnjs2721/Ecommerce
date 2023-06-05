@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.*;
+import won.ecommerce.repository.deleted.DeletedUserRepository;
 import won.ecommerce.repository.dto.search.item.OrderCondition;
 import won.ecommerce.repository.dto.search.item.ItemSearchFromCommonCondition;
 import won.ecommerce.repository.dto.search.item.SearchItemFromCommonDto;
@@ -23,6 +24,7 @@ import static io.micrometer.common.util.StringUtils.*;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final DeletedUserRepository deletedUserRepository;
     private final DuplicationCheckService duplicationCheckService;
     private final ChangeStatusLogService changeStatusLogService;
     private final ItemService itemService;
@@ -88,6 +90,7 @@ public class UserService {
         User user = checkUserByEmail(email);
         if (password.equals(user.getPassword())) {
             shoppingCartService.deleteShoppingCart(user.getShoppingCart());
+            saveDeletedUser(user);
             userRepository.delete(user);
             return user.getName();
         } else {
@@ -178,6 +181,15 @@ public class UserService {
         return shoppingCartService.getShoppingCartItems(user.getShoppingCart().getId(), pageable);
     }
 
+    /**
+     * 장바구니 전체 상품 주문
+     */
+    @Transactional
+    public void orderAllItemAtShoppingCart(Long userId) {
+        User user = checkUserById(userId);
+        shoppingCartService.orderAllItemAtShoppingCart(user);
+    }
+
 
     /**
      * 닉네임 검사
@@ -232,5 +244,21 @@ public class UserService {
                 .build();
         user.setShoppingCart(shoppingCart);
         return user;
+    }
+
+    // 회원탈퇴시 정보 저장
+    public void saveDeletedUser(User user) {
+        DeletedUser deletedUser = DeletedUser.builder()
+                .userName(user.getName())
+                .userNickname(user.getNickname())
+                .userEmail(user.getEmail())
+                .userPassword(user.getPassword())
+                .userPNum(user.getPNum())
+                .userBirth(user.getBirth())
+                .userAddress(user.getAddress())
+                .userStatus(user.getStatus())
+                .build();
+
+        deletedUserRepository.save(deletedUser);
     }
 }

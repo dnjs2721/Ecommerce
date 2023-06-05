@@ -17,13 +17,13 @@ public class Item extends BaseTimeEntity{
     @GeneratedValue
     private Long id;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "seller_id")
+    @JoinColumn(name = "sellerId")
     private User seller;
     private String name;
     private int price;
     private int stockQuantity;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
+    @JoinColumn(name = "categoryId")
     private Category category;
 
     @OneToMany(mappedBy = "item")

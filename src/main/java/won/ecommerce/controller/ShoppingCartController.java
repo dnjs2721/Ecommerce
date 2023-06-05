@@ -88,6 +88,19 @@ public class ShoppingCartController {
         }
     }
 
+    /**
+     * 장바구니 전체 상품 주문
+     */
+    @GetMapping("/orderAllItemAtShoppingCart/{userId}")
+    public ResponseEntity<String> orderAllItemAtShoppingCart(@PathVariable("userId") Long userId) {
+        try {
+            userService.orderAllItemAtShoppingCart(userId);
+            return ResponseEntity.ok().body("주문완료");
+        } catch (NoSuchElementException e) {
+            return createResponseEntity(e, NOT_FOUND);
+        }
+    }
+
     public ResponseEntity<String> createResponseEntity(Exception e, HttpStatus httpStatus) {
         HttpHeaders headers = new HttpHeaders();
         return new ResponseEntity<>(e.getMessage(), headers, httpStatus);

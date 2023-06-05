@@ -52,7 +52,7 @@ public class SellerService {
     @Transactional
     public String deleteItem(Long sellerId, Long itemId) throws IllegalAccessException {
         User seller = checkSeller(sellerId);
-        return itemService.deleteItem(sellerId, itemId);
+        return itemService.deleteItem(seller, itemId);
     }
 
 

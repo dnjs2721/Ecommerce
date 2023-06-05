@@ -31,6 +31,11 @@ public class User extends BaseTimeEntity {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shoppingCartId")
     private ShoppingCart shoppingCart;
+    @OneToMany(mappedBy = "buyer")
+    private final List<OrdersForBuyer> ordersForBuyer = new ArrayList<>();
+    @OneToMany(mappedBy = "seller")
+    private final List<OrdersForSeller> ordersForSeller = new ArrayList<>();
+
 
     @Builder
     public User(String name, String nickname, String email, String password, String pNum, String birth, Address address) {

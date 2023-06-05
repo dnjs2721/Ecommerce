@@ -10,16 +10,14 @@ import won.ecommerce.repository.dto.search.shoppingCart.SearchShoppingCartDto;
 import won.ecommerce.repository.shoppingCart.ShoppingCartItemRepository;
 import won.ecommerce.repository.shoppingCart.ShoppingCartRepository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class ShoppingCartService {
     private final ShoppingCartItemRepository shoppingCartItemRepository;
     private final ShoppingCartRepository shoppingCartRepository;
+    private final OrdersService ordersService;
 
     /**
      * 장바구니 생성
@@ -103,6 +101,24 @@ public class ShoppingCartService {
      */
     public Page<SearchShoppingCartDto> getShoppingCartItems(Long shoppingCartId, Pageable pageable) {
         return shoppingCartItemRepository.searchShoppingCart(shoppingCartId, pageable);
+    }
+
+    /**
+     * 장바구니 전체 상품 주문
+     */
+    public void orderAllItemAtShoppingCart(User user) {
+        ShoppingCart shoppingCart = user.getShoppingCart();
+        Map<Item, Integer> itemsAndCount = new HashMap<>();
+
+        List<ShoppingCartItem> shoppingCartItems = shoppingCart.getShoppingCartItems();
+        for (ShoppingCartItem shoppingCartItem : shoppingCartItems) {
+            Item item = shoppingCartItem.getItem();
+            Integer itemCount = shoppingCartItem.getItemCount();
+            itemsAndCount.put(item, itemCount);
+        }
+
+        ordersService.createOrders(user, itemsAndCount); // 구매자용, 판매자용 주문 생성
+        deleteAllItems(shoppingCart); // 장바구니 비우기
     }
 
 

@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import won.ecommerce.entity.*;
+import won.ecommerce.repository.deleted.DeletedItemRepository;
 import won.ecommerce.repository.dto.search.categoryItem.CategoryItemDto;
 import won.ecommerce.repository.dto.search.item.OrderCondition;
 import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
@@ -24,6 +25,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ItemService {
     private final ItemRepository itemRepository;
+    private final DeletedItemRepository deletedItemRepository;
     private final CategoryService categoryService;
     private final ShoppingCartService shoppingCartService;
 
@@ -87,9 +89,9 @@ public class ItemService {
     /**
      * 상품 삭제
      */
-    public String deleteItem(Long sellerId, Long itemId) throws IllegalAccessException {
+    public String deleteItem(User seller, Long itemId) throws IllegalAccessException {
         Item item = checkItem(itemId);
-        if (!item.getSeller().getId().equals(sellerId)) {
+        if (!item.getSeller().getId().equals(seller.getId())) {
             throw new IllegalAccessException("판매자의 상품이 아닙니다.");
         }
         List<ShoppingCartItem> shoppingCartItems = item.getShoppingCartItems();
@@ -97,6 +99,7 @@ public class ItemService {
             shoppingCartService.deleteAllItemsByList(shoppingCartItems);
         }
         String name = item.getName();
+        saveDeletedItem(seller, item);
         itemRepository.delete(item);
         return name;
     }
@@ -130,5 +133,24 @@ public class ItemService {
         if (bySellerAndName.isPresent()) {
             throw new IllegalStateException("이미 판매자가 판매중인 상품입니다.");
         }
+    }
+
+    /**
+     * 삭제되는 상품 정보 보존
+     */
+    public void saveDeletedItem(User seller, Item item) {
+        DeletedItem deletedItem = DeletedItem.builder()
+                .sellerId(seller.getId())
+                .sellerName(seller.getName())
+                .sellerNickName(seller.getNickname())
+                .sellerEmail(seller.getEmail())
+                .sellerPNum(seller.getPNum())
+                .sellerBirth(seller.getBirth())
+                .sellerAddress(seller.getAddress())
+                .itemId(item.getId())
+                .itemName(item.getName())
+                .itemPrice(item.getPrice())
+                .build();
+        deletedItemRepository.save(deletedItem);
     }
 }

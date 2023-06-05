@@ -1,0 +1,5 @@
+package won.ecommerce.entity;
+
+public enum OrderStatus {
+    WAITING_FOR_PAYMENT, COMPLETE_PAYMENT, WAITING_FOR_DELIVERY, SHIPPING, DELIVERY_COMPLETE, CANCEL
+}
