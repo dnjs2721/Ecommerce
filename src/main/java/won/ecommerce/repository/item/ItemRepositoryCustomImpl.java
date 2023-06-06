@@ -10,7 +10,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import won.ecommerce.entity.Category;
-import won.ecommerce.entity.QShoppingCartItem;
 import won.ecommerce.repository.dto.search.item.OrderCondition;
 import won.ecommerce.repository.dto.search.item.*;
 

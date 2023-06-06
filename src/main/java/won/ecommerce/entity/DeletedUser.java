@@ -9,10 +9,11 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class DeletedUser {
+public class DeletedUser extends BaseTimeEntity {
     @Id
     @GeneratedValue
     private Long id;
+    private Long userId;
     private String userName;
     private String userNickname;
     private String userEmail;
@@ -25,7 +26,8 @@ public class DeletedUser {
     private UserStatus userStatus;
 
     @Builder
-    public DeletedUser(String userName, String userNickname, String userEmail, String userPassword, String userPNum, String userBirth, Address userAddress, UserStatus userStatus) {
+    public DeletedUser(Long userId, String userName, String userNickname, String userEmail, String userPassword, String userPNum, String userBirth, Address userAddress, UserStatus userStatus) {
+        this.userId = userId;
         this.userName = userName;
         this.userNickname = userNickname;
         this.userEmail = userEmail;

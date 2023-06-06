@@ -6,10 +6,7 @@ import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
-import won.ecommerce.entity.QItem;
-import won.ecommerce.entity.QShoppingCart;
-import won.ecommerce.entity.QShoppingCartItem;
-import won.ecommerce.entity.QUser;
+import won.ecommerce.entity.*;
 import won.ecommerce.repository.dto.search.shoppingCart.QSearchShoppingCartDto;
 import won.ecommerce.repository.dto.search.shoppingCart.SearchShoppingCartDto;
 
@@ -29,17 +26,10 @@ public class ShoppingCartItemRepositoryCustomImpl implements ShoppingCartItemRep
     }
 
     @Override
-    public void deleteAllByIds(List<Long> ids) {
-        queryFactory
-                .delete(shoppingCartItem)
-                .where(shoppingCartItem.id.in(ids))
-                .execute();
-    }
-
-    @Override
     public Page<SearchShoppingCartDto> searchShoppingCart(Long shoppingCartId, Pageable pageable) {
         List<SearchShoppingCartDto> content = queryFactory
                 .select(new QSearchShoppingCartDto(
+                        shoppingCartItem.id,
                         item.name,
                         user.nickname,
                         shoppingCartItem.itemCount,
@@ -66,5 +56,15 @@ public class ShoppingCartItemRepositoryCustomImpl implements ShoppingCartItemRep
                 .orderBy(shoppingCartItem.createdDate.asc());
 
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
+    @Override
+    public List<ShoppingCartItem> findShoppingCartItemByShoppingCartIdAndIds(Long shoppingCartId, List<Long> shoppingCartItemIds) {
+        return queryFactory
+                .select(shoppingCartItem)
+                .from(shoppingCartItem)
+                .where(shoppingCartItem.shoppingCart.id.eq(shoppingCartId),
+                        shoppingCartItem.id.in(shoppingCartItemIds))
+                .fetch();
     }
 }

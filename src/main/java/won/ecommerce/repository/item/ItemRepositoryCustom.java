@@ -9,6 +9,7 @@ import won.ecommerce.repository.dto.search.item.ItemSearchFromCommonCondition;
 import won.ecommerce.repository.dto.search.item.SearchItemDto;
 import won.ecommerce.repository.dto.search.item.SearchItemFromCommonDto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ItemRepositoryCustom {

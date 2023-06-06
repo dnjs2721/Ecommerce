@@ -3,9 +3,12 @@ package won.ecommerce.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.*;
-import won.ecommerce.repository.deleted.DeletedItemRepository;
+import won.ecommerce.repository.deleted.item.DeletedItemRepository;
 import won.ecommerce.repository.dto.search.categoryItem.CategoryItemDto;
 import won.ecommerce.repository.dto.search.item.OrderCondition;
 import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
@@ -16,6 +19,7 @@ import won.ecommerce.repository.item.ItemRepository;
 import won.ecommerce.service.dto.item.ChangeItemInfoRequestDto;
 import won.ecommerce.service.dto.item.ItemCreateRequestDto;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -152,5 +156,16 @@ public class ItemService {
                 .itemPrice(item.getPrice())
                 .build();
         deletedItemRepository.save(deletedItem);
+    }
+
+    /**
+     * DeletedItem 보존 기간 지난 정보 삭제
+     * 매일 자정(0시 0분 0초)에 보관기간이 7일 이상 지난 데이터 삭제
+     */
+    @Transactional
+    @Async
+    @Scheduled(cron = "0 0 0 * * *")
+    public void deleteExpireDeletedItem() {
+        deletedItemRepository.deleteItemByCreatedAtLessThanEqual(LocalDateTime.now().minusDays(7));
     }
 }

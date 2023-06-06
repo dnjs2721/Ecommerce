@@ -3,10 +3,12 @@ package won.ecommerce.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.*;
-import won.ecommerce.repository.deleted.DeletedUserRepository;
+import won.ecommerce.repository.deleted.user.DeletedUserRepository;
 import won.ecommerce.repository.dto.search.item.OrderCondition;
 import won.ecommerce.repository.dto.search.item.ItemSearchFromCommonCondition;
 import won.ecommerce.repository.dto.search.item.SearchItemFromCommonDto;
@@ -15,6 +17,8 @@ import won.ecommerce.service.dto.user.ChangeUserInfoRequestDto;
 import won.ecommerce.service.dto.user.JoinRequestDto;
 import won.ecommerce.repository.user.UserRepository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import static io.micrometer.common.util.StringUtils.*;
@@ -137,7 +141,7 @@ public class UserService {
      * 장바구니 상품 추가
      */
     @Transactional
-    public String addShoppingCartItem(Long userId, Long itemId, Integer itemCount) {
+    public String addShoppingCartItem(Long userId, Long itemId, int itemCount) {
         User user = checkUserById(userId); // NoSuchElementException
         Item item = itemService.checkItem(itemId); // NoSuchElementException 상품 없음
         shoppingCartService.addItem(user.getShoppingCart(), item, itemCount);
@@ -145,14 +149,12 @@ public class UserService {
     }
 
     /**
-     * 장바구니 상품 삭제
+     * 장바구니 상품 수량 변경
      */
     @Transactional
-    public String deleteShoppingCartItem(Long userId, Long itemId, Integer itemCount) {
+    public String changeShoppingCartItemCount(Long userId, Long shoppingCartItemId, int changeCount) throws IllegalAccessException {
         User user = checkUserById(userId); // NoSuchElementException
-        Item item = itemService.checkItem(itemId); // NoSuchElementException 상품 없음
-        shoppingCartService.deleteItem(user.getShoppingCart().getId(), itemId, itemCount);
-        return item.getName();
+        return shoppingCartService.changeCount(user.getShoppingCart().getId(), shoppingCartItemId, changeCount);
     }
 
     /**
@@ -185,9 +187,18 @@ public class UserService {
      * 장바구니 전체 상품 주문
      */
     @Transactional
-    public void orderAllItemAtShoppingCart(Long userId) {
+    public List<String> orderAllItemAtShoppingCart(Long userId) {
         User user = checkUserById(userId);
-        shoppingCartService.orderAllItemAtShoppingCart(user);
+        return shoppingCartService.orderAllItemAtShoppingCart(user);
+    }
+
+    /**
+     * 장바구니 상품 선택 주문
+     */
+    @Transactional
+    public List<String> orderSelectItemAtShoppingCart(Long userId, List<Long> shoppingCartItemId) {
+        User user = checkUserById(userId);
+        return shoppingCartService.orderSelectItemAtShoppingCart(user, shoppingCartItemId);
     }
 
 
@@ -249,6 +260,7 @@ public class UserService {
     // 회원탈퇴시 정보 저장
     public void saveDeletedUser(User user) {
         DeletedUser deletedUser = DeletedUser.builder()
+                .userId(user.getId())
                 .userName(user.getName())
                 .userNickname(user.getNickname())
                 .userEmail(user.getEmail())
@@ -260,5 +272,16 @@ public class UserService {
                 .build();
 
         deletedUserRepository.save(deletedUser);
+    }
+
+    /**
+     * DeletedUser 보관 기간 지난 정보 삭제
+     * 매일 자정(0시 0분 0초)에 보관 기간이 7일 이상 지난 데이터 삭제
+     */
+    @Transactional
+    @Async
+    @Scheduled(cron = "0 0 0 * * *")
+    public void deleteExpireDeletedItem() {
+        deletedUserRepository.deleteUserByCreatedAtLessThanEqual(LocalDateTime.now().minusDays(7));
     }
 }

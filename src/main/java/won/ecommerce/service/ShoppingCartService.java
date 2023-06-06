@@ -40,30 +40,32 @@ public class ShoppingCartService {
     /**
      * 장바구니 상품 추가
      */
-    public void addItem(ShoppingCart shoppingCart, Item item, Integer itemCount) {
-        Optional<ShoppingCartItem> findItem = shoppingCartItemRepository.findByShoppingCartIdAndItemId(shoppingCart.getId(), item.getId());
-        if (itemCount == null) {
-            itemCount = 1;
-        }
-        if (findItem.isEmpty()) {
+    public void addItem(ShoppingCart shoppingCart, Item item, int itemCount) {
+        Optional<ShoppingCartItem> optionalShoppingCartItem = shoppingCartItemRepository.findByShoppingCartIdAndItemId(shoppingCart.getId(), item.getId());
+        if (optionalShoppingCartItem.isEmpty()) {
             ShoppingCartItem shoppingCartItem = new ShoppingCartItem(shoppingCart, item, itemCount);
             shoppingCartItemRepository.save(shoppingCartItem);
         } else {
-            ShoppingCartItem shoppingCartItem = findItem.get();
+            ShoppingCartItem shoppingCartItem = optionalShoppingCartItem.get();
             shoppingCartItem.changeItemCount(itemCount + shoppingCartItem.getItemCount());
         }
     }
 
     /**
-     * 장바구니 상품 삭제
+     * 장바구니 상품 수량 변경
      */
-    public void deleteItem(Long shoppingCartId, Long itemId, Integer itemCount) {
-        ShoppingCartItem shoppingCartItem = findShoppingCartItem(shoppingCartId, itemId);
-        if (itemCount == null || shoppingCartItem.getItemCount() <= itemCount) {
-            shoppingCartItemRepository.delete(shoppingCartItem);
-        } else{
-            shoppingCartItem.changeItemCount(shoppingCartItem.getItemCount() - itemCount);
+    public String changeCount(Long shoppingCartId, Long shoppingCartItemId, int changeCount) throws IllegalAccessException {
+        Optional<ShoppingCartItem> optionalShoppingCartItem = shoppingCartItemRepository.findById(shoppingCartItemId);
+        if (optionalShoppingCartItem.isEmpty()) {
+            throw new NoSuchElementException("잘못된 장바구니 상품입니다.");
         }
+        ShoppingCartItem shoppingCartItem = optionalShoppingCartItem.get();
+        if (!shoppingCartItem.getShoppingCart().getId().equals(shoppingCartId)) {
+            throw new IllegalAccessException("사용자의 장바구니 상품이 아닙니다.");
+        }
+        shoppingCartItem.changeItemCount(changeCount);
+
+        return shoppingCartItem.getItem().getName();
     }
 
     /**
@@ -72,21 +74,20 @@ public class ShoppingCartService {
     public void deleteAllItems(ShoppingCart shoppingCart) {
         List<ShoppingCartItem> shoppingCartItems = shoppingCart.getShoppingCartItems();
         if (shoppingCartItems.isEmpty()) {
-            throw new NoSuchElementException("장바구니가에 담긴 상품이 없습니다.");
+            throw new NoSuchElementException("장바구니에 담긴 상품이 없습니다.");
         }
         deleteAllItemsByList(shoppingCartItems);
     }
 
     /**
      * 장바구니 상품 리스트 삭제
-     * 쿼리 최적화
      */
     public void deleteAllItemsByList(List<ShoppingCartItem> shoppingCartItems) {
         List<Long> shoppingCartItemIds = new ArrayList<>();
         for (ShoppingCartItem shoppingCartItem : shoppingCartItems) {
             shoppingCartItemIds.add(shoppingCartItem.getId());
         }
-        shoppingCartItemRepository.deleteAllByIds(shoppingCartItemIds);
+        shoppingCartItemRepository.deleteAllByIdInBatch(shoppingCartItemIds);
     }
 
     /**
@@ -106,27 +107,57 @@ public class ShoppingCartService {
     /**
      * 장바구니 전체 상품 주문
      */
-    public void orderAllItemAtShoppingCart(User user) {
+    public List<String> orderAllItemAtShoppingCart(User user) {
         ShoppingCart shoppingCart = user.getShoppingCart();
-        Map<Item, Integer> itemsAndCount = new HashMap<>();
+
+        List<String> itemsName = new ArrayList<>();
 
         List<ShoppingCartItem> shoppingCartItems = shoppingCart.getShoppingCartItems();
+
+        Map<Item, Integer> itemAndCountMap = createItemAndCountMap(shoppingCartItems, itemsName);
+
+        ordersService.createOrders(user, itemAndCountMap); // 구매자용, 판매자용 주문 생성
+        deleteAllItems(shoppingCart); // 장바구니 비우기
+
+        return itemsName;
+    }
+
+    /**
+     * 장바구니 상품 선택 주문
+     */
+    public List<String> orderSelectItemAtShoppingCart(User user, List<Long> shoppingCartItemIds) {
+
+        Long shoppingCartId = user.getShoppingCart().getId();
+        List<ShoppingCartItem> shoppingCartItems =
+                shoppingCartItemRepository.findShoppingCartItemByShoppingCartIdAndIds(shoppingCartId, shoppingCartItemIds);
+        if ((shoppingCartItemIds.size() != shoppingCartItems.size()) || shoppingCartItemIds.isEmpty()) {
+            throw new IllegalArgumentException("잘못된 주문입니다.");
+        }
+
+        List<String> itemsName = new ArrayList<>();
+
+        Map<Item, Integer> itemAndCountMap = createItemAndCountMap(shoppingCartItems, itemsName);
+
+        ordersService.createOrders(user, itemAndCountMap);
+        shoppingCartItemRepository.deleteAllByIdInBatch(shoppingCartItemIds);
+
+        return itemsName;
+    }
+
+    /**
+     * Item, Count 맵 작성
+     */
+    public Map<Item, Integer> createItemAndCountMap(List<ShoppingCartItem> shoppingCartItems, List<String> itemsName) {
+        Map<Item, Integer> itemsAndCount = new HashMap<>();
+
         for (ShoppingCartItem shoppingCartItem : shoppingCartItems) {
             Item item = shoppingCartItem.getItem();
             Integer itemCount = shoppingCartItem.getItemCount();
             itemsAndCount.put(item, itemCount);
+
+            itemsName.add(item.getName());
         }
 
-        ordersService.createOrders(user, itemsAndCount); // 구매자용, 판매자용 주문 생성
-        deleteAllItems(shoppingCart); // 장바구니 비우기
-    }
-
-
-    public ShoppingCartItem findShoppingCartItem(Long shoppingCartId, Long itemId) {
-        Optional<ShoppingCartItem> findShoppingCartItem = shoppingCartItemRepository.findByShoppingCartIdAndItemId(shoppingCartId, itemId);
-        if (findShoppingCartItem.isEmpty()) {
-            throw new NoSuchElementException("장바구니에서 상품을 찾지 못했습니다.");
-        }
-        return findShoppingCartItem.get();
+        return itemsAndCount;
     }
 }

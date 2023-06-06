@@ -8,5 +8,5 @@ public class ShoppingCartItemRequestDto {
     @NotNull(message = "상품 Id(필수)")
     Long itemId;
 
-    Integer itemCount;
+    int itemCount = 1;
 }

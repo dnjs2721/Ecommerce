@@ -8,12 +8,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import won.ecommerce.controller.dto.shoppingCartDto.ChangeShoppingCartItemCountRequestDto;
 import won.ecommerce.controller.dto.shoppingCartDto.ShoppingCartItemRequestDto;
 import won.ecommerce.repository.dto.search.shoppingCart.SearchShoppingCartDto;
 import won.ecommerce.service.UserService;
 
 import java.util.NoSuchElementException;
 
+import static org.springframework.http.HttpStatus.NOT_ACCEPTABLE;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @RestController
@@ -37,15 +39,17 @@ public class ShoppingCartController {
     }
 
     /**
-     * 장바구니 상품 삭제
+     * 장바구니 상품 수량 변경
      */
-    @PostMapping("/deleteShoppingCartItem/{userId}")
-    public ResponseEntity<String> deleteShoppingCartItem(@PathVariable("userId") Long userId, @RequestBody @Valid ShoppingCartItemRequestDto request) {
+    @PostMapping("/changeShoppingCartItemCount/{userId}")
+    public ResponseEntity<String> changeShoppingCartItemCount(@PathVariable("userId") Long userId, @RequestBody @Valid ChangeShoppingCartItemCountRequestDto request) {
         try {
-            String itemName = userService.deleteShoppingCartItem(userId, request.getItemId(), request.getItemCount());
-            return ResponseEntity.ok().body(itemName + " 이(가) 장바구니에서 삭제 되었습니다.");
-        } catch (NoSuchElementException e) { // 사용자 없음, 상품 없음 예외
-            return createResponseEntity(e, NOT_FOUND);
+            String itemName = userService.changeShoppingCartItemCount(userId, request.getShoppingCartItemId(), request.getChangCount());
+            return ResponseEntity.ok().body(itemName + " 수량 변경 완료.");
+        } catch (NoSuchElementException e1) { // 사용자 없음, 장바구니 상품 없음 예외
+            return createResponseEntity(e1, NOT_FOUND);
+        } catch (IllegalAccessException e2) { // 사용자의 장바구니 상품이 아님
+            return createResponseEntity(e2, NOT_ACCEPTABLE);
         }
     }
 
@@ -84,19 +88,6 @@ public class ShoppingCartController {
             Page<SearchShoppingCartDto> shoppingCartItems = userService.getShoppingCartItems(userId, pageable);
             return ResponseEntity.ok().body(shoppingCartItems);
         } catch (NoSuchElementException e) { // 사용자 없음
-            return createResponseEntity(e, NOT_FOUND);
-        }
-    }
-
-    /**
-     * 장바구니 전체 상품 주문
-     */
-    @GetMapping("/orderAllItemAtShoppingCart/{userId}")
-    public ResponseEntity<String> orderAllItemAtShoppingCart(@PathVariable("userId") Long userId) {
-        try {
-            userService.orderAllItemAtShoppingCart(userId);
-            return ResponseEntity.ok().body("주문완료");
-        } catch (NoSuchElementException e) {
             return createResponseEntity(e, NOT_FOUND);
         }
     }
