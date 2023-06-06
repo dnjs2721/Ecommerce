@@ -16,6 +16,7 @@ import won.ecommerce.service.SellerService;
 import won.ecommerce.service.dto.item.ChangeItemInfoRequestDto;
 import won.ecommerce.service.dto.item.ItemCreateRequestDto;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import static org.springframework.http.HttpStatus.*;
@@ -73,15 +74,20 @@ public class SellerController {
         }
     }
 
+    /**
+     * 상품 삭제
+     */
     @PostMapping("/deleteItem/{sellerId}")
-    public ResponseEntity<String> deleteItem(@PathVariable("sellerId") Long sellerId, @RequestBody @Valid DeleteItemRequestDto request) {
+    public ResponseEntity<String> deleteItem(@PathVariable("sellerId") Long sellerId, @RequestBody DeleteItemRequestDto request) {
         try {
-            String itemName = sellerService.deleteItem(sellerId, request.getItemId());
-            return ResponseEntity.ok().body(itemName + " 이(가) 삭제되었습니다.");
+            List<String> itemsName = sellerService.deleteItem(sellerId, request.getItemIds());
+            return ResponseEntity.ok().body(itemsName.toString() + " 이(가) 삭제되었습니다.");
         } catch (IllegalAccessException e1) {
             return createResponseEntity(e1, NOT_ACCEPTABLE);
         } catch (NoSuchElementException e2) {
             return createResponseEntity(e2, NOT_FOUND);
+        } catch (IllegalArgumentException e3) {
+            return createResponseEntity(e3, CONFLICT);
         }
     }
 

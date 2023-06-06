@@ -158,7 +158,15 @@ public class UserService {
     }
 
     /**
-     * 장바구니 상품 전체 삭제
+     * 장바구니 선택 상품 삭제
+     */
+    @Transactional
+    public List<String> deleteShoppingCartItem(Long userId, List<Long> shoppingCartItemIds) {
+        User user = checkUserById(userId);
+        return shoppingCartService.deleteShoppingCartItemByListIds(user, shoppingCartItemIds);
+    }
+    /**
+     * 장바구니 비우기
      */
     @Transactional
     public String deleteAllShoppingCartItem(Long userId) {

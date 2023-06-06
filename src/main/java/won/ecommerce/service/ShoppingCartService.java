@@ -76,18 +76,33 @@ public class ShoppingCartService {
         if (shoppingCartItems.isEmpty()) {
             throw new NoSuchElementException("장바구니에 담긴 상품이 없습니다.");
         }
-        deleteAllItemsByList(shoppingCartItems);
+        deleteShoppingCartItemByList(shoppingCartItems);
     }
 
     /**
-     * 장바구니 상품 리스트 삭제
+     * 장바구니 상품 리스트 삭제 List<ShoppingCartItem>
      */
-    public void deleteAllItemsByList(List<ShoppingCartItem> shoppingCartItems) {
+    public void deleteShoppingCartItemByList(List<ShoppingCartItem> shoppingCartItems) {
         List<Long> shoppingCartItemIds = new ArrayList<>();
         for (ShoppingCartItem shoppingCartItem : shoppingCartItems) {
             shoppingCartItemIds.add(shoppingCartItem.getId());
         }
         shoppingCartItemRepository.deleteAllByIdInBatch(shoppingCartItemIds);
+    }
+
+    /**
+     * 장바구니 상품 리스트 삭제 List<Long>
+     */
+    public List<String> deleteShoppingCartItemByListIds(User user, List<Long> shoppingCartItemIds) {
+        List<ShoppingCartItem> shoppingCartItems = findShoppingCartItemByShoppingCartIdAndIds(user, shoppingCartItemIds);
+        List<String> itemsName = new ArrayList<>();
+
+        for (ShoppingCartItem shoppingCartItem : shoppingCartItems) {
+            itemsName.add(shoppingCartItem.getItem().getName());
+        }
+        shoppingCartItemRepository.deleteAllByIdInBatch(shoppingCartItemIds);
+
+        return itemsName;
     }
 
     /**
@@ -127,12 +142,7 @@ public class ShoppingCartService {
      */
     public List<String> orderSelectItemAtShoppingCart(User user, List<Long> shoppingCartItemIds) {
 
-        Long shoppingCartId = user.getShoppingCart().getId();
-        List<ShoppingCartItem> shoppingCartItems =
-                shoppingCartItemRepository.findShoppingCartItemByShoppingCartIdAndIds(shoppingCartId, shoppingCartItemIds);
-        if ((shoppingCartItemIds.size() != shoppingCartItems.size()) || shoppingCartItemIds.isEmpty()) {
-            throw new IllegalArgumentException("잘못된 주문입니다.");
-        }
+        List<ShoppingCartItem> shoppingCartItems = findShoppingCartItemByShoppingCartIdAndIds(user, shoppingCartItemIds);
 
         List<String> itemsName = new ArrayList<>();
 
@@ -159,5 +169,18 @@ public class ShoppingCartService {
         }
 
         return itemsAndCount;
+    }
+
+    /**
+     * 사용자의 장바구니 상품인지 검사
+     */
+    public List<ShoppingCartItem> findShoppingCartItemByShoppingCartIdAndIds(User user, List<Long> shoppingCartItemIds){
+        Long shoppingCartId = user.getShoppingCart().getId();
+        List<ShoppingCartItem> shoppingCartItems =
+                shoppingCartItemRepository.findShoppingCartItemByShoppingCartIdAndIds(shoppingCartId, shoppingCartItemIds);
+        if ((shoppingCartItemIds.size() != shoppingCartItems.size()) || shoppingCartItemIds.isEmpty()) {
+            throw new IllegalArgumentException("잘못된 장바구니 상품 정보입니다.");
+        }
+        return shoppingCartItems;
     }
 }

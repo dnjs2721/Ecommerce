@@ -175,6 +175,9 @@ public class AdminController {
         }
     }
 
+    /**
+     * 카테고리 삭제
+     */
     @PostMapping("/deleteCategory/{adminId}")
     public ResponseEntity<String> deleteCategory(@PathVariable("adminId") Long adminId, @RequestBody @Valid DeleteCategoryRequestDto request) {
         try {

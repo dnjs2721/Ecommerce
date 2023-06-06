@@ -1,10 +1,11 @@
 package won.ecommerce.controller.dto.itemDto;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 public class DeleteItemRequestDto {
-    @NotNull(message = "아이템 ID(필수)")
-    Long itemId;
+    List<Long> itemIds = new ArrayList<>();
 }

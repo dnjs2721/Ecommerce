@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import won.ecommerce.entity.Category;
+import won.ecommerce.entity.Item;
 import won.ecommerce.repository.dto.search.item.OrderCondition;
 import won.ecommerce.repository.dto.search.item.*;
 
@@ -139,6 +140,16 @@ public class ItemRepositoryCustomImpl implements ItemRepositoryCustom{
                 .set(shoppingCartItem.totalItemPrice, shoppingCartItem.itemCount.multiply(price))
                 .where(shoppingCartItem.item.id.eq(itemId))
                 .execute();
+    }
+
+    @Override
+    public List<Item> findItemBySellerIdAndItemIds(Long sellerId, List<Long> itemIds) {
+        return queryFactory
+                .select(item)
+                .from(item)
+                .where(item.seller.id.eq(sellerId),
+                        item.id.in(itemIds))
+                .fetch();
     }
 
     private BooleanExpression sellerNickNameEq(String sellerNickName) {

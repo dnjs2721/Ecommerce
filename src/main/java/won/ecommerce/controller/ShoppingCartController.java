@@ -9,14 +9,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import won.ecommerce.controller.dto.shoppingCartDto.ChangeShoppingCartItemCountRequestDto;
+import won.ecommerce.controller.dto.shoppingCartDto.DeleteShoppingCartItemRequestDto;
 import won.ecommerce.controller.dto.shoppingCartDto.ShoppingCartItemRequestDto;
 import won.ecommerce.repository.dto.search.shoppingCart.SearchShoppingCartDto;
 import won.ecommerce.service.UserService;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
-import static org.springframework.http.HttpStatus.NOT_ACCEPTABLE;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -54,7 +55,22 @@ public class ShoppingCartController {
     }
 
     /**
-     * 장바구니 상품 전체 삭제
+     * 장바구니 선택 상품 삭제
+     */
+    @PostMapping("/deleteShoppingCartItem/{userId}")
+    public ResponseEntity<String> deleteShoppingCartItem(@PathVariable("userId") Long userId, @RequestBody DeleteShoppingCartItemRequestDto request) {
+        try {
+            List<String> itemsName = userService.deleteShoppingCartItem(userId, request.getShoppingCartItemsIds());
+            return ResponseEntity.ok().body(itemsName.toString() + " 이 장바구니에서 삭제되었습니다.");
+        } catch (NoSuchElementException e1) {
+            return createResponseEntity(e1, NOT_FOUND);
+        } catch (IllegalArgumentException e2) {
+            return createResponseEntity(e2, CONFLICT);
+        }
+    }
+
+    /**
+     * 장바구니 비우기
      */
     @PostMapping("/deleteAllShoppingCartItem/{userId}")
     public ResponseEntity<String> deleteAllShoppingCartItem(@PathVariable("userId") Long userId) {

@@ -13,6 +13,8 @@ import won.ecommerce.repository.dto.search.item.SearchItemDto;
 import won.ecommerce.service.dto.item.ChangeItemInfoRequestDto;
 import won.ecommerce.service.dto.item.ItemCreateRequestDto;
 
+import java.util.List;
+
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -50,9 +52,9 @@ public class SellerService {
      * 상품 삭제
      */
     @Transactional
-    public String deleteItem(Long sellerId, Long itemId) throws IllegalAccessException {
+    public List<String> deleteItem(Long sellerId, List<Long> itemIds) throws IllegalAccessException {
         User seller = checkSeller(sellerId);
-        return itemService.deleteItem(seller, itemId);
+        return itemService.deleteItem(seller, itemIds);
     }
 
 

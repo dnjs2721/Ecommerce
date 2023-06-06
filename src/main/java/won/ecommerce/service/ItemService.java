@@ -93,19 +93,23 @@ public class ItemService {
     /**
      * 상품 삭제
      */
-    public String deleteItem(User seller, Long itemId) throws IllegalAccessException {
-        Item item = checkItem(itemId);
-        if (!item.getSeller().getId().equals(seller.getId())) {
-            throw new IllegalAccessException("판매자의 상품이 아닙니다.");
+    public List<String> deleteItem(User seller, List<Long> itemIds){
+        List<Item> findItems = itemRepository.findItemBySellerIdAndItemIds(seller.getId(), itemIds);
+        if (itemIds.isEmpty() || (findItems.size() != itemIds.size())) {
+            throw new IllegalArgumentException("잘못된 상품 정보입니다.");
         }
-        List<ShoppingCartItem> shoppingCartItems = item.getShoppingCartItems();
+        List<String> itemsName = new ArrayList<>();
+        List<ShoppingCartItem> shoppingCartItems = new ArrayList<>();
+        for (Item item : findItems) {
+            shoppingCartItems.addAll(item.getShoppingCartItems());
+            itemsName.add(item.getName());
+        }
         if (!shoppingCartItems.isEmpty()) {
-            shoppingCartService.deleteAllItemsByList(shoppingCartItems);
+            shoppingCartService.deleteShoppingCartItemByList(shoppingCartItems);
         }
-        String name = item.getName();
-        saveDeletedItem(seller, item);
-        itemRepository.delete(item);
-        return name;
+        saveDeletedItem(seller, findItems);
+        itemRepository.deleteAllByIdInBatch(itemIds);
+        return itemsName;
     }
 
     /**
@@ -142,20 +146,22 @@ public class ItemService {
     /**
      * 삭제되는 상품 정보 보존
      */
-    public void saveDeletedItem(User seller, Item item) {
-        DeletedItem deletedItem = DeletedItem.builder()
-                .sellerId(seller.getId())
-                .sellerName(seller.getName())
-                .sellerNickName(seller.getNickname())
-                .sellerEmail(seller.getEmail())
-                .sellerPNum(seller.getPNum())
-                .sellerBirth(seller.getBirth())
-                .sellerAddress(seller.getAddress())
-                .itemId(item.getId())
-                .itemName(item.getName())
-                .itemPrice(item.getPrice())
-                .build();
-        deletedItemRepository.save(deletedItem);
+    public void saveDeletedItem(User seller, List<Item> items) {
+        for (Item item : items) {
+            DeletedItem deletedItem = DeletedItem.builder()
+                    .sellerId(seller.getId())
+                    .sellerName(seller.getName())
+                    .sellerNickName(seller.getNickname())
+                    .sellerEmail(seller.getEmail())
+                    .sellerPNum(seller.getPNum())
+                    .sellerBirth(seller.getBirth())
+                    .sellerAddress(seller.getAddress())
+                    .itemId(item.getId())
+                    .itemName(item.getName())
+                    .itemPrice(item.getPrice())
+                    .build();
+            deletedItemRepository.save(deletedItem);
+        }
     }
 
     /**
