@@ -11,7 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import won.ecommerce.entity.Category;
 import won.ecommerce.entity.Item;
-import won.ecommerce.repository.dto.search.item.OrderCondition;
+import won.ecommerce.repository.dto.search.item.SortCondition;
 import won.ecommerce.repository.dto.search.item.*;
 
 import java.time.LocalDateTime;
@@ -77,7 +77,7 @@ public class ItemRepositoryCustomImpl implements ItemRepositoryCustom{
     }
 
     @Override
-    public Page<SearchItemFromCommonDto> searchItemPageFromCommon(ItemSearchFromCommonCondition condition, OrderCondition orderCondition, Pageable pageable) {
+    public Page<SearchItemFromCommonDto> searchItemPageFromCommon(ItemSearchFromCommonCondition condition, SortCondition sortCondition, Pageable pageable) {
         List<SearchItemFromCommonDto> content = queryFactory
                 .select(new QSearchItemFromCommonDto(
                         new QSellerInfoDto(
@@ -97,7 +97,7 @@ public class ItemRepositoryCustomImpl implements ItemRepositoryCustom{
                         priceGoe(condition.getPriceGoe()),
                         priceLoe(condition.getPriceLoe()),
                         categoryEQ(condition.getCategoryId()))
-                .orderBy(createOrderSpecifier(orderCondition).toArray(OrderSpecifier[]::new))
+                .orderBy(createOrderSpecifier(sortCondition).toArray(OrderSpecifier[]::new))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -188,7 +188,7 @@ public class ItemRepositoryCustomImpl implements ItemRepositoryCustom{
         return hasText(itemName) ? item.name.like("%"+itemName+"%") : null;
     }
 
-    public List<OrderSpecifier<?>> createOrderSpecifier(OrderCondition orderCondition) {
+    public List<OrderSpecifier<?>> createOrderSpecifier(SortCondition orderCondition) {
         List<OrderSpecifier<?>> orderSpecifiers = new ArrayList<>();
 
         checkOrderCondition(orderSpecifiers, orderCondition.getOrderName1(), orderCondition.getOrderDirect1());

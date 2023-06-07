@@ -9,9 +9,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.*;
 import won.ecommerce.repository.deleted.user.DeletedUserRepository;
-import won.ecommerce.repository.dto.search.item.OrderCondition;
+import won.ecommerce.repository.dto.search.item.SortCondition;
 import won.ecommerce.repository.dto.search.item.ItemSearchFromCommonCondition;
 import won.ecommerce.repository.dto.search.item.SearchItemFromCommonDto;
+import won.ecommerce.repository.dto.search.order.OrderSearchCondition;
+import won.ecommerce.repository.dto.search.order.SearchOrderItemsForBuyerDto;
+import won.ecommerce.repository.dto.search.order.SearchOrdersForBuyerDto;
 import won.ecommerce.repository.dto.search.shoppingCart.SearchShoppingCartDto;
 import won.ecommerce.service.dto.user.ChangeUserInfoRequestDto;
 import won.ecommerce.service.dto.user.JoinRequestDto;
@@ -33,6 +36,7 @@ public class UserService {
     private final ChangeStatusLogService changeStatusLogService;
     private final ItemService itemService;
     private final ShoppingCartService shoppingCartService;
+    private final OrdersService ordersService;
 
     /**
      * 회원가입
@@ -133,8 +137,8 @@ public class UserService {
     /**
      * 상품 조회
      */
-    public Page<SearchItemFromCommonDto> searchItems(ItemSearchFromCommonCondition condition, OrderCondition orderCondition, Pageable pageable) {
-        return itemService.searchItemFromCommon(condition, orderCondition, pageable);
+    public Page<SearchItemFromCommonDto> searchItems(ItemSearchFromCommonCondition condition, SortCondition sortCondition, Pageable pageable) {
+        return itemService.searchItemFromCommon(condition, sortCondition, pageable);
     }
 
     /**
@@ -209,6 +213,31 @@ public class UserService {
         return shoppingCartService.orderSelectItemAtShoppingCart(user, shoppingCartItemId);
     }
 
+    /**
+     * 상품 단건 주문
+     */
+    @Transactional
+    public String orderSingleItem(Long buyerId, Long itemId, int itemCount) {
+        User buyer = checkUserById(buyerId); // NoSuchElementException
+        Item item = itemService.checkItem(itemId); // NoSuchElementException
+        return ordersService.orderSingleItem(buyer, item, itemCount);
+    }
+
+    /**
+     * 주문 조회 사용자
+     */
+    public Page<SearchOrdersForBuyerDto> searchOrdersForBuyer(Long buyerId, OrderSearchCondition condition, Pageable pageable) {
+        User user = checkUserById(buyerId);
+        return ordersService.searchOrdersForBuyer(buyerId, condition, pageable);
+    }
+
+    /**
+     * 주문 상세 조회 사용자
+     */
+    public List<SearchOrderItemsForBuyerDto> searchOrderDetailForBuyer(Long buyerId, Long orderId) {
+        User user = checkUserById(buyerId);
+        return ordersService.searchOrderDetailForBuyer(buyerId, orderId);
+    }
 
     /**
      * 닉네임 검사

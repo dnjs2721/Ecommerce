@@ -3,7 +3,7 @@ package won.ecommerce.repository.dto.search.item;
 import lombok.Data;
 
 @Data
-public class OrderCondition {
+public class SortCondition {
     private String orderName1;
     private String orderDirect1;
     private String orderName2;

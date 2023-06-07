@@ -10,6 +10,7 @@ import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
 import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
 import won.ecommerce.repository.dto.search.item.SearchItemDto;
+import won.ecommerce.repository.dto.search.order.*;
 import won.ecommerce.service.dto.item.ChangeItemInfoRequestDto;
 import won.ecommerce.service.dto.item.ItemCreateRequestDto;
 
@@ -21,6 +22,7 @@ import java.util.List;
 public class SellerService {
     private final ItemService itemService;
     private final UserService userService;
+    private final OrdersService ordersService;
 
     /**
      * 판매 상품 등록
@@ -57,6 +59,21 @@ public class SellerService {
         return itemService.deleteItem(seller, itemIds);
     }
 
+    /**
+     * 주문 조회 판매자
+     */
+    public Page<SearchOrdersForSellerDto> searchOrdersForSeller(Long sellerId, OrderSearchCondition condition, Pageable pageable) throws IllegalAccessException {
+        User seller = checkSeller(sellerId);
+        return ordersService.searchOrdersForSeller(sellerId, condition, pageable);
+    }
+
+    /**
+     * 주문 상세 조회 판매자
+     */
+    public List<SearchOrderItemForSellerDto> searchOrderDetailForSeller(Long sellerId, Long orderId) throws IllegalAccessException {
+        User seller = checkSeller(sellerId); //NoSuchElementException
+        return ordersService.searchOrderDetailForSeller(sellerId, orderId);
+    }
 
     // 판매자 확인
     public User checkSeller(Long sellerId) throws IllegalAccessException {

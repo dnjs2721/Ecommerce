@@ -12,6 +12,10 @@ import won.ecommerce.controller.dto.itemDto.DeleteItemRequestDto;
 import won.ecommerce.entity.Item;
 import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
 import won.ecommerce.repository.dto.search.item.SearchItemDto;
+import won.ecommerce.repository.dto.search.order.OrderSearchCondition;
+import won.ecommerce.repository.dto.search.order.SearchOrderItemForSellerDto;
+import won.ecommerce.repository.dto.search.order.SearchOrderItemsForBuyerDto;
+import won.ecommerce.repository.dto.search.order.SearchOrdersForSellerDto;
 import won.ecommerce.service.SellerService;
 import won.ecommerce.service.dto.item.ChangeItemInfoRequestDto;
 import won.ecommerce.service.dto.item.ItemCreateRequestDto;
@@ -87,6 +91,38 @@ public class SellerController {
         } catch (NoSuchElementException e2) {
             return createResponseEntity(e2, NOT_FOUND);
         } catch (IllegalArgumentException e3) {
+            return createResponseEntity(e3, CONFLICT);
+        }
+    }
+
+    /**
+     * 주문 조회 판매자
+     */
+    @GetMapping("/searchOrders/{userId}")
+    public ResponseEntity<?> searchOrdersForSeller(@PathVariable("userId") Long sellerId, OrderSearchCondition condition, Pageable pageable) {
+        try {
+            Page<SearchOrdersForSellerDto> content = sellerService.searchOrdersForSeller(sellerId, condition, pageable);
+            return ResponseEntity.ok().body(content);
+        } catch (IllegalAccessException e1) {
+            return createResponseEntity(e1, NOT_ACCEPTABLE);
+        } catch (NoSuchElementException e2) {
+            return createResponseEntity(e2, NOT_FOUND);
+        }
+    }
+
+    /**
+     * 주문 상세 조회 사용자
+     */
+    @GetMapping("/searchOrderDetail/{userId}/{orderId}")
+    public ResponseEntity<?> searchOrderDetail(@PathVariable("userId") Long sellerId, @PathVariable("orderId") Long orderId) {
+        try {
+            List<SearchOrderItemForSellerDto> items = sellerService.searchOrderDetailForSeller(sellerId, orderId);
+            return ResponseEntity.ok().body(items);
+        } catch (NoSuchElementException e1) {
+            return createResponseEntity(e1, NOT_FOUND);
+        } catch (IllegalAccessException e2) {
+            return createResponseEntity(e2, NOT_ACCEPTABLE);
+        } catch (IllegalStateException e3) {
             return createResponseEntity(e3, CONFLICT);
         }
     }

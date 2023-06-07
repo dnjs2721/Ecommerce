@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import won.ecommerce.exception.NotEnoughStockException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +50,15 @@ public class Item extends BaseTimeEntity{
     public void changeStockQuantity(int stockQuantity) {
         this.stockQuantity = stockQuantity;
     }
+
+    public void decreaseStockQuantity(int count) {
+        int restStock = this.stockQuantity - count;
+        if (restStock < 0) {
+            throw new NotEnoughStockException(this.getName() + "의 재고가 부족합니다.");
+        }
+        this.stockQuantity = restStock;
+    }
+
 
     public void changeCategory(Category category) {
         this.category.getItems().remove(this);

@@ -8,18 +8,20 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import won.ecommerce.controller.dto.shoppingCartDto.ShoppingCartItemRequestDto;
 import won.ecommerce.controller.dto.userDto.*;
 import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
-import won.ecommerce.repository.dto.search.item.OrderCondition;
+import won.ecommerce.repository.dto.search.item.SortCondition;
 import won.ecommerce.repository.dto.search.item.ItemSearchFromCommonCondition;
 import won.ecommerce.repository.dto.search.item.SearchItemFromCommonDto;
-import won.ecommerce.repository.dto.search.shoppingCart.SearchShoppingCartDto;
+import won.ecommerce.repository.dto.search.order.OrderSearchCondition;
+import won.ecommerce.repository.dto.search.order.SearchOrderItemsForBuyerDto;
+import won.ecommerce.repository.dto.search.order.SearchOrdersForBuyerDto;
 import won.ecommerce.service.UserService;
 import won.ecommerce.service.dto.user.JoinRequestDto;
 import won.ecommerce.service.dto.user.ChangeUserInfoRequestDto;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import static org.springframework.http.HttpStatus.*;
@@ -142,9 +144,37 @@ public class UserController {
      * 상품 조회
      */
     @GetMapping("/searchItem")
-    public ResponseEntity<?> searchItem(ItemSearchFromCommonCondition condition, OrderCondition orderCondition, Pageable pageable) {
-        Page<SearchItemFromCommonDto> findItems = userService.searchItems(condition, orderCondition, pageable);
+    public ResponseEntity<?> searchItem(ItemSearchFromCommonCondition condition, SortCondition sortCondition, Pageable pageable) {
+        Page<SearchItemFromCommonDto> findItems = userService.searchItems(condition, sortCondition, pageable);
         return ResponseEntity.ok().body(findItems);
+    }
+
+    /**
+     * 주문 조회 사용자
+     */
+    @GetMapping("/searchOrders/{userId}")
+    public ResponseEntity<?> searchOrdersForBuyer(@PathVariable("userId") Long buyerId, OrderSearchCondition condition, Pageable pageable) {
+        try {
+            Page<SearchOrdersForBuyerDto> content = userService.searchOrdersForBuyer(buyerId, condition, pageable);
+            return ResponseEntity.ok().body(content);
+        } catch (NoSuchElementException e) {
+            return createResponseEntity(e, NOT_FOUND);
+        }
+    }
+
+    /**
+     * 주문 상세 조회 사용자
+     */
+    @GetMapping("/searchOrderDetail/{userId}/{orderId}")
+    public ResponseEntity<?> searchOrderDetail(@PathVariable("userId") Long buyerId, @PathVariable("orderId") Long orderId) {
+        try {
+            List<SearchOrderItemsForBuyerDto> items = userService.searchOrderDetailForBuyer(buyerId, orderId);
+            return ResponseEntity.ok().body(items);
+        } catch (NoSuchElementException e1) {
+            return createResponseEntity(e1, NOT_FOUND);
+        } catch (IllegalStateException e2) {
+            return createResponseEntity(e2, CONFLICT);
+        }
     }
 
     public ResponseEntity<String> createResponseEntity(Exception e, HttpStatus httpStatus) {

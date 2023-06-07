@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.*;
+import won.ecommerce.exception.NotEnoughStockException;
 import won.ecommerce.repository.dto.search.shoppingCart.SearchShoppingCartDto;
 import won.ecommerce.repository.shoppingCart.ShoppingCartItemRepository;
 import won.ecommerce.repository.shoppingCart.ShoppingCartRepository;
@@ -162,8 +163,13 @@ public class ShoppingCartService {
 
         for (ShoppingCartItem shoppingCartItem : shoppingCartItems) {
             Item item = shoppingCartItem.getItem();
-            Integer itemCount = shoppingCartItem.getItemCount();
-            itemsAndCount.put(item, itemCount);
+            int shoppingCartItemCount = shoppingCartItem.getItemCount();
+
+            if (shoppingCartItemCount > item.getStockQuantity()) {
+                throw new NotEnoughStockException(item.getName() + "의 재고가 부족합니다.");
+            }
+
+            itemsAndCount.put(item, shoppingCartItemCount);
 
             itemsName.add(item.getName());
         }

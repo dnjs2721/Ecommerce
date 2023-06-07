@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.*;
 import won.ecommerce.repository.deleted.item.DeletedItemRepository;
 import won.ecommerce.repository.dto.search.categoryItem.CategoryItemDto;
-import won.ecommerce.repository.dto.search.item.OrderCondition;
+import won.ecommerce.repository.dto.search.item.SortCondition;
 import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
 import won.ecommerce.repository.dto.search.item.ItemSearchFromCommonCondition;
 import won.ecommerce.repository.dto.search.item.SearchItemDto;
@@ -64,8 +64,8 @@ public class ItemService {
     /**
      * 상품 조회 - 일반 사용자
      */
-    public Page<SearchItemFromCommonDto> searchItemFromCommon(ItemSearchFromCommonCondition condition, OrderCondition orderCondition, Pageable pageable) {
-        return itemRepository.searchItemPageFromCommon(condition, orderCondition,pageable);
+    public Page<SearchItemFromCommonDto> searchItemFromCommon(ItemSearchFromCommonCondition condition, SortCondition sortCondition, Pageable pageable) {
+        return itemRepository.searchItemPageFromCommon(condition, sortCondition,pageable);
     }
 
     /**
