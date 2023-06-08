@@ -23,8 +23,6 @@ public class OrdersForSeller extends BaseTimeEntity {
     private String buyerPNum;
     @Embedded
     private Address buyerAddress;
-    @Enumerated(EnumType.STRING)
-    private OrderStatus orderStatus;
     @OneToMany(mappedBy = "sellerOrderId")
     private final List<OrderItem> orderItems = new ArrayList<>();
 
@@ -34,6 +32,5 @@ public class OrdersForSeller extends BaseTimeEntity {
         this.buyerName = buyerName;
         this.buyerPNum = buyerPNum;
         this.buyerAddress = buyerAddress;
-        this.orderStatus = OrderStatus.WAITING_FOR_PAYMENT;
     }
 }

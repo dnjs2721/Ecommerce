@@ -1,11 +1,14 @@
 package won.ecommerce.service;
 
+import com.querydsl.core.Tuple;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import won.ecommerce.controller.dto.order.ChangeOrderStatusRequestDto;
 import won.ecommerce.entity.Item;
+import won.ecommerce.entity.OrderItem;
 import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
 import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
@@ -73,6 +76,21 @@ public class SellerService {
     public List<SearchOrderItemForSellerDto> searchOrderDetailForSeller(Long sellerId, Long orderId) throws IllegalAccessException {
         User seller = checkSeller(sellerId); //NoSuchElementException
         return ordersService.searchOrderDetailForSeller(sellerId, orderId);
+    }
+
+    /**
+     * 판매자 주문 상품 상태 변경
+     */
+    @Transactional
+    public String changeOrderStatus(Long sellerId, ChangeOrderStatusRequestDto request) throws IllegalAccessException {
+        checkSeller(sellerId); // NoSuchElementException, IllegalAccessException
+        OrderItem orderItem = ordersService.checkOrderItem(request.getOrderItemId()); // NoSuchElementException
+        if (!orderItem.getSellerId().equals(sellerId)) {
+            throw new IllegalAccessException("사용자의 주문상품이 아닙니다.");
+        }
+        Item item = itemService.checkItem(orderItem.getItemId()); // NoSuchElementException
+
+        return ordersService.changeOrderStatus(item, orderItem, request); // IllegalStateException
     }
 
     // 판매자 확인

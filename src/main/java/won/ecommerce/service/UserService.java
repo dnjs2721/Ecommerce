@@ -234,10 +234,28 @@ public class UserService {
     /**
      * 주문 상세 조회 사용자
      */
-    public List<SearchOrderItemsForBuyerDto> searchOrderDetailForBuyer(Long buyerId, Long orderId) {
+    public List<SearchOrderItemsForBuyerDto> searchOrderDetailForBuyer(Long buyerId, Long orderId) throws IllegalAccessException {
         User user = checkUserById(buyerId);
         return ordersService.searchOrderDetailForBuyer(buyerId, orderId);
     }
+
+    /**
+     * 주문 상품 취소
+     */
+    @Transactional
+    public String cancelOrderItem(Long buyerId, Long orderItemId) throws IllegalAccessException {
+        checkUserById(buyerId); // NoSuchElementException
+
+        OrderItem orderItem = ordersService.checkOrderItem(orderItemId); // NoSuchElementException
+        if (!orderItem.getBuyerId().equals(buyerId)) {
+            throw new IllegalAccessException("사용자의 주문상품이 아닙니다.");
+        }
+
+        Item item = itemService.checkItem(orderItem.getItemId()); // NoSuchElementException
+
+        return ordersService.cancelOrderItem(item, orderItem); // IllegalStateException
+    }
+
 
     /**
      * 닉네임 검사

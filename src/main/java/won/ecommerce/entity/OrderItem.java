@@ -24,6 +24,7 @@ public class OrderItem extends BaseTimeEntity {
     private int totalPrice;
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
+    private String comment;
 
     @Builder
     public OrderItem(Long buyerOrderId, Long sellerOrderId,  Long buyerId, Long sellerId, Long itemId, String itemName, int price, int count) {
@@ -37,5 +38,13 @@ public class OrderItem extends BaseTimeEntity {
         this.count = count;
         this.totalPrice = price * count;
         this.orderStatus = OrderStatus.WAITING_FOR_PAYMENT;
+    }
+
+    public void changeStatus(OrderStatus orderStatus) {
+        this.orderStatus = orderStatus;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
     }
 }

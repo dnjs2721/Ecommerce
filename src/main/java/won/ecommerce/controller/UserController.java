@@ -8,6 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import won.ecommerce.controller.dto.order.BuyerCancelOrderItemRequestDto;
 import won.ecommerce.controller.dto.userDto.*;
 import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
@@ -172,8 +173,25 @@ public class UserController {
             return ResponseEntity.ok().body(items);
         } catch (NoSuchElementException e1) {
             return createResponseEntity(e1, NOT_FOUND);
+        } catch (IllegalAccessException e2) {
+            return createResponseEntity(e2, NOT_ACCEPTABLE);
+        }
+    }
+
+    /**
+     * 주문 상품 취소
+     */
+    @PostMapping("/cancelOrderItem/{userId}")
+    public ResponseEntity<String> cancelOrderItem(@PathVariable("userId") Long buyerId, @RequestBody @Valid BuyerCancelOrderItemRequestDto request) {
+        try {
+            String itemName = userService.cancelOrderItem(buyerId, request.getOrderItemId());
+            return ResponseEntity.ok().body(itemName + " 이 주문취소 되었습니다.");
+        } catch (NoSuchElementException e1) {
+            return createResponseEntity(e1, NOT_FOUND);
         } catch (IllegalStateException e2) {
             return createResponseEntity(e2, CONFLICT);
+        } catch (IllegalAccessException e3) {
+            return createResponseEntity(e3, NOT_ACCEPTABLE);
         }
     }
 

@@ -1,9 +1,11 @@
 package won.ecommerce.service;
 
+import com.querydsl.core.Tuple;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import won.ecommerce.controller.dto.order.ChangeOrderStatusRequestDto;
 import won.ecommerce.entity.*;
 import won.ecommerce.repository.dto.search.order.*;
 import won.ecommerce.repository.orders.OrderItemRepository;
@@ -11,6 +13,8 @@ import won.ecommerce.repository.orders.OrdersForBuyerRepository;
 import won.ecommerce.repository.orders.OrdersForSellerRepository;
 
 import java.util.*;
+
+import static won.ecommerce.entity.OrderStatus.*;
 
 @Service
 @RequiredArgsConstructor
@@ -96,10 +100,13 @@ public class OrdersService {
     /**
      * 주문 상세 조회 사용자
      */
-    public List<SearchOrderItemsForBuyerDto> searchOrderDetailForBuyer(Long buyerId, Long orderId) {
+    public List<SearchOrderItemsForBuyerDto> searchOrderDetailForBuyer(Long buyerId, Long orderId) throws IllegalAccessException {
         Optional<OrdersForBuyer> optionalOrder = buyerRepository.findById(orderId);
-        if (optionalOrder.isEmpty() || !optionalOrder.get().getBuyer().getId().equals(buyerId)) {
-            throw new IllegalStateException("잘못된 주문번호 입니다.");
+        if (optionalOrder.isEmpty()) {
+            throw new NoSuchElementException("잘못된 주문번호 입니다.");
+        }
+        if (!optionalOrder.get().getBuyer().getId().equals(buyerId)) {
+            throw new IllegalAccessException("사용자의 주문이 아닙니다");
         }
         return buyerRepository.searchOrderItemsForBuyer(orderId);
     }
@@ -114,12 +121,66 @@ public class OrdersService {
     /**
      * 주문 상세 조회 판매자
      */
-    public List<SearchOrderItemForSellerDto> searchOrderDetailForSeller(Long sellerId, Long orderId) {
+    public List<SearchOrderItemForSellerDto> searchOrderDetailForSeller(Long sellerId, Long orderId) throws IllegalAccessException {
         Optional<OrdersForSeller> optionalOrder = sellerRepository.findById(orderId);
-        if (optionalOrder.isEmpty() || !optionalOrder.get().getSeller().getId().equals(sellerId)) {
-            throw new IllegalStateException("잘못된 주문번호 입니다.");
+        if (optionalOrder.isEmpty()) {
+            throw new NoSuchElementException("잘못된 주문번호 입니다.");
+        }
+        if (!optionalOrder.get().getSeller().getId().equals(sellerId)) {
+            throw new IllegalAccessException("사용자의 주문이 아닙니다.");
         }
         return sellerRepository.searchOrderItemsForSeller(orderId);
+    }
+
+    /**
+     * 주문 상품 취소
+     */
+    public String cancelOrderItem(Item item, OrderItem orderItem) {
+        OrderStatus orderStatus = orderItem.getOrderStatus();
+        if (orderStatus.equals(CANCEL)) {
+            throw new IllegalStateException("이미 취소된 상품입니다");
+        } else if (orderStatus.equals(WAITING_FOR_DELIVERY) || orderStatus.equals(SHIPPING)) {
+            throw new IllegalStateException("배송중인 상품입니다.");
+        } else if (orderStatus.equals(DELIVERY_COMPLETE)) {
+            throw new IllegalStateException("배송이 완료된 상품입니다. 교환/환불을 진행해 주세요.");
+        } else {
+            /**
+             * COMPLETE_PAYMENT 일 경우 결제 취소 서비스 호출
+             */
+            if (orderStatus.equals(COMPLETE_PAYMENT)) {
+                return orderItem.getItemName();
+            }
+            orderItem.changeStatus(CANCEL);
+            orderItem.setComment("구매자에 의한 취소");
+
+            item.increaseStockQuantity(orderItem.getCount());
+
+            return orderItem.getItemName();
+        }
+    }
+
+    /**
+     * 판매자 주문 상품 상태 변경
+     */
+    public String changeOrderStatus(Item item, OrderItem orderItem, ChangeOrderStatusRequestDto request) throws IllegalAccessException {
+        OrderStatus orderStatus = request.getOrderStatus();
+        if (orderStatus.equals(CANCEL)) {
+            orderItem.setComment("판매자에 의한 취소 " + request.getComment());
+            item.increaseStockQuantity(orderItem.getCount());
+        } else if (orderStatus.equals(WAITING_FOR_PAYMENT)) {
+            throw new IllegalStateException("해당 단계로 변경할 수 없습니다.");
+        }
+        orderItem.changeStatus(orderStatus);
+
+        return orderItem.getItemName();
+    }
+
+    public OrderItem checkOrderItem(Long orderItemId) {
+        Optional<OrderItem> optionalOrderItem = orderItemRepository.findById(orderItemId);
+        if (optionalOrderItem.isEmpty()) {
+            throw new NoSuchElementException("잘못된 주문상품번호 입니다.");
+        }
+        return optionalOrderItem.get();
     }
 
     // 주문상품 생성 생성 저장 메서드

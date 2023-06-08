@@ -1,5 +1,6 @@
 package won.ecommerce.controller;
 
+import com.querydsl.core.Tuple;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -9,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import won.ecommerce.controller.dto.itemDto.DeleteItemRequestDto;
+import won.ecommerce.controller.dto.order.ChangeOrderStatusRequestDto;
 import won.ecommerce.entity.Item;
 import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
 import won.ecommerce.repository.dto.search.item.SearchItemDto;
@@ -122,9 +124,25 @@ public class SellerController {
             return createResponseEntity(e1, NOT_FOUND);
         } catch (IllegalAccessException e2) {
             return createResponseEntity(e2, NOT_ACCEPTABLE);
+        }
+    }
+
+    /**
+     * 판매자 주문 상품 상태 변경
+     */
+    @PostMapping("/changeOrderStatus/{userId}")
+    public ResponseEntity<String> changeOrderStatus(@PathVariable("userId") Long sellerId, @RequestBody @Valid ChangeOrderStatusRequestDto request) {
+        try {
+            String itemName = sellerService.changeOrderStatus(sellerId, request);
+            return ResponseEntity.ok().body(itemName + " 의 주문상태가 변경되었습니다.");
+        } catch (NoSuchElementException e1) {
+            return createResponseEntity(e1, NOT_FOUND);
+        } catch (IllegalAccessException e2) {
+            return createResponseEntity(e2, NOT_ACCEPTABLE);
         } catch (IllegalStateException e3) {
             return createResponseEntity(e3, CONFLICT);
         }
+
     }
 
     public ResponseEntity<String> createResponseEntity(Exception e, HttpStatus httpStatus) {

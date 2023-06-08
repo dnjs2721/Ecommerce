@@ -14,20 +14,17 @@ public class SearchOrdersForSellerDto {
     private String buyerName;
     private String buyerPNum;
     private Address buyerAddress;
-    private Integer orderPrice;
-    private OrderStatus orderStatus;
-
+    private int orderPrice;
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime orderDate;
 
     @QueryProjection
-    public SearchOrdersForSellerDto(Long orderId, String buyerName, String buyerPNum, Address buyerAddress, Integer orderPrice, OrderStatus orderStatus, LocalDateTime orderDate) {
+    public SearchOrdersForSellerDto(Long orderId, String buyerName, String buyerPNum, Address buyerAddress, int orderPrice, LocalDateTime orderDate) {
         this.orderId = orderId;
         this.buyerName = buyerName;
         this.buyerPNum = buyerPNum;
         this.buyerAddress = buyerAddress;
         this.orderPrice = orderPrice;
-        this.orderStatus = orderStatus;
         this.orderDate = orderDate;
     }
 }

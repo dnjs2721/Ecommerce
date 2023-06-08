@@ -1,9 +1,12 @@
 package won.ecommerce.repository.dto.search.order;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.querydsl.core.annotations.QueryProjection;
 import lombok.Data;
+import won.ecommerce.entity.OrderStatus;
 
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class SearchOrderItemForSellerDto {
     Long orderItemId;
     Long itemId;
@@ -11,14 +14,18 @@ public class SearchOrderItemForSellerDto {
     int price;
     int count;
     int totalPrice;
+    OrderStatus orderStatus;
+    String cancelReason;
 
     @QueryProjection
-    public SearchOrderItemForSellerDto(Long orderItemId, Long itemId, String itemName, int price, int count, int totalPrice) {
+    public SearchOrderItemForSellerDto(Long orderItemId, Long itemId, String itemName, int price, int count, int totalPrice, OrderStatus orderStatus, String cancelReason) {
         this.orderItemId = orderItemId;
         this.itemId = itemId;
         this.itemName = itemName;
         this.price = price;
         this.count = count;
         this.totalPrice = totalPrice;
+        this.orderStatus = orderStatus;
+        this.cancelReason = cancelReason;
     }
 }

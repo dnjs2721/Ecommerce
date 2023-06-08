@@ -18,13 +18,10 @@ public class OrdersForBuyer extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "buyerId")
     private User buyer;
-    @Enumerated(EnumType.STRING)
-    private OrderStatus orderStatus;
     @OneToMany(mappedBy = "buyerOrderId")
     private final List<OrderItem> orderItems = new ArrayList<>();
 
     public OrdersForBuyer(User buyer) {
         this.buyer = buyer;
-        this.orderStatus = OrderStatus.WAITING_FOR_PAYMENT;
     }
 }

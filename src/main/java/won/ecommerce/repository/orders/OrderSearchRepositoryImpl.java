@@ -39,12 +39,11 @@ public class OrderSearchRepositoryImpl implements OrderSearchRepository{
                                 JPAExpressions
                                         .select(orderItem.totalPrice.sum())
                                         .from(orderItem)
-                                        .where(orderItem.buyerOrderId.eq(ordersForBuyer.id)), "orderPrice"),
-                        ordersForBuyer.orderStatus,
+                                        .where(orderItem.buyerOrderId.eq(ordersForBuyer.id),
+                                                orderItem.orderStatus.ne(OrderStatus.CANCEL)), "orderPrice"),
                         ordersForBuyer.createdDate))
                 .from(ordersForBuyer)
                 .where(ordersForBuyer.buyer.id.eq(buyerId),
-                        statusEq(condition.getStatus(), ordersForBuyer.orderStatus),
                         orderTimeGoeForBuyer(condition.getTimeGoe()),
                         orderTimeLoeForBuyer(condition.getTimeLoe()))
                 .offset(pageable.getOffset())
@@ -55,7 +54,6 @@ public class OrderSearchRepositoryImpl implements OrderSearchRepository{
                 .select(ordersForBuyer.count())
                 .from(ordersForBuyer)
                 .where(ordersForBuyer.buyer.id.eq(buyerId),
-                        statusEq(condition.getStatus(), ordersForBuyer.orderStatus),
                         orderTimeGoeForBuyer(condition.getTimeGoe()),
                         orderTimeLoeForBuyer(condition.getTimeLoe()));
 
@@ -74,12 +72,11 @@ public class OrderSearchRepositoryImpl implements OrderSearchRepository{
                                 JPAExpressions
                                         .select(orderItem.totalPrice.sum())
                                         .from(orderItem)
-                                        .where(orderItem.sellerOrderId.eq(ordersForSeller.id)), "orderPrice"),
-                        ordersForSeller.orderStatus,
+                                        .where(orderItem.sellerOrderId.eq(ordersForSeller.id),
+                                                orderItem.orderStatus.ne(OrderStatus.CANCEL)), "orderPrice"),
                         ordersForSeller.createdDate))
                 .from(ordersForSeller)
                 .where(ordersForSeller.seller.id.eq(sellerId),
-                        statusEq(condition.getStatus(), ordersForSeller.orderStatus),
                         orderTimeGoeForSeller(condition.getTimeGoe()),
                         orderTimeLoeForSeller(condition.getTimeLoe()))
                 .offset(pageable.getOffset())
@@ -90,7 +87,7 @@ public class OrderSearchRepositoryImpl implements OrderSearchRepository{
                 .select(ordersForSeller.count())
                 .from(ordersForSeller)
                 .where(ordersForSeller.seller.id.eq(sellerId),
-                        statusEq(condition.getStatus(), ordersForSeller.orderStatus),
+
                         orderTimeGoeForSeller(condition.getTimeGoe()),
                         orderTimeLoeForSeller(condition.getTimeLoe()));
 
@@ -106,8 +103,10 @@ public class OrderSearchRepositoryImpl implements OrderSearchRepository{
                         orderItem.itemName,
                         orderItem.price,
                         orderItem.count,
-                        orderItem.totalPrice
-                ))
+                        orderItem.totalPrice,
+                        orderItem.orderStatus,
+                        orderItem.comment
+                        ))
                 .from(orderItem)
                 .where(orderItem.sellerOrderId.eq(orderId))
                 .fetch();
@@ -123,7 +122,9 @@ public class OrderSearchRepositoryImpl implements OrderSearchRepository{
                         orderItem.itemName,
                         orderItem.price,
                         orderItem.count,
-                        orderItem.totalPrice
+                        orderItem.totalPrice,
+                        orderItem.orderStatus,
+                        orderItem.comment
                 ))
                 .from(orderItem)
                 .leftJoin(user).on(orderItem.sellerId.eq(user.id))
@@ -131,7 +132,7 @@ public class OrderSearchRepositoryImpl implements OrderSearchRepository{
                 .fetch();
     }
 
-
+//    statusEq(condition.getStatus(), ordersForSeller.orderStatus),
     private BooleanExpression statusEq(String status, EnumPath<OrderStatus> orderStatus) {
         if (!hasText(status)) {
             return null;
