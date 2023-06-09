@@ -24,4 +24,26 @@ public class OrdersForBuyer extends BaseTimeEntity {
     public OrdersForBuyer(User buyer) {
         this.buyer = buyer;
     }
+
+    public int getTotalPrice() {
+        List<OrderItem> findItems = this.getOrderItems();
+        int totalPrice = 0;
+        for (OrderItem orderItem : orderItems) {
+            if (orderItem.getOrderStatus() != OrderStatus.CANCEL) {
+                totalPrice += orderItem.getTotalPrice();
+            }
+        }
+        return totalPrice;
+    }
+
+    public List<String> getOrderItemsName() {
+        List<OrderItem> findItems = this.getOrderItems();
+        List<String> itemsName = new ArrayList<>();
+        for (OrderItem orderItem : findItems) {
+            if (orderItem.getOrderStatus() != OrderStatus.CANCEL) {
+                itemsName.add(orderItem.getItemName());
+            }
+        }
+        return itemsName;
+    }
 }

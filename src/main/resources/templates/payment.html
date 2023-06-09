@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script
+            type="text/javascript"
+            src="https://code.jquery.com/jquery-1.12.4.min.js"
+    ></script>
+    <script
+            type="text/javascript"
+            src="https://cdn.iamport.kr/v1/iamport.js"
+    ></script>"
+
+    <script>
+        function payment() {
+            const IMP = window.IMP;
+            IMP.init()
+        }
+    </script>
+</head>
+<body>
+    <div>
+        <h2>IAMPORT 결제 데모</h2>
+        <li>
+            <button id="iamportPayment" type="button">결제테스트</button>
+        </li>
+    </div>
+</body>
+</html>

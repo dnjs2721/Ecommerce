@@ -101,13 +101,7 @@ public class OrdersService {
      * 주문 상세 조회 사용자
      */
     public List<SearchOrderItemsForBuyerDto> searchOrderDetailForBuyer(Long buyerId, Long orderId) throws IllegalAccessException {
-        Optional<OrdersForBuyer> optionalOrder = buyerRepository.findById(orderId);
-        if (optionalOrder.isEmpty()) {
-            throw new NoSuchElementException("잘못된 주문번호 입니다.");
-        }
-        if (!optionalOrder.get().getBuyer().getId().equals(buyerId)) {
-            throw new IllegalAccessException("사용자의 주문이 아닙니다");
-        }
+        checkBuyerOrder(buyerId, orderId);
         return buyerRepository.searchOrderItemsForBuyer(orderId);
     }
 
@@ -221,4 +215,17 @@ public class OrdersService {
 
         return ordersForBuyer;
     }
+
+    // 구매자의 주문인지 체크
+    public OrdersForBuyer checkBuyerOrder(Long buyerId, Long orderId) throws IllegalAccessException {
+        Optional<OrdersForBuyer> optionalOrder = buyerRepository.findById(orderId);
+        if (optionalOrder.isEmpty()) {
+            throw new NoSuchElementException("잘못된 주문번호 입니다.");
+        }
+        if (!optionalOrder.get().getBuyer().getId().equals(buyerId)) {
+            throw new IllegalAccessException("사용자의 주문이 아닙니다");
+        }
+        return optionalOrder.get();
+    }
+
 }

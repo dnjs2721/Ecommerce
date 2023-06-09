@@ -37,6 +37,7 @@ public class UserService {
     private final ItemService itemService;
     private final ShoppingCartService shoppingCartService;
     private final OrdersService ordersService;
+    private final PaymentService paymentService;
 
     /**
      * 회원가입
@@ -254,6 +255,13 @@ public class UserService {
         Item item = itemService.checkItem(orderItem.getItemId()); // NoSuchElementException
 
         return ordersService.cancelOrderItem(item, orderItem); // IllegalStateException
+    }
+
+    @Transactional
+    public void payment(Long userId, Long orderId) throws IllegalAccessException {
+        User user = checkUserById(userId);
+        OrdersForBuyer ordersForBuyer = ordersService.checkBuyerOrder(userId, orderId);
+        paymentService.payment(user, ordersForBuyer);
     }
 
 
