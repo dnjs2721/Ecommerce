@@ -2,29 +2,94 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
-    <script
-            type="text/javascript"
-            src="https://code.jquery.com/jquery-1.12.4.min.js"
-    ></script>
-    <script
-            type="text/javascript"
-            src="https://cdn.iamport.kr/v1/iamport.js"
-    ></script>"
+    <title>Ecommerce Payment</title>
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script type="text/javascript"
+            src="https://cdn.iamport.kr/v1/iamport.js"></script>
 
-    <script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        $(document).ready(function(){
+            $("#PortOnePayment").click(function(){
+                payment(); //버튼 클릭하면 호출
+            });
+        })
+
         function payment() {
-            const IMP = window.IMP;
-            IMP.init()
+            var IMP = window.IMP;
+            IMP.init([[${identificationCode}]]);
+            IMP.request_pay({
+                pg: "kakaopay." + [[${CID}]],
+                pay_method: "card",
+                merchant_uid: "merchant_" + new Date().getTime(),   // 주문번호
+                name: "[(${itemsName})]",
+                amount: [[${totalPrice}]],                         // 숫자 타입
+                buyer_email: [[${buyerEmail}]],
+                buyer_tel : [[${buyerPNUm}]],
+                buyer_name: "[(${buyerName})]"
+            }, function (rsp) {
+                if (rsp.success) {
+                    // 결제 성공 시: 결제 승인 또는 가상계좌 발급에 성공한 경우
+                    let  data = {
+                        imp_uid: rsp.imp_uid,
+                        amount: rsp.paid_amount.toString(),
+                        orderId : "[(${orderId})]",
+                        merchant_uid: rsp.merchant_uid
+                    }
+                    jQuery.ajax({
+                        type:"POST",
+                        url:"/verifyIamPort",
+                        data:JSON.stringify(data),
+                        contentType:"application/json; charset=utf-8",
+                        dataType:"json",
+                        success: function (result) {
+                            alert("성공적으로 결제되었습니다.");
+                            window.location = "paymentHome"
+                        },
+                        error: function (result) {
+                            alert(result.responseText);
+                            cancelPayments(rsp);
+                        },
+                    })
+                } else {
+                    alert("결제에 실패하였습니다. 에러 내용: " + rsp.errorText);
+                    console.log(rsp);
+                }
+            });
         }
+
+        function cancelPayments(temp) {
+            let data = null;
+            if (temp != null) {
+                data = {
+                    imp_uid: temp.imp_uid,
+                    reason: "결제금액 위/변조. 결제금액이 일치하지 않습니다.",
+                    checksum: temp.amount,
+                    refundHolder:temp.buyer_name
+                };
+            }
+            $.ajax({
+                type: "POST",
+                url: "api/payment/cancelPayments",
+                data: JSON.stringify(data),
+                contentType: "application/json; charset=utf-8",
+                success: function (result) {
+                    alert("결제금액 환불완료");
+                },
+                error: function (result) {
+                    alert("환불에 실패하였습니다. 실패 내용: " + result.responseText);
+                },
+            })
+        }
+        /*]]>*/
     </script>
 </head>
 <body>
     <div>
-        <h2>IAMPORT 결제 데모</h2>
-        <li>
-            <button id="iamportPayment" type="button">결제테스트</button>
-        </li>
+        <h2>Ecommerce 결제</h2>
+        <button id="PortOnePayment" type="button">결제</button>
+<!--        <button onclick="payment()">결제하기</button>-->
     </div>
 </body>
 </html>

@@ -3,7 +3,6 @@ package won.ecommerce.repository.dto.search.order;
 import com.querydsl.core.annotations.QueryProjection;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
-import won.ecommerce.entity.OrderStatus;
 
 import java.time.LocalDateTime;
 

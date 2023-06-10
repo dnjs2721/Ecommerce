@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
 import won.ecommerce.entity.*;
 import won.ecommerce.repository.deleted.user.DeletedUserRepository;
 import won.ecommerce.repository.dto.search.item.SortCondition;
@@ -258,10 +259,10 @@ public class UserService {
     }
 
     @Transactional
-    public void payment(Long userId, Long orderId) throws IllegalAccessException {
+    public void payment(Long userId, Long orderId, Model model) throws IllegalAccessException {
         User user = checkUserById(userId);
         OrdersForBuyer ordersForBuyer = ordersService.checkBuyerOrder(userId, orderId);
-        paymentService.payment(user, ordersForBuyer);
+        paymentService.payment(user, ordersForBuyer, model);
     }
 
 

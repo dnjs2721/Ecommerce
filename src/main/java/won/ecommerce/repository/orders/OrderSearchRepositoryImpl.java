@@ -10,8 +10,7 @@ import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
-import won.ecommerce.entity.OrderStatus;
-import won.ecommerce.entity.QUser;
+import won.ecommerce.entity.OrderItemStatus;
 import won.ecommerce.repository.dto.search.order.*;
 
 import java.time.LocalDateTime;
@@ -40,7 +39,7 @@ public class OrderSearchRepositoryImpl implements OrderSearchRepository{
                                         .select(orderItem.totalPrice.sum())
                                         .from(orderItem)
                                         .where(orderItem.buyerOrderId.eq(ordersForBuyer.id),
-                                                orderItem.orderStatus.ne(OrderStatus.CANCEL)), "orderPrice"),
+                                                orderItem.orderItemStatus.ne(OrderItemStatus.CANCEL)), "orderPrice"),
                         ordersForBuyer.createdDate))
                 .from(ordersForBuyer)
                 .where(ordersForBuyer.buyer.id.eq(buyerId),
@@ -73,7 +72,7 @@ public class OrderSearchRepositoryImpl implements OrderSearchRepository{
                                         .select(orderItem.totalPrice.sum())
                                         .from(orderItem)
                                         .where(orderItem.sellerOrderId.eq(ordersForSeller.id),
-                                                orderItem.orderStatus.ne(OrderStatus.CANCEL)), "orderPrice"),
+                                                orderItem.orderItemStatus.ne(OrderItemStatus.CANCEL)), "orderPrice"),
                         ordersForSeller.createdDate))
                 .from(ordersForSeller)
                 .where(ordersForSeller.seller.id.eq(sellerId),
@@ -104,7 +103,7 @@ public class OrderSearchRepositoryImpl implements OrderSearchRepository{
                         orderItem.price,
                         orderItem.count,
                         orderItem.totalPrice,
-                        orderItem.orderStatus,
+                        orderItem.orderItemStatus,
                         orderItem.comment
                         ))
                 .from(orderItem)
@@ -123,7 +122,7 @@ public class OrderSearchRepositoryImpl implements OrderSearchRepository{
                         orderItem.price,
                         orderItem.count,
                         orderItem.totalPrice,
-                        orderItem.orderStatus,
+                        orderItem.orderItemStatus,
                         orderItem.comment
                 ))
                 .from(orderItem)
@@ -133,28 +132,28 @@ public class OrderSearchRepositoryImpl implements OrderSearchRepository{
     }
 
 //    statusEq(condition.getStatus(), ordersForSeller.orderStatus),
-    private BooleanExpression statusEq(String status, EnumPath<OrderStatus> orderStatus) {
+    private BooleanExpression statusEq(String status, EnumPath<OrderItemStatus> orderStatus) {
         if (!hasText(status)) {
             return null;
         } else {
             switch (status) {
                 case "결재대기" -> {
-                    return orderStatus.eq(OrderStatus.WAITING_FOR_PAYMENT);
+                    return orderStatus.eq(OrderItemStatus.WAITING_FOR_PAYMENT);
                 }
                 case "결재완료" -> {
-                    return orderStatus.eq(OrderStatus.COMPLETE_PAYMENT);
+                    return orderStatus.eq(OrderItemStatus.COMPLETE_PAYMENT);
                 }
                 case "배송준비중" -> {
-                    return orderStatus.eq(OrderStatus.WAITING_FOR_DELIVERY);
+                    return orderStatus.eq(OrderItemStatus.WAITING_FOR_DELIVERY);
                 }
                 case "배송중" -> {
-                    return orderStatus.eq(OrderStatus.SHIPPING);
+                    return orderStatus.eq(OrderItemStatus.SHIPPING);
                 }
                 case "배송완료" -> {
-                    return orderStatus.eq(OrderStatus.DELIVERY_COMPLETE);
+                    return orderStatus.eq(OrderItemStatus.DELIVERY_COMPLETE);
                 }
                 case "취소" -> {
-                    return orderStatus.eq(OrderStatus.CANCEL);
+                    return orderStatus.eq(OrderItemStatus.CANCEL);
                 }
                 default -> {
                     return null;

@@ -13,4 +13,5 @@ public class PortOneApiConfig {
     private String apiKey;
     private String apiSecretKey;
     private String identificationCode;
+    private String CID;
 }

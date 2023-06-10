@@ -26,11 +26,17 @@ public class OrdersForSeller extends BaseTimeEntity {
     @OneToMany(mappedBy = "sellerOrderId")
     private final List<OrderItem> orderItems = new ArrayList<>();
 
+    private String merchantUid;
+
     @Builder
     public OrdersForSeller(User seller, String buyerName, String buyerPNum, Address buyerAddress) {
         this.seller = seller;
         this.buyerName = buyerName;
         this.buyerPNum = buyerPNum;
         this.buyerAddress = buyerAddress;
+    }
+
+    public void setMerchantUid(String merchantUid) {
+        this.merchantUid = merchantUid;
     }
 }

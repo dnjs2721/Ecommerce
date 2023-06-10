@@ -1,6 +1,5 @@
 package won.ecommerce.service;
 
-import com.querydsl.core.Tuple;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,7 +13,7 @@ import won.ecommerce.repository.orders.OrdersForSellerRepository;
 
 import java.util.*;
 
-import static won.ecommerce.entity.OrderStatus.*;
+import static won.ecommerce.entity.OrderItemStatus.*;
 
 @Service
 @RequiredArgsConstructor
@@ -130,18 +129,18 @@ public class OrdersService {
      * 주문 상품 취소
      */
     public String cancelOrderItem(Item item, OrderItem orderItem) {
-        OrderStatus orderStatus = orderItem.getOrderStatus();
-        if (orderStatus.equals(CANCEL)) {
+        OrderItemStatus orderItemStatus = orderItem.getOrderItemStatus();
+        if (orderItemStatus.equals(CANCEL)) {
             throw new IllegalStateException("이미 취소된 상품입니다");
-        } else if (orderStatus.equals(WAITING_FOR_DELIVERY) || orderStatus.equals(SHIPPING)) {
+        } else if (orderItemStatus.equals(WAITING_FOR_DELIVERY) || orderItemStatus.equals(SHIPPING)) {
             throw new IllegalStateException("배송중인 상품입니다.");
-        } else if (orderStatus.equals(DELIVERY_COMPLETE)) {
+        } else if (orderItemStatus.equals(DELIVERY_COMPLETE)) {
             throw new IllegalStateException("배송이 완료된 상품입니다. 교환/환불을 진행해 주세요.");
         } else {
             /**
              * COMPLETE_PAYMENT 일 경우 결제 취소 서비스 호출
              */
-            if (orderStatus.equals(COMPLETE_PAYMENT)) {
+            if (orderItemStatus.equals(COMPLETE_PAYMENT)) {
                 return orderItem.getItemName();
             }
             orderItem.changeStatus(CANCEL);
@@ -157,14 +156,14 @@ public class OrdersService {
      * 판매자 주문 상품 상태 변경
      */
     public String changeOrderStatus(Item item, OrderItem orderItem, ChangeOrderStatusRequestDto request) throws IllegalAccessException {
-        OrderStatus orderStatus = request.getOrderStatus();
-        if (orderStatus.equals(CANCEL)) {
+        OrderItemStatus orderItemStatus = request.getOrderItemStatus();
+        if (orderItemStatus.equals(CANCEL)) {
             orderItem.setComment("판매자에 의한 취소 " + request.getComment());
             item.increaseStockQuantity(orderItem.getCount());
-        } else if (orderStatus.equals(WAITING_FOR_PAYMENT)) {
+        } else if (orderItemStatus.equals(WAITING_FOR_PAYMENT)) {
             throw new IllegalStateException("해당 단계로 변경할 수 없습니다.");
         }
-        orderItem.changeStatus(orderStatus);
+        orderItem.changeStatus(orderItemStatus);
 
         return orderItem.getItemName();
     }
@@ -218,14 +217,36 @@ public class OrdersService {
 
     // 구매자의 주문인지 체크
     public OrdersForBuyer checkBuyerOrder(Long buyerId, Long orderId) throws IllegalAccessException {
+        OrdersForBuyer orderForBuyer = getOrderForBuyer(orderId);
+        if (!orderForBuyer.getBuyer().getId().equals(buyerId)) {
+            throw new IllegalAccessException("사용자의 주문이 아닙니다");
+        }
+        return orderForBuyer;
+    }
+
+    public OrdersForBuyer getOrderForBuyer(Long orderId) {
         Optional<OrdersForBuyer> optionalOrder = buyerRepository.findById(orderId);
         if (optionalOrder.isEmpty()) {
             throw new NoSuchElementException("잘못된 주문번호 입니다.");
         }
-        if (!optionalOrder.get().getBuyer().getId().equals(buyerId)) {
-            throw new IllegalAccessException("사용자의 주문이 아닙니다");
-        }
         return optionalOrder.get();
     }
 
+    public void changeOrderStatusToCompletePayment(OrdersForBuyer ordersForBuyer) {
+        List<OrderItem> orderItems = ordersForBuyer.getOrderItems();
+        for (OrderItem orderItem : orderItems) {
+            if (orderItem.getOrderItemStatus().equals(WAITING_FOR_PAYMENT)) {
+                orderItem.changeStatus(COMPLETE_PAYMENT);
+            }
+        }
+    }
+
+    public void checkState(OrdersForBuyer ordersForBuyer) {
+        List<OrderItem> orderItems = ordersForBuyer.getOrderItems();
+        for (OrderItem orderItem : orderItems) {
+            if (!orderItem.getOrderItemStatus().equals(WAITING_FOR_PAYMENT)) {
+                throw new IllegalStateException("이미 처리된 주문입니다.");
+            }
+        }
+    }
 }

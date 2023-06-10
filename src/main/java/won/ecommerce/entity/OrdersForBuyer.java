@@ -21,6 +21,8 @@ public class OrdersForBuyer extends BaseTimeEntity {
     @OneToMany(mappedBy = "buyerOrderId")
     private final List<OrderItem> orderItems = new ArrayList<>();
 
+    private String merchantUid;
+
     public OrdersForBuyer(User buyer) {
         this.buyer = buyer;
     }
@@ -29,7 +31,7 @@ public class OrdersForBuyer extends BaseTimeEntity {
         List<OrderItem> findItems = this.getOrderItems();
         int totalPrice = 0;
         for (OrderItem orderItem : orderItems) {
-            if (orderItem.getOrderStatus() != OrderStatus.CANCEL) {
+            if (orderItem.getOrderItemStatus() != OrderItemStatus.CANCEL) {
                 totalPrice += orderItem.getTotalPrice();
             }
         }
@@ -40,10 +42,14 @@ public class OrdersForBuyer extends BaseTimeEntity {
         List<OrderItem> findItems = this.getOrderItems();
         List<String> itemsName = new ArrayList<>();
         for (OrderItem orderItem : findItems) {
-            if (orderItem.getOrderStatus() != OrderStatus.CANCEL) {
+            if (orderItem.getOrderItemStatus() != OrderItemStatus.CANCEL) {
                 itemsName.add(orderItem.getItemName());
             }
         }
         return itemsName;
+    }
+
+    public void setMerchantUid(String merchantUid) {
+        this.merchantUid = merchantUid;
     }
 }
