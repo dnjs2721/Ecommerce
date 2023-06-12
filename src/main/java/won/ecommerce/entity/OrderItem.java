@@ -25,6 +25,7 @@ public class OrderItem extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private OrderItemStatus orderItemStatus;
     private String comment;
+    private String impUid;
 
     @Builder
     public OrderItem(Long buyerOrderId, Long sellerOrderId,  Long buyerId, Long sellerId, Long itemId, String itemName, int price, int count) {
@@ -46,5 +47,9 @@ public class OrderItem extends BaseTimeEntity {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public void setImpUid(String impUid) {
+        this.impUid = impUid;
     }
 }

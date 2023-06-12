@@ -2,19 +2,21 @@ package won.ecommerce.controller;
 
 import com.siot.IamportRestClient.IamportClient;
 import com.siot.IamportRestClient.exception.IamportResponseException;
+import com.siot.IamportRestClient.request.CancelData;
 import com.siot.IamportRestClient.response.IamportResponse;
 import com.siot.IamportRestClient.response.Payment;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import won.ecommerce.config.PortOneApiConfig;
+import won.ecommerce.controller.dto.CancelPaymentDto;
 import won.ecommerce.controller.dto.PaymentDto;
 import won.ecommerce.service.PaymentService;
 import won.ecommerce.service.UserService;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Map;
 
 @Controller
@@ -32,31 +34,67 @@ public class PaymentController {
         this.paymentService = paymentService;
     }
 
-    @ResponseBody
+    /**
+     * 결제, 취소 홈
+     */
     @GetMapping("/paymentHome")
     public String paymentHome() {
         return "paymentHome";
     }
 
-    @ResponseBody
-    @GetMapping("/getToken")
-    public ResponseEntity<IamportClient> getToken() throws IamportResponseException, IOException {
-        String token = api.getAuth().getResponse().getToken();
-        log.info(token);
-        return ResponseEntity.ok().body(api);
+    /**
+     * 결제
+     */
+    @PostMapping("/payment")
+    public String payment(@ModelAttribute("formData1") PaymentDto dto, Model model) {
+        try {
+            userService.payment(dto.getPaymentUserId(), dto.getOrderId(), model);
+            return "payment";
+        } catch (Exception e) {
+            String errorMessage = e.getMessage(); // 에러 메시지 가져오기
+            model.addAttribute("errorMessage", errorMessage);
+            return "errorPage";
+        }
     }
 
-    //    @PostMapping("/payment")
-//    public String payment(@ModelAttribute("formData") PaymentDto dto, Model model) throws IllegalAccessException {
-//        userService.payment(dto.getUserId(), dto.getOrderId(), model);
-//        return "payment";
-//    }
-    @GetMapping("/payment/{userId}/{orderId}")
-    public String payment(@PathVariable("userId") Long userId, @PathVariable("orderId") Long orderId, Model model) throws IllegalAccessException {
-        userService.payment(userId, orderId, model);
-        return "payment";
+    /**
+     * 주문취소, 결제취소 홈
+     */
+    @PostMapping("/cancelOrderHome")
+    public String cancelOrderHome(@ModelAttribute("formData2") CancelPaymentDto dto, Model model) {
+        try {
+            userService.cancelOrderHome(dto.getCancelPaymentUserId(), dto.getOrderItemId(), model);
+            return "cancelOrderHome";
+        } catch (Exception e) {
+            String errorMessage = e.getMessage(); // 에러 메시지 가져오기
+            model.addAttribute("errorMessage", errorMessage);
+            return "errorPage";
+        }
     }
 
+    /**
+     * 결제취소
+     * post 통신으로 변결필요
+     */
+    @GetMapping("/cancelPayment/{userId}/{orderItemId}")
+    public String cancelPayment(@PathVariable("userId") Long userId, @PathVariable("orderItemId") Long orderItemId, Model model) throws IllegalAccessException {
+        userService.cancelPayment(userId, orderItemId, model);
+        return "cancelPayment";
+    }
+
+    /**
+     * 주문 취소
+     *  post 통신으로 변결필요
+     */
+    @GetMapping("/cancelOrder/{orderItemId}")
+    public String cancelOrder(@PathVariable("orderItemId") Long orderItemId) {
+        paymentService.cancelOrderItem(orderItemId);
+        return "redirect:/paymentHome";
+    }
+
+    /**
+     * 결제검증
+     */
     @ResponseBody
     @PostMapping("verifyIamPort")
     public IamportResponse<Payment> verifyIamPort(@RequestBody Map<String, String> map)
@@ -65,20 +103,44 @@ public class PaymentController {
         String impUid = map.get("imp_uid");
         long orderId = Long.parseLong(map.get("orderId"));
         int amount = Integer.parseInt(map.get("amount"));
-        String merchantUid = map.get("merchant_uid");
 
         IamportResponse<Payment> iamportResponse = api.paymentByImpUid(impUid);
-        paymentService.verifyIamPort(iamportResponse, amount, orderId);
+        paymentService.verifyIamPort(iamportResponse, amount, orderId, impUid);
         return iamportResponse;
     }
 
-//    @PostMapping("/cancelPayments")
-//    public IamportResponse<Payment> cancelPayments(@RequestBody Map<String, String> map) throws IamportResponseException, IOException {
-//        IamportResponse<Payment> iamportResponse = null;
-//        if (map.containsKey("imp_uid")) {
-//            iamportResponse = api.paymentByImpUid(map.get("imp_uid"));
-//        } else if (map.containsKey("pgTid")) {
-//
-//        }
-//    }
+    /**
+     * 결제 취소 로직
+     */
+    @ResponseBody
+    @PostMapping("/cancelPayments")
+    public IamportResponse<Payment> cancelPayments(@RequestBody Map<String, String> map) throws IamportResponseException, IOException {
+        IamportResponse<Payment> iamportResponse = new IamportResponse<>();
+        Long orderItemId = null;
+        if (map.containsKey("impUid")) {
+            iamportResponse = api.paymentByImpUid(map.get("impUid"));
+        } else if (map.containsKey("paymentUid")){
+            iamportResponse = api.paymentByImpUid(map.get("paymentUid"));
+            orderItemId = Long.parseLong(map.get("orderItemId"));
+        }
+        CancelData data = cancelData(iamportResponse, map);
+        if (orderItemId != null) {
+            paymentService.cancelOrderItem(orderItemId);
+        }
+        return api.cancelPaymentByImpUid(data);
+    }
+
+    // 취소 데이터 생성
+    public CancelData cancelData(IamportResponse<Payment> iamportResponse, Map<String, String> map) {
+        String reason = map.get("reason");
+        BigDecimal checkSum = new BigDecimal(Integer.parseInt(map.get("checkSum")));
+        String refundHolder = map.get("refundHolder");
+
+        CancelData data = new CancelData(iamportResponse.getResponse().getImpUid(), true);
+        data.setReason(reason);
+        data.setChecksum(checkSum);
+        data.setRefund_holder(refundHolder);
+
+        return data;
+    }
 }

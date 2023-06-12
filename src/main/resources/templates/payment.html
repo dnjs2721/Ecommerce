@@ -8,6 +8,47 @@
     <script type="text/javascript"
             src="https://cdn.iamport.kr/v1/iamport.js"></script>
 
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        .button-container {
+            margin-top: 20px;
+        }
+
+        .button-container button {
+            display: block;
+            width: 100%;
+            padding: 10px 20px;
+            background-color: #6f9bfe;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .button-container button:hover {
+            background-color: #3c79e6;
+        }
+    </style>
+
     <script th:inline="javascript">
         /*<![CDATA[*/
         $(document).ready(function(){
@@ -34,10 +75,9 @@
                     let  data = {
                         imp_uid: rsp.imp_uid,
                         amount: rsp.paid_amount.toString(),
-                        orderId : "[(${orderId})]",
-                        merchant_uid: rsp.merchant_uid
+                        orderId : "[(${orderId})]"
                     }
-                    jQuery.ajax({
+                    $.ajax({
                         type:"POST",
                         url:"/verifyIamPort",
                         data:JSON.stringify(data),
@@ -45,7 +85,7 @@
                         dataType:"json",
                         success: function (result) {
                             alert("성공적으로 결제되었습니다.");
-                            window.location = "paymentHome"
+                            window.location.replace("/paymentHome");
                         },
                         error: function (result) {
                             alert(result.responseText);
@@ -53,43 +93,42 @@
                         },
                     })
                 } else {
-                    alert("결제에 실패하였습니다. 에러 내용: " + rsp.errorText);
+                    alert(rsp.error_msg);
                     console.log(rsp);
                 }
             });
         }
 
         function cancelPayments(temp) {
-            let data = null;
-            if (temp != null) {
-                data = {
-                    imp_uid: temp.imp_uid,
-                    reason: "결제금액 위/변조. 결제금액이 일치하지 않습니다.",
-                    checksum: temp.amount,
-                    refundHolder:temp.buyer_name
-                };
-            }
+            let data = {
+                impUid: temp.imp_uid,
+                reason: "결제금액 위/변조. 결제금액이 일치하지 않습니다.",
+                checksum: temp.amount,
+                refundHolder: temp.buyer_name
+            };
             $.ajax({
                 type: "POST",
-                url: "api/payment/cancelPayments",
+                url: "/cancelPayments",
                 data: JSON.stringify(data),
                 contentType: "application/json; charset=utf-8",
                 success: function (result) {
                     alert("결제금액 환불완료");
+                    window.location.replace("/paymentHome");
                 },
                 error: function (result) {
                     alert("환불에 실패하였습니다. 실패 내용: " + result.responseText);
                 },
-            })
+            });
         }
         /*]]>*/
     </script>
 </head>
 <body>
-    <div>
-        <h2>Ecommerce 결제</h2>
+<div class="container">
+    <h2>Ecommerce 결제</h2>
+    <div class="button-container">
         <button id="PortOnePayment" type="button">결제</button>
-<!--        <button onclick="payment()">결제하기</button>-->
     </div>
+</div>
 </body>
 </html>

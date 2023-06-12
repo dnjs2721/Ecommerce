@@ -242,27 +242,35 @@ public class UserService {
     }
 
     /**
-     * 주문 상품 취소
+     * 결제
      */
     @Transactional
-    public String cancelOrderItem(Long buyerId, Long orderItemId) throws IllegalAccessException {
+    public void payment(Long userId, Long orderId, Model model) throws IllegalAccessException {
+        User user = checkUserById(userId);
+        paymentService.payment(user, orderId, model);
+    }
+
+    /**
+     * 주문 상품 취소 홈
+     */
+    public void cancelOrderHome(Long buyerId, Long orderItemId, Model model) throws IllegalAccessException {
         checkUserById(buyerId); // NoSuchElementException
 
         OrderItem orderItem = ordersService.checkOrderItem(orderItemId); // NoSuchElementException
         if (!orderItem.getBuyerId().equals(buyerId)) {
             throw new IllegalAccessException("사용자의 주문상품이 아닙니다.");
         }
-
-        Item item = itemService.checkItem(orderItem.getItemId()); // NoSuchElementException
-
-        return ordersService.cancelOrderItem(item, orderItem); // IllegalStateException
+        paymentService.cancelOrderHome(buyerId, orderItem, model);// IllegalStateException
     }
 
+    /**
+     * 결제 취소
+     */
     @Transactional
-    public void payment(Long userId, Long orderId, Model model) throws IllegalAccessException {
-        User user = checkUserById(userId);
-        OrdersForBuyer ordersForBuyer = ordersService.checkBuyerOrder(userId, orderId);
-        paymentService.payment(user, ordersForBuyer, model);
+    public void cancelPayment(Long userId, Long orderItemId, Model model) {
+        String name = checkUserById(userId).getName();
+        OrderItem orderItem = ordersService.checkOrderItem(orderItemId);
+        paymentService.cancelPayment(name, orderItemId, model);
     }
 
 

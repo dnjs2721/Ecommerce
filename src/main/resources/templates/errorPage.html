@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Error Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        p {
+            margin-bottom: 0;
+        }
+
+        .button-container {
+            margin-top: 20px;
+        }
+
+        .button-container button {
+            width: 100%;
+            margin-bottom: 10px;
+            text-decoration: none;
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #6f9bfe;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .button-container button:hover {
+            background-color: #3c79e6;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Error Page</h1>
+    <p th:text="${errorMessage}"></p>
+
+    <div class="button-container">
+        <a th:href="@{/paymentHome}">
+            <button type="button">Payment Home</button>
+        </a>
+    </div>
+</div>
+</body>
+</html>
