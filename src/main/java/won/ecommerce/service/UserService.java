@@ -254,23 +254,13 @@ public class UserService {
      * 주문 상품 취소 홈
      */
     public void cancelOrderHome(Long buyerId, Long orderItemId, Model model) throws IllegalAccessException {
-        checkUserById(buyerId); // NoSuchElementException
+        User buyer = checkUserById(buyerId);// NoSuchElementException
 
         OrderItem orderItem = ordersService.checkOrderItem(orderItemId); // NoSuchElementException
         if (!orderItem.getBuyerId().equals(buyerId)) {
             throw new IllegalAccessException("사용자의 주문상품이 아닙니다.");
         }
-        paymentService.cancelOrderHome(buyerId, orderItem, model);// IllegalStateException
-    }
-
-    /**
-     * 결제 취소
-     */
-    @Transactional
-    public void cancelPayment(Long userId, Long orderItemId, Model model) {
-        String name = checkUserById(userId).getName();
-        OrderItem orderItem = ordersService.checkOrderItem(orderItemId);
-        paymentService.cancelPayment(name, orderItemId, model);
+        paymentService.cancelOrderHome(buyer.getName(), buyerId, orderItem, model);// IllegalStateException
     }
 
 

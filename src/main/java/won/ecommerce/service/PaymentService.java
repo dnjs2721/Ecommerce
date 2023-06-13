@@ -64,7 +64,7 @@ public class PaymentService {
     /**
      * 주문 상품 취소 홈
      */
-    public void cancelOrderHome(Long buyerId, OrderItem orderItem, Model model) {
+    public void cancelOrderHome(String buyerName, Long buyerId, OrderItem orderItem, Model model) {
         OrderItemStatus orderItemStatus = orderItem.getOrderItemStatus();
         if (orderItemStatus.equals(WAITING_FOR_PAYMENT)) {
             model.addAttribute("itemName", orderItem.getItemName());
@@ -75,20 +75,13 @@ public class PaymentService {
             model.addAttribute("userId", buyerId);
             model.addAttribute("orderItemId", orderItem.getId());
             model.addAttribute("state", "payment");
+            model.addAttribute("paymentUid", orderItem.getImpUid());
+            model.addAttribute("amount", orderItem.getTotalPrice());
+            model.addAttribute("orderItemId", orderItem.getId());
+            model.addAttribute("buyerName", buyerName);
         } else {
             ordersService.cancelOrderHome(orderItemStatus);
         }
-    }
-
-    /**
-     * 결제 취소
-     */
-    public void cancelPayment(String userName, Long orderItemId, Model model) {
-        OrderItem orderItem = ordersService.checkOrderItem(orderItemId);
-        model.addAttribute("paymentUid", orderItem.getImpUid());
-        model.addAttribute("amount", orderItem.getTotalPrice());
-        model.addAttribute("orderItemId", orderItem.getId());
-        model.addAttribute("buyerName", userName);
     }
 
     // 주문 취소, 재고 변경
@@ -99,5 +92,10 @@ public class PaymentService {
         orderItem.changeStatus(CANCEL);
         orderItem.setComment("구매자에 의한 취소");
         item.increaseStockQuantity(orderItem.getCount());
+    }
+
+    public int getOrderItemTotalPrice(Long orderItemId) {
+        OrderItem orderItem = ordersService.checkOrderItem(orderItemId);
+        return orderItem.getTotalPrice();
     }
 }

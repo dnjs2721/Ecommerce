@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import won.ecommerce.config.PortOneApiConfig;
 import won.ecommerce.controller.dto.CancelPaymentDto;
 import won.ecommerce.controller.dto.PaymentDto;
+import won.ecommerce.exception.VerifyIamportException;
 import won.ecommerce.service.PaymentService;
 import won.ecommerce.service.UserService;
 
@@ -58,41 +59,6 @@ public class PaymentController {
     }
 
     /**
-     * 주문취소, 결제취소 홈
-     */
-    @PostMapping("/cancelOrderHome")
-    public String cancelOrderHome(@ModelAttribute("formData2") CancelPaymentDto dto, Model model) {
-        try {
-            userService.cancelOrderHome(dto.getCancelPaymentUserId(), dto.getOrderItemId(), model);
-            return "cancelOrderHome";
-        } catch (Exception e) {
-            String errorMessage = e.getMessage(); // 에러 메시지 가져오기
-            model.addAttribute("errorMessage", errorMessage);
-            return "errorPage";
-        }
-    }
-
-    /**
-     * 결제취소
-     * post 통신으로 변결필요
-     */
-    @GetMapping("/cancelPayment/{userId}/{orderItemId}")
-    public String cancelPayment(@PathVariable("userId") Long userId, @PathVariable("orderItemId") Long orderItemId, Model model) throws IllegalAccessException {
-        userService.cancelPayment(userId, orderItemId, model);
-        return "cancelPayment";
-    }
-
-    /**
-     * 주문 취소
-     *  post 통신으로 변결필요
-     */
-    @GetMapping("/cancelOrder/{orderItemId}")
-    public String cancelOrder(@PathVariable("orderItemId") Long orderItemId) {
-        paymentService.cancelOrderItem(orderItemId);
-        return "redirect:/paymentHome";
-    }
-
-    /**
      * 결제검증
      */
     @ResponseBody
@@ -110,6 +76,30 @@ public class PaymentController {
     }
 
     /**
+     * 주문취소, 결제취소 버튼
+     */
+    @PostMapping("/cancelOrderHome")
+    public String cancelOrderHome(@ModelAttribute("formData2") CancelPaymentDto dto, Model model) {
+        try {
+            userService.cancelOrderHome(dto.getCancelPaymentUserId(), dto.getOrderItemId(), model);
+            return "cancelOrderHome";
+        } catch (Exception e) {
+            String errorMessage = e.getMessage(); // 에러 메시지 가져오기
+            model.addAttribute("errorMessage", errorMessage);
+            return "errorPage";
+        }
+    }
+
+    /**
+     * 주문 취소
+     */
+    @PostMapping("/cancelOrder/{orderItemId}")
+    public String cancelOrder(@PathVariable("orderItemId") Long orderItemId) {
+        paymentService.cancelOrderItem(orderItemId);
+        return "redirect:/paymentHome";
+    }
+    
+    /**
      * 결제 취소 로직
      */
     @ResponseBody
@@ -122,6 +112,10 @@ public class PaymentController {
         } else if (map.containsKey("paymentUid")){
             iamportResponse = api.paymentByImpUid(map.get("paymentUid"));
             orderItemId = Long.parseLong(map.get("orderItemId"));
+            int orderItemTotalPrice = paymentService.getOrderItemTotalPrice(orderItemId);
+            if (Integer.parseInt(map.get("checkSum")) != orderItemTotalPrice) {
+                throw new VerifyIamportException("환불금액 위/변조. 환불금액이 일치하지 않습니다.");
+            }
         }
         CancelData data = cancelData(iamportResponse, map);
         if (orderItemId != null) {

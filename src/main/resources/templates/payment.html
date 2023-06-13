@@ -94,6 +94,7 @@
                     })
                 } else {
                     alert(rsp.error_msg);
+                    window.location.replace("/paymentHome");
                     console.log(rsp);
                 }
             });
@@ -112,11 +113,12 @@
                 data: JSON.stringify(data),
                 contentType: "application/json; charset=utf-8",
                 success: function (result) {
-                    alert("결제금액 환불완료");
+                    alert("결제가 성공적으로 취소되었습니다");
                     window.location.replace("/paymentHome");
                 },
                 error: function (result) {
-                    alert("환불에 실패하였습니다. 실패 내용: " + result.responseText);
+                    alert("결제 취소 중 오류가 발생했습니다: " + result.responseText);
+                    window.location.replace("/paymentHome");
                 },
             });
         }
