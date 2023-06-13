@@ -1,4 +1,4 @@
-package won.ecommerce.controller.dto;
+package won.ecommerce.controller.dto.paymentDto;
 
 
 import com.google.gson.annotations.SerializedName;

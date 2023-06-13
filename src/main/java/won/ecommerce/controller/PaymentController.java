@@ -10,8 +10,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import won.ecommerce.config.PortOneApiConfig;
-import won.ecommerce.controller.dto.CancelPaymentDto;
-import won.ecommerce.controller.dto.PaymentDto;
+import won.ecommerce.controller.dto.paymentDto.CancelPaymentDto;
+import won.ecommerce.controller.dto.paymentDto.PaymentDto;
 import won.ecommerce.exception.VerifyIamportException;
 import won.ecommerce.service.PaymentService;
 import won.ecommerce.service.UserService;
@@ -98,7 +98,7 @@ public class PaymentController {
         paymentService.cancelOrderItem(orderItemId);
         return "redirect:/paymentHome";
     }
-    
+
     /**
      * 결제 취소 로직
      */
@@ -130,9 +130,8 @@ public class PaymentController {
         BigDecimal checkSum = new BigDecimal(Integer.parseInt(map.get("checkSum")));
         String refundHolder = map.get("refundHolder");
 
-        CancelData data = new CancelData(iamportResponse.getResponse().getImpUid(), true);
+        CancelData data = new CancelData(iamportResponse.getResponse().getImpUid(), true, checkSum);
         data.setReason(reason);
-        data.setChecksum(checkSum);
         data.setRefund_holder(refundHolder);
 
         return data;
