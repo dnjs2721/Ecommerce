@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import won.ecommerce.controller.dto.order.ChangeOrderStatusRequestDto;
 import won.ecommerce.entity.*;
 import won.ecommerce.repository.dto.search.order.*;
+import won.ecommerce.repository.orders.ExchangeRefundRepository;
 import won.ecommerce.repository.orders.OrderItemRepository;
 import won.ecommerce.repository.orders.OrdersForBuyerRepository;
 import won.ecommerce.repository.orders.OrdersForSellerRepository;
@@ -21,6 +22,7 @@ public class OrdersService {
     private final OrdersForBuyerRepository buyerRepository;
     private final OrdersForSellerRepository sellerRepository;
     private final OrderItemRepository orderItemRepository;
+    private final ExchangeRefundRepository exchangeRefundRepository;
 
     /**
      * 구매자용 주문, 판매자용 주문, 주문상품 생성
@@ -132,6 +134,7 @@ public class OrdersService {
         }
     }
 
+
     /**
      * 판매자 주문 상품 상태 변경
      */
@@ -229,6 +232,15 @@ public class OrdersService {
             throw new NoSuchElementException("잘못된 주문상품번호 입니다.");
         }
         return optionalOrderItem.get();
+    }
+
+    // 구매자의 구매 상품인지 확인
+    public OrderItem checkBuyerOrderItem(Long buyerId, Long orderItemId) throws IllegalAccessException {
+        OrderItem orderItem = checkOrderItem(orderItemId);
+        if (!orderItem.getBuyerId().equals(buyerId)) {
+            throw new IllegalAccessException("사용자의 주문상품이 아닙니다.");
+        }
+        return orderItem;
     }
 
     // 결제 번호 입력

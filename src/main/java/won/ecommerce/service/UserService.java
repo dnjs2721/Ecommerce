@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
+import won.ecommerce.controller.dto.userDto.CreateExchangeRefundLogRequestDto;
 import won.ecommerce.entity.*;
 import won.ecommerce.repository.deleted.user.DeletedUserRepository;
 import won.ecommerce.repository.dto.search.item.SortCondition;
@@ -39,6 +40,7 @@ public class UserService {
     private final ShoppingCartService shoppingCartService;
     private final OrdersService ordersService;
     private final PaymentService paymentService;
+    private final ExchangeRefundLogService exchangeRefundLogService;
 
     /**
      * 회원가입
@@ -256,11 +258,38 @@ public class UserService {
     public void cancelOrderHome(Long buyerId, Long orderItemId, Model model) throws IllegalAccessException {
         User buyer = checkUserById(buyerId);// NoSuchElementException
 
-        OrderItem orderItem = ordersService.checkOrderItem(orderItemId); // NoSuchElementException
-        if (!orderItem.getBuyerId().equals(buyerId)) {
-            throw new IllegalAccessException("사용자의 주문상품이 아닙니다.");
-        }
+        OrderItem orderItem = ordersService.checkBuyerOrderItem(buyerId, orderItemId); // IllegalAccessException
         paymentService.cancelOrderHome(buyer.getName(), buyerId, orderItem, model);// IllegalStateException
+    }
+
+    /**
+     * 교환/환불 신청 로그 생성
+     */
+    @Transactional
+    public void createExchangeRefundLog(Long userId, CreateExchangeRefundLogRequestDto request) throws IllegalAccessException {
+        checkUserById(userId);// NoSuchElementException
+        OrderItem orderItem = ordersService.checkBuyerOrderItem(userId, request.getOrderItemId());// IllegalAccessException
+        if (!orderItem.getOrderItemStatus().equals(OrderItemStatus.DELIVERY_COMPLETE)) {
+            throw new IllegalStateException("교환/환불을 신청할수 있는 상태가 아닙니다. 배송완료 후 신청 해주세요.");
+        }
+        exchangeRefundLogService.createExchangeRefundLog(userId, request);  // IllegalStateException
+    }
+
+    /**
+     * 대기중인 교환/환불 신청 확인
+     */
+    public ExchangeRefundLog searchWaitExchangeRefundLog(Long userId, Long orderItemId) {
+        checkUserById(userId); // NoSuchElementException
+        return exchangeRefundLogService.searchWaitExchangeRefundLog(userId, orderItemId); // NoSuchElementException
+    }
+
+    /**
+     * 대기중인 교환/환불 신청 취소
+     */
+    @Transactional
+    public void cancelExchangeRefund(Long userId, Long orderItemId, LogStatus logStatus) {
+        ExchangeRefundLog exchangeRefundLog = searchWaitExchangeRefundLog(userId, orderItemId); // NoSuchElementException
+        exchangeRefundLogService.changeLogStatusExchangeRefundLog(exchangeRefundLog.getId(), logStatus); // NoSuchElementException
     }
 
 

@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import won.ecommerce.controller.dto.userDto.*;
+import won.ecommerce.entity.ExchangeRefundLog;
+import won.ecommerce.entity.LogStatus;
 import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
 import won.ecommerce.repository.dto.search.item.SortCondition;
@@ -174,6 +176,49 @@ public class UserController {
             return createResponseEntity(e1, NOT_FOUND);
         } catch (IllegalAccessException e2) {
             return createResponseEntity(e2, NOT_ACCEPTABLE);
+        }
+    }
+
+    /**
+     * 교환/환불 신청 로그 생성
+     */
+    @PostMapping("/exchangeRefundLog/create/{userId}")
+    public ResponseEntity<String> createExchangeRefundLog(@PathVariable("userId") Long buyerId, @RequestBody @Valid CreateExchangeRefundLogRequestDto requeset) {
+        try {
+            userService.createExchangeRefundLog(buyerId, requeset);
+            return ResponseEntity.ok().body("교환/환불 신청이 전송되었습니다.");
+        } catch (NoSuchElementException e1) {
+            return createResponseEntity(e1, NOT_FOUND);
+        } catch (IllegalAccessException e2) {
+            return createResponseEntity(e2, NOT_ACCEPTABLE);
+        } catch (IllegalStateException e3) {
+            return createResponseEntity(e3, CONFLICT);
+        }
+    }
+
+    /**
+     * 대기중인 교환/환불 신청 확인
+     */
+    @GetMapping("/exchangeRefundLog/searchWait/{userId}/{orderItemId}")
+    public ResponseEntity<?> searchWaitExchangeRefundLog(@PathVariable("userId") Long buyerId, @PathVariable("orderItemId") Long orderItemId) {
+        try {
+            ExchangeRefundLog exchangeRefundLog = userService.searchWaitExchangeRefundLog(buyerId, orderItemId);
+            return ResponseEntity.ok().body(exchangeRefundLog);
+        } catch (NoSuchElementException e1) {
+            return createResponseEntity(e1, NOT_FOUND);
+        }
+    }
+
+    /**
+     * 대기중인 교환/환불 신청 취소
+     */
+    @PostMapping("/exchangeRefundLog/cancel/{userId}")
+    public ResponseEntity<String> cancelExchangeRefund(@PathVariable("userId") Long buyerId, @RequestBody @Valid cancelExchangeRefundRequestDto request) {
+        try {
+            userService.cancelExchangeRefund(buyerId, request.getOrderItemId(), LogStatus.CANCEL);
+            return ResponseEntity.ok().body("요청이 성공적으로 취소되었습니다.");
+        } catch (NoSuchElementException e1) {
+            return createResponseEntity(e1, NOT_FOUND);
         }
     }
 

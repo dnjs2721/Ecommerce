@@ -77,6 +77,9 @@ public class PaymentController {
 
     /**
      * 주문취소, 결제취소 버튼
+     * WAITING_FOR_PAYMENT 일 때는 주문취소 버틑
+     * COMPLETE_PAYMENT 일 때는 결제취소 버튼
+     * 나머지는 예외
      */
     @PostMapping("/cancelOrderHome")
     public String cancelOrderHome(@ModelAttribute("formData2") CancelPaymentDto dto, Model model) {
@@ -132,8 +135,14 @@ public class PaymentController {
 
         CancelData data = new CancelData(iamportResponse.getResponse().getImpUid(), true, checkSum);
         data.setReason(reason);
+        data.setChecksum(checkSum);
         data.setRefund_holder(refundHolder);
 
         return data;
     }
+
+    /**
+     * 환불
+     * DELIVERY_COMPLETE 일 때 구매자가 보낸 신청을 통해 환불
+     */
 }
