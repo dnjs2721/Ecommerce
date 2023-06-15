@@ -1,12 +1,16 @@
 package won.ecommerce.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import won.ecommerce.controller.dto.userDto.CreateExchangeRefundLogRequestDto;
 import won.ecommerce.entity.ExchangeRefundLog;
 import won.ecommerce.entity.ExchangeRefundStatus;
 import won.ecommerce.entity.LogStatus;
-import won.ecommerce.repository.orders.ExchangeRefundRepository;
+import won.ecommerce.repository.dto.search.exchangeRefundLog.ExchangeRefundLogSearchCondition;
+import won.ecommerce.repository.dto.search.exchangeRefundLog.SearchExchangeRefundLogDto;
+import won.ecommerce.repository.exchangeRefund.ExchangeRefundRepository;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -19,7 +23,7 @@ public class ExchangeRefundLogService {
     /**
      * 교환/환불 신청 로그 생성
      */
-    public void createExchangeRefundLog(Long userId, CreateExchangeRefundLogRequestDto request) {
+    public void createExchangeRefundLog(Long userId, Long sellerId, CreateExchangeRefundLogRequestDto request) {
         Optional<ExchangeRefundLog> findLog = exchangeRefundRepository.findByUserIdAndOrderItemIdAndLogStatus(userId, request.getOrderItemId(), LogStatus.WAIT);
         if (findLog.isPresent()) {
             ExchangeRefundLog exchangeRefundLog = findLog.get();
@@ -35,6 +39,7 @@ public class ExchangeRefundLogService {
         }
 
         ExchangeRefundLog log = ExchangeRefundLog.builder()
+                .sellerId(sellerId)
                 .userId(userId)
                 .orderItemId(request.getOrderItemId())
                 .reason(request.getReason())
@@ -44,7 +49,7 @@ public class ExchangeRefundLogService {
     }
 
     /**
-     * 대기중인 교환/환불 신청 확인
+     * 구매자 대기중인 교환/환불 신청 확인
      */
     public ExchangeRefundLog searchWaitExchangeRefundLog(Long userId, Long orderItemId) {
         Optional<ExchangeRefundLog> findLog = exchangeRefundRepository.findByUserIdAndOrderItemIdAndLogStatus(userId, orderItemId, LogStatus.WAIT);
@@ -52,6 +57,13 @@ public class ExchangeRefundLogService {
             throw new NoSuchElementException("대기중인 교환/환불 신청을 찾지 못했습니다.");
         }
         return findLog.get();
+    }
+
+    /**
+     * 판매자 교환/환불 신청서 확인
+     */
+    public Page<SearchExchangeRefundLogDto> searchExchangeRefundLog(Long sellerId, ExchangeRefundLogSearchCondition condition, Pageable pageable) {
+        return exchangeRefundRepository.searchExchangeRefundLog(sellerId, condition, pageable);
     }
 
     /**

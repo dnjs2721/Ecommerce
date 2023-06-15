@@ -11,6 +11,8 @@ import won.ecommerce.entity.Item;
 import won.ecommerce.entity.OrderItem;
 import won.ecommerce.entity.User;
 import won.ecommerce.entity.UserStatus;
+import won.ecommerce.repository.dto.search.exchangeRefundLog.ExchangeRefundLogSearchCondition;
+import won.ecommerce.repository.dto.search.exchangeRefundLog.SearchExchangeRefundLogDto;
 import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
 import won.ecommerce.repository.dto.search.item.SearchItemDto;
 import won.ecommerce.repository.dto.search.order.*;
@@ -26,6 +28,7 @@ public class SellerService {
     private final ItemService itemService;
     private final UserService userService;
     private final OrdersService ordersService;
+    private final ExchangeRefundLogService exchangeRefundLogService;
 
     /**
      * 판매 상품 등록
@@ -91,6 +94,14 @@ public class SellerService {
         Item item = itemService.checkItem(orderItem.getItemId()); // NoSuchElementException
 
         return ordersService.changeOrderStatus(item, orderItem, request); // IllegalStateException
+    }
+
+    /**
+     * 판매자 교환/환불 신청서 확인
+     */
+    public Page<SearchExchangeRefundLogDto> searchExchangeRefundLog(Long sellerId, ExchangeRefundLogSearchCondition condition, Pageable pageable) throws IllegalAccessException {
+        checkSeller(sellerId);
+        return exchangeRefundLogService.searchExchangeRefundLog(sellerId, condition, pageable);
     }
 
     // 판매자 확인

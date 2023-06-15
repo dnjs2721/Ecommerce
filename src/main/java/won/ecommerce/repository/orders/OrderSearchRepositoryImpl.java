@@ -162,15 +162,15 @@ public class OrderSearchRepositoryImpl implements OrderSearchRepository{
         }
     }
 
-    private BooleanExpression orderTimeGoeForBuyer(LocalDateTime timeLoe) {
-        return timeLoe != null ? ordersForBuyer.createdDate.goe(timeLoe) : null;
+    private BooleanExpression orderTimeGoeForBuyer(LocalDateTime timeGoe) {
+        return timeGoe != null ? ordersForBuyer.createdDate.goe(timeGoe) : null;
     }
     private BooleanExpression orderTimeLoeForBuyer(LocalDateTime timeLoe) {
         return timeLoe != null ? ordersForBuyer.createdDate.loe(timeLoe) : null;
     }
 
-    private BooleanExpression orderTimeGoeForSeller(LocalDateTime timeLoe) {
-        return timeLoe != null ? ordersForSeller.createdDate.goe(timeLoe) : null;
+    private BooleanExpression orderTimeGoeForSeller(LocalDateTime timeGoe) {
+        return timeGoe != null ? ordersForSeller.createdDate.goe(timeGoe) : null;
     }
     private BooleanExpression orderTimeLoeForSeller(LocalDateTime timeLoe) {
         return timeLoe != null ? ordersForSeller.createdDate.loe(timeLoe) : null;

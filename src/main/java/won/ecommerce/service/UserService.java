@@ -272,7 +272,7 @@ public class UserService {
         if (!orderItem.getOrderItemStatus().equals(OrderItemStatus.DELIVERY_COMPLETE)) {
             throw new IllegalStateException("교환/환불을 신청할수 있는 상태가 아닙니다. 배송완료 후 신청 해주세요.");
         }
-        exchangeRefundLogService.createExchangeRefundLog(userId, request);  // IllegalStateException
+        exchangeRefundLogService.createExchangeRefundLog(userId, orderItem.getSellerId(), request);  // IllegalStateException
     }
 
     /**

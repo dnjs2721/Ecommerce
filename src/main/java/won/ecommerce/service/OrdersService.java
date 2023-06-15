@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import won.ecommerce.controller.dto.order.ChangeOrderStatusRequestDto;
 import won.ecommerce.entity.*;
 import won.ecommerce.repository.dto.search.order.*;
-import won.ecommerce.repository.orders.ExchangeRefundRepository;
+import won.ecommerce.repository.exchangeRefund.ExchangeRefundRepository;
 import won.ecommerce.repository.orders.OrderItemRepository;
 import won.ecommerce.repository.orders.OrdersForBuyerRepository;
 import won.ecommerce.repository.orders.OrdersForSellerRepository;

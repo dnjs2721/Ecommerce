@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import won.ecommerce.controller.dto.itemDto.DeleteItemRequestDto;
 import won.ecommerce.controller.dto.order.ChangeOrderStatusRequestDto;
 import won.ecommerce.entity.Item;
+import won.ecommerce.repository.dto.search.exchangeRefundLog.ExchangeRefundLogSearchCondition;
+import won.ecommerce.repository.dto.search.exchangeRefundLog.SearchExchangeRefundLogDto;
 import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
 import won.ecommerce.repository.dto.search.item.SearchItemDto;
 import won.ecommerce.repository.dto.search.order.OrderSearchCondition;
@@ -142,7 +144,18 @@ public class SellerController {
         } catch (IllegalStateException e3) {
             return createResponseEntity(e3, CONFLICT);
         }
+    }
 
+    @GetMapping("/searchExchangeRefundLog/{userId}")
+    public ResponseEntity<?> searchExchangeRefundLog(@PathVariable("userId") Long sellerId, ExchangeRefundLogSearchCondition condition, Pageable pageable) {
+        try {
+            Page<SearchExchangeRefundLogDto> searchLogs = sellerService.searchExchangeRefundLog(sellerId, condition, pageable);
+            return ResponseEntity.ok().body(searchLogs);
+        } catch (IllegalAccessException e1) {
+            return createResponseEntity(e1, NOT_ACCEPTABLE);
+        } catch (NoSuchElementException e2) {
+            return createResponseEntity(e2, NOT_FOUND);
+        }
     }
 
     public ResponseEntity<String> createResponseEntity(Exception e, HttpStatus httpStatus) {

@@ -15,6 +15,7 @@ public class ExchangeRefundLog extends BaseTimeEntity {
     @Id
     @GeneratedValue
     private Long id;
+    private Long sellerId;
     private Long userId;
     private Long orderItemId;
     private String reason;
@@ -25,7 +26,8 @@ public class ExchangeRefundLog extends BaseTimeEntity {
     private LocalDateTime processingTime;
 
     @Builder
-    public ExchangeRefundLog(Long userId, Long orderItemId, String reason, ExchangeRefundStatus status) {
+    public ExchangeRefundLog(Long sellerId, Long userId, Long orderItemId, String reason, ExchangeRefundStatus status) {
+        this.sellerId = sellerId;
         this.userId = userId;
         this.orderItemId = orderItemId;
         this.reason = reason;
