@@ -6,6 +6,8 @@ import com.siot.IamportRestClient.request.CancelData;
 import com.siot.IamportRestClient.response.IamportResponse;
 import com.siot.IamportRestClient.response.Payment;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -13,11 +15,15 @@ import won.ecommerce.config.PortOneApiConfig;
 import won.ecommerce.controller.dto.paymentDto.CancelPaymentDto;
 import won.ecommerce.controller.dto.paymentDto.PaymentDto;
 import won.ecommerce.exception.VerifyIamportException;
+import won.ecommerce.repository.dto.search.exchangeRefundLog.ExchangeRefundLogSearchCondition;
+import won.ecommerce.repository.dto.search.exchangeRefundLog.SearchExchangeRefundLogDto;
 import won.ecommerce.service.PaymentService;
+import won.ecommerce.service.SellerService;
 import won.ecommerce.service.UserService;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -27,12 +33,14 @@ public class PaymentController {
     private final PortOneApiConfig portOneApiConfig;
     private final UserService userService;
     private final PaymentService paymentService;
+    private final SellerService sellerService;
 
-    public PaymentController(PortOneApiConfig portOneApiConfig, UserService userService, PaymentService paymentService) {
+    public PaymentController(PortOneApiConfig portOneApiConfig, UserService userService, PaymentService paymentService, SellerService sellerService) {
         this.api = new IamportClient(portOneApiConfig.getApiKey(), portOneApiConfig.getApiSecretKey());
         this.portOneApiConfig = portOneApiConfig;
         this.userService = userService;
         this.paymentService = paymentService;
+        this.sellerService = sellerService;
     }
 
     /**
@@ -112,7 +120,7 @@ public class PaymentController {
         Long orderItemId = null;
         if (map.containsKey("impUid")) {
             iamportResponse = api.paymentByImpUid(map.get("impUid"));
-        } else if (map.containsKey("paymentUid")){
+        } else if (map.containsKey("paymentUid")) {
             iamportResponse = api.paymentByImpUid(map.get("paymentUid"));
             orderItemId = Long.parseLong(map.get("orderItemId"));
             int orderItemTotalPrice = paymentService.getOrderItemTotalPrice(orderItemId);
@@ -145,4 +153,18 @@ public class PaymentController {
      * 환불
      * DELIVERY_COMPLETE 일 때 구매자가 보낸 신청을 통해 환불
      */
+    @GetMapping("/getExchangeRefundLogs/{userId}")
+    public String getExchangeRefundLogs(@PathVariable("userId") Long sellerId, ExchangeRefundLogSearchCondition condition, Pageable pageable, Model model) throws IllegalAccessException {
+        List<SearchExchangeRefundLogDto> logs = sellerService.searchExchangeRefundLog(sellerId, condition, pageable).getContent();
+        model.addAttribute("logs", logs);
+        model.addAttribute("sellerId", sellerId);
+        return "ExchangeRefundLogs";
+    }
+
+    @ResponseBody
+    @PostMapping("/processingERLog")
+    public void processingERLog(@RequestParam("logId") Long longId, @RequestParam("okOrCancel") Boolean okOrCancel) {
+        log.info("gd");
+        log.info(okOrCancel.toString());
+    }
 }

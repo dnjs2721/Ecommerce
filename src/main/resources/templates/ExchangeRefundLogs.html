@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Exchange and Refund Log</title>
+
+  <script type="text/javascript"
+          src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1500px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+
+    h1 {
+      margin-left: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .button-container {
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .button-container button {
+      padding: 6px 12px;
+      background-color: #6f9bfe;
+      color: #ffffff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .button-container button:hover {
+      background-color: #3c79e6;
+    }
+
+    th {
+      white-space: nowrap;
+    }
+
+  </style>
+</head>
+<body>
+<div class="container">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <h1 style="margin-left: 20px">교환 및 환불 신청서</h1>
+    <div class="button-container">
+      <button type="button" onclick="redirectToPaymentHome()">Payment Home으로 이동</button>
+    </div>
+  </div>
+  <hr>
+  <table>
+    <thead>
+    <tr>
+      <th style="text-align: center;">신청날짜</th>
+      <th style="text-align: center;">구매자 ID</th>
+      <th style="text-align: center;">주문 항목 ID</th>
+      <th style="text-align: center;">교환/환불</th>
+      <th style="text-align: center;">사유</th>
+      <th style="text-align: center;">로그 상태</th>
+      <th style="text-align: center;">처리 시간</th>
+      <th style="text-align: center;">처리/처리완료</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- Iterate over the list of SearchExchangeRefundLogDto objects -->
+    <tr th:each="log : ${logs}">
+      <td>
+        <span th:text="${#temporals.format(log.createdDate, 'yyyy년 MM월 dd일')}"></span><br>
+        <span th:text="${#temporals.format(log.createdDate, 'HH시 mm분 ss초')}"></span>
+      </td>
+      <td th:text="${log.userId}"></td>
+      <td th:text="${log.orderItemId}"></td>
+      <td>
+        <span th:if="${log.status.toString() == 'REFUND'}">환불</span>
+        <span th:if="${log.status.toString() == 'EXCHANGE'}">교환</span>
+      </td>
+      <td th:text="${log.reason}"></td>
+      <td>
+        <span th:if="${log.logStatus.toString() == 'WAIT'}">대기</span>
+        <span th:if="${log.logStatus.toString() == 'CANCEL'}">취소</span>
+        <span th:if="${log.logStatus.toString() == 'OK'}">승인</span>
+      </td>
+      <td>
+        <span th:if="${log.processingTime != null}">
+          <span th:text="${#temporals.format(log.processingTime, 'yyyy년 MM월 dd일')}"></span><br>
+          <span th:text="${#temporals.format(log.processingTime, 'HH시 mm분 ss초')}"></span>
+        </span>
+      </td>
+      <td>
+        <div class="button-container" th:if="${log.processingTime == null}">
+          <button type="button" th:logId="${log.logId}" onclick="sendLogIdOk(this.getAttribute('logId'))">승인</button>
+          <button type="button" th:logId="${log.logId}" onclick="sendLogIdCancel(this.getAttribute('logId'))">거부</button>
+        </div>
+        <div th:if="${log.processingTime != null}">
+          <span style="white-space: nowrap;">처리완료</span>
+        </div>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+
+<script th:inline="javascript">
+  /*<![CDATA[*/
+  function sendLogIdOk(logId) {
+    $.ajax({
+      type: "POST",
+      url: "/processingERLog",
+      data: { logId: logId, okOrCancel: true},
+      success: function (result) {
+        alert("로그 ID가 성공적으로 전송되었습니다.");
+        window.location.replace("/getExchangeRefundLogs/[(${sellerId})]");
+        // Do something with the response from the server
+      },
+      error: function (result) {
+        alert("로그 ID 전송 중 오류가 발생했습니다: " + result.responseText);
+        window.location.replace("/getExchangeRefundLogs/[(${sellerId})]");
+      },
+    });
+  }
+
+  function sendLogIdCancel(logId) {
+    $.ajax({
+      type: "POST",
+      url: "/processingERLog",
+      data: { logId: logId, okOrCancel: false},
+      success: function (result) {
+        alert("로그 ID가 성공적으로 전송되었습니다.");
+        window.location.replace("/getExchangeRefundLogs/[(${sellerId})]");
+        // Do something with the response from the server
+      },
+      error: function (result) {
+        alert("로그 ID 전송 중 오류가 발생했습니다: " + result.responseText);
+        window.location.replace("/getExchangeRefundLogs/[(${sellerId})]");
+      },
+    });
+  }
+
+  function redirectToPaymentHome() {
+    window.location.href = "/paymentHome";
+  }
+  /*]]>*/
+</script>
+</body>
+</html>
