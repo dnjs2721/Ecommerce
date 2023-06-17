@@ -84,13 +84,34 @@ public class PaymentService {
         }
     }
 
+    /** 주문 상품 취소 홈 판매자
+     *
+     */
+    public void cancelOrderHomeForSeller(String buyerName, Long buyerId, OrderItem orderItem, Model model) {
+        OrderItemStatus orderItemStatus = orderItem.getOrderItemStatus();
+        if (orderItemStatus.equals(WAITING_FOR_PAYMENT)) {
+            model.addAttribute("itemName", orderItem.getItemName());
+            model.addAttribute("orderItemId", orderItem.getId());
+            model.addAttribute("state", "order");
+        } else {
+            model.addAttribute("itemName", orderItem.getItemName());
+            model.addAttribute("userId", buyerId);
+            model.addAttribute("orderItemId", orderItem.getId());
+            model.addAttribute("state", "payment");
+            model.addAttribute("paymentUid", orderItem.getImpUid());
+            model.addAttribute("amount", orderItem.getTotalPrice());
+            model.addAttribute("orderItemId", orderItem.getId());
+            model.addAttribute("buyerName", buyerName);
+        }
+    }
+
     // 주문 취소, 재고 변경
     @Transactional
-    public void cancelOrderItem(Long orderItemId) {
+    public void cancelOrderItem(Long orderItemId,  String reason) {
         OrderItem orderItem = ordersService.checkOrderItem(orderItemId);
         Item item = itemService.checkItem(orderItem.getItemId());
         orderItem.changeStatus(CANCEL);
-        orderItem.setComment("구매자에 의한 취소");
+        orderItem.setComment(reason);
         item.increaseStockQuantity(orderItem.getCount());
     }
 

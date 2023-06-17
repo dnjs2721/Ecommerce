@@ -259,6 +259,7 @@ public class UserService {
         User buyer = checkUserById(buyerId);// NoSuchElementException
 
         OrderItem orderItem = ordersService.checkBuyerOrderItem(buyerId, orderItemId); // IllegalAccessException
+        model.addAttribute("reason", "구매자에 의한 취소");
         paymentService.cancelOrderHome(buyer.getName(), buyerId, orderItem, model);// IllegalStateException
     }
 

@@ -7,15 +7,19 @@
         body {
             font-family: Arial, sans-serif;
             background-color: #f2f2f2;
+            display: flex; /* 수정된 부분 */
+            justify-content: center; /* 수정된 부분 */
+            align-items: center; /* 수정된 부분 */
+            height: 100vh; /* 수정된 부분 */
         }
 
         .container {
-            max-width: 400px;
-            margin: 0 auto;
+            width: 400px; /* 수정된 부분 */
             padding: 20px;
             background-color: #ffffff;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
 
         .form-group {
             margin-bottom: 15px;
@@ -53,7 +57,7 @@
 </head>
 <body>
 <div class="container">
-    <h1>결제 및 취소</h1>
+    <h1>사용자</h1>
 
     <h2>결제</h2>
     <form method="post" action="/payment" th:object="${formData1}">
@@ -70,7 +74,7 @@
         <button type="submit" class="btn">결제</button>
     </form>
 
-    <h2>취소</h2>
+    <h2>주문/결제 취소</h2>
     <form method="post" action="/cancelOrderHome" th:object="${formData2}">
         <div class="form-group">
             <label for="cancelPaymentUserId">사용자 ID:</label>
@@ -84,6 +88,43 @@
         </div>
         <button type="submit" class="btn">취소</button>
     </form>
+    <br>
 </div>
+
+<div class="container">
+    <h1>판매자</h1>
+
+    <h2>교환/환불 신청서 확인</h2>
+    <form onsubmit="submitForm(); return false;">
+        <div class="form-group">
+            <label for="sellerId">판매자 ID:</label>
+            <input type="text" name="sellerId" id="sellerId" class="form-control"
+                   placeholder="sellerId" required="required" />
+        </div>
+        <button type="submit" class="btn">신청서 확인</button>
+    </form>
+
+    <h2>주문/결제 취소</h2>
+    <form method="post" action="/seller/cancelOrderHome" th:object="${formData3}">
+        <div class="form-group">
+            <label for="cancelPaymentSellerId">판매자 ID:</label>
+            <input type="text" name="cancelPaymentSellerId" id="cancelPaymentSellerId" class="form-control"
+                   placeholder="sellerId" required="required" />
+        </div>
+        <div class="form-group">
+            <label for="orderItemIdForSeller">주문 상품 ID:</label>
+            <input type="text" name="orderItemIdForSeller" id="orderItemIdForSeller" class="form-control"
+                   placeholder="orderItemId" required="required" />
+        </div>
+        <button type="submit" class="btn">취소</button>
+    </form>
+</div>
+
+<script>
+    function submitForm() {
+        var sellerId = document.getElementById("sellerId").value;
+        window.location.href = "/getExchangeRefundLogs/" + sellerId + "?size=5&page=1";
+    }
+</script>
 </body>
 </html>

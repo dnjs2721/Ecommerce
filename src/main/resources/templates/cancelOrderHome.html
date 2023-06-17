@@ -51,14 +51,16 @@
         /*<![CDATA[*/
         $(document).ready(function () {
             $("#CancelPayment").click(function () {
-                cancelPayment(); //버튼 클릭하면 호출
+                cancelPayment(); // 버튼 클릭하면 호출
             });
         })
 
         function cancelPayment() {
+            let reason = $("#reasonInput").val(); // 이유 입력란의 값 가져오기
+
             let data = {
                 paymentUid: [[${paymentUid}]],
-                reason: "구매자에 의한 결제취소",
+                reason: reason || "[(${reason})]", // 입력된 값이 없으면 모델의 reason 값을 사용
                 checkSum: "[(${amount})]",
                 refundHolder: "[(${buyerName})]",
                 orderItemId: "[(${orderItemId})]",
@@ -84,15 +86,18 @@
     <script th:inline="javascript">
         $(document).ready(function () {
             $("#CancelOrder").click(function () {
-                cancelOrder(); //버튼 클릭하면 호출
+                cancelOrder(); // 버튼 클릭하면 호출
             });
         })
 
         /*<![CDATA[*/
         function cancelOrder() {
+            let reason = $("#reasonInputOrder").val();
+
             $.ajax({
                 type: "POST",
                 url: "/cancelOrder/[[${orderItemId}]]",
+                data: { reason: reason || "[(${reason})]"},
                 success: function (result) {
                     alert("주문이 성공적으로 취소되었습니다");
                     window.location.replace("/paymentHome");
@@ -101,7 +106,7 @@
                     alert("주문 취소 중 오류가 발생했습니다: " + result.responseText);
                     window.location.replace("/paymentHome");
                 },
-            });액
+            });
         }
         /*]]>*/
     </script>
@@ -113,12 +118,16 @@
 
     <div th:if="${state == 'order'}">
         <div class="button-container">
+            <label for="reasonInput">취소 이유:</label>
+            <input type="text" id="reasonInputOrder" name="reasonInputOrder" placeholder="취소 이유를 입력하세요" /><br>
             <button id="CancelOrder" type="button">주문취소</button>
         </div>
     </div>
 
     <div th:if="${state == 'payment'}">
         <div class="button-container">
+            <label for="reasonInput">취소 이유:</label>
+            <input type="text" id="reasonInput" name="reasonInput" placeholder="취소 이유를 입력하세요" /><br>
             <button id="CancelPayment" type="button">결제취소</button>
         </div>
     </div>

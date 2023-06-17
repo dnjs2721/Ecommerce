@@ -6,11 +6,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
 import won.ecommerce.controller.dto.order.ChangeOrderStatusRequestDto;
-import won.ecommerce.entity.Item;
-import won.ecommerce.entity.OrderItem;
-import won.ecommerce.entity.User;
-import won.ecommerce.entity.UserStatus;
+import won.ecommerce.entity.*;
 import won.ecommerce.repository.dto.search.exchangeRefundLog.ExchangeRefundLogSearchCondition;
 import won.ecommerce.repository.dto.search.exchangeRefundLog.SearchExchangeRefundLogDto;
 import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
@@ -29,6 +27,7 @@ public class SellerService {
     private final UserService userService;
     private final OrdersService ordersService;
     private final ExchangeRefundLogService exchangeRefundLogService;
+    private final PaymentService paymentService;
 
     /**
      * 판매 상품 등록
@@ -102,6 +101,26 @@ public class SellerService {
     public Page<SearchExchangeRefundLogDto> searchExchangeRefundLog(Long sellerId, ExchangeRefundLogSearchCondition condition, Pageable pageable) throws IllegalAccessException {
         checkSeller(sellerId);
         return exchangeRefundLogService.searchExchangeRefundLog(sellerId, condition, pageable);
+    }
+
+    /**
+     * 판매자 교환/환불 신청 거부
+     */
+    @Transactional
+    public void cancelERLog(Long erLogId, Boolean okOrCancel) {
+        if (Boolean.FALSE.equals(okOrCancel)) {
+            exchangeRefundLogService.changeLogStatusExchangeRefundLog(erLogId, LogStatus.CANCEL);
+        } else {
+            exchangeRefundLogService.changeLogStatusExchangeRefundLog(erLogId, LogStatus.OK);
+        }
+    }
+
+    public void cancelOrderHome(Long sellerId, Long orderItemId, Model model) throws IllegalAccessException {
+        checkSeller(sellerId);// NoSuchElementException
+        OrderItem orderItem = ordersService.checkSellerOrderItem(sellerId, orderItemId); // IllegalAccessException
+        User user = userService.checkUserById(orderItem.getBuyerId());
+        model.addAttribute("reason", "판매자에 의한 취소");
+        paymentService.cancelOrderHomeForSeller(user.getName(), user.getId(), orderItem, model);// IllegalStateException
     }
 
     // 판매자 확인

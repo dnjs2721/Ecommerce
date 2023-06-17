@@ -13,6 +13,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import won.ecommerce.config.PortOneApiConfig;
 import won.ecommerce.controller.dto.paymentDto.CancelPaymentDto;
+import won.ecommerce.controller.dto.paymentDto.CancelPaymentForSellerDto;
 import won.ecommerce.controller.dto.paymentDto.PaymentDto;
 import won.ecommerce.exception.VerifyIamportException;
 import won.ecommerce.repository.dto.search.exchangeRefundLog.ExchangeRefundLogSearchCondition;
@@ -101,12 +102,24 @@ public class PaymentController {
         }
     }
 
+    @PostMapping("/seller/cancelOrderHome")
+    public String cancelOrderHomeForSeller(@ModelAttribute("formData3") CancelPaymentForSellerDto dto, Model model) {
+        try {
+            sellerService.cancelOrderHome(dto.getCancelPaymentSellerId(), dto.getOrderItemIdForSeller(), model);
+            return "cancelOrderHome";
+        } catch (Exception e) {
+            String errorMessage = e.getMessage(); // 에러 메시지 가져오기
+            model.addAttribute("errorMessage", errorMessage);
+            return "errorPage";
+        }
+    }
+
     /**
      * 주문 취소
      */
     @PostMapping("/cancelOrder/{orderItemId}")
-    public String cancelOrder(@PathVariable("orderItemId") Long orderItemId) {
-        paymentService.cancelOrderItem(orderItemId);
+    public String cancelOrder(@PathVariable("orderItemId") Long orderItemId, @RequestParam("reason") String reason) {
+        paymentService.cancelOrderItem(orderItemId, reason);
         return "redirect:/paymentHome";
     }
 
@@ -130,7 +143,8 @@ public class PaymentController {
         }
         CancelData data = cancelData(iamportResponse, map);
         if (orderItemId != null) {
-            paymentService.cancelOrderItem(orderItemId);
+            String reason = map.get("reason");
+            paymentService.cancelOrderItem(orderItemId, reason);
         }
         return api.cancelPaymentByImpUid(data);
     }
@@ -151,20 +165,25 @@ public class PaymentController {
 
     /**
      * 환불
-     * DELIVERY_COMPLETE 일 때 구매자가 보낸 신청을 통해 환불
+     * DELIVERY_COMPLETE 일 때 구매자가 보낸 신청 확인
      */
     @GetMapping("/getExchangeRefundLogs/{userId}")
     public String getExchangeRefundLogs(@PathVariable("userId") Long sellerId, ExchangeRefundLogSearchCondition condition, Pageable pageable, Model model) throws IllegalAccessException {
-        List<SearchExchangeRefundLogDto> logs = sellerService.searchExchangeRefundLog(sellerId, condition, pageable).getContent();
-        model.addAttribute("logs", logs);
-        model.addAttribute("sellerId", sellerId);
-        return "ExchangeRefundLogs";
+        try {
+            Page<SearchExchangeRefundLogDto> logs = sellerService.searchExchangeRefundLog(sellerId, condition, pageable);
+            model.addAttribute("logs", logs);
+            model.addAttribute("sellerId", sellerId);
+            return "ExchangeRefundLogs";
+        } catch (Exception e) {
+            String errorMessage = e.getMessage(); // 에러 메시지 가져오기
+            model.addAttribute("errorMessage", errorMessage);
+            return "errorPage";
+        }
     }
 
     @ResponseBody
     @PostMapping("/processingERLog")
-    public void processingERLog(@RequestParam("logId") Long longId, @RequestParam("okOrCancel") Boolean okOrCancel) {
-        log.info("gd");
-        log.info(okOrCancel.toString());
+    public void processingERLog(@RequestParam("logId") Long logId, @RequestParam("okOrCancel") Boolean okOrCancel) {
+        sellerService.cancelERLog(logId, okOrCancel);
     }
 }

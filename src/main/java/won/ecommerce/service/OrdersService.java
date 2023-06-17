@@ -218,12 +218,13 @@ public class OrdersService {
     }
 
     // 핀매자 주문인지 체크
-    private void checkSellerOrder(Long sellerId, Long orderId) throws IllegalAccessException {
+    public void checkSellerOrder(Long sellerId, Long orderId) throws IllegalAccessException {
         OrdersForSeller ordersForSeller = getOrdersForSeller(orderId);
         if (!ordersForSeller.getSeller().getId().equals(sellerId)) {
             throw new IllegalAccessException("사용자의 주문이 아닙니다.");
         }
     }
+
 
     // 구매 상품 존재 확인
     public OrderItem checkOrderItem(Long orderItemId) {
@@ -238,6 +239,14 @@ public class OrdersService {
     public OrderItem checkBuyerOrderItem(Long buyerId, Long orderItemId) throws IllegalAccessException {
         OrderItem orderItem = checkOrderItem(orderItemId);
         if (!orderItem.getBuyerId().equals(buyerId)) {
+            throw new IllegalAccessException("사용자의 주문상품이 아닙니다.");
+        }
+        return orderItem;
+    }
+
+    public OrderItem checkSellerOrderItem(Long sellerId, Long orderItemId) throws IllegalAccessException {
+        OrderItem orderItem = checkOrderItem(orderItemId);
+        if (!orderItem.getSellerId().equals(sellerId)) {
             throw new IllegalAccessException("사용자의 주문상품이 아닙니다.");
         }
         return orderItem;
