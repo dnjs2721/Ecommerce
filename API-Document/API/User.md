@@ -371,3 +371,98 @@
       {logId} 이미 전송된 요청입니다.
       ```
 <br/>
+
+- 상품 조회
+  - **API** : `/api/users/searchItem/?Params`
+  - **Method : GET**
+  - **Request**
+
+      ```jsonc
+      {Params} 동적
+      {
+        orderName1 : price or name
+        orderDirect1 : ASC or DESC
+        orderName2 : price or name
+        orderDirect2 : ASC or DESC
+        priceGoe : 가격범위 이상
+        priceLoe : 가격범위 이하
+        sellerNickName : 판매자 닉네임
+        itemName : 상품 이름
+        categoryId : 카테고리
+        size : 페이지 최대 표시 수
+        page : 페이지 번호
+      }
+      ```
+
+  - **Response**
+      - 200 OK
+      ```
+      Page
+      ```
+      - 404 *NOT_FOUND*
+      ```
+      가입되지 않은 회원입니다.
+      ```
+<br/>
+
+- 주문 조회
+    - **API** : `/api/users/searchOrders/{userId}`
+    - **Method : GET**
+  
+    - **Request**
+     
+      ```jsonc
+      "userId" : userId 를 통하여 사용자 확인
+      ```
+      ```jsonc
+        {Params} 동적
+        {
+          status : 주문 상태
+          timeGoe : 주문 날짜 이상
+          timeLoe : 주문 날짜 이하
+          size : 페이지 최대 표시 수
+          page : 페이지 번호
+        }
+      ```
+
+    - **Response**
+        - 200 OK
+        ```
+        Page
+        ```
+        - 404 *NOT_FOUND*
+        ```
+        가입되지 않은 회원입니다.
+        ```
+<br/>
+
+- 주문 조회
+    - **API** : `/api/users/searchOrders/{userId}`
+    - **Method : GET**
+
+    - **Request**
+
+        ```jsonc
+        "userId" : userId 를 통하여 사용자 확인
+        ```
+        ```jsonc
+        {Params} 동적
+        {
+          status : 주문 상태
+          timeGoe : 주문 날짜 이상
+          timeLoe : 주문 날짜 이하
+          size : 페이지 최대 표시 수
+          page : 페이지 번호
+        }
+        ```
+
+    - **Response**
+        - 200 OK
+        ```
+        Page
+        ```
+        - 404 *NOT_FOUND*
+        ```
+        가입되지 않은 회원입니다.
+        ```
+<br/>
