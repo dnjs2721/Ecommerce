@@ -1,6 +1,5 @@
 package won.ecommerce.controller;
 
-import com.querydsl.core.Tuple;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,7 +17,6 @@ import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
 import won.ecommerce.repository.dto.search.item.SearchItemDto;
 import won.ecommerce.repository.dto.search.order.OrderSearchCondition;
 import won.ecommerce.repository.dto.search.order.SearchOrderItemForSellerDto;
-import won.ecommerce.repository.dto.search.order.SearchOrderItemsForBuyerDto;
 import won.ecommerce.repository.dto.search.order.SearchOrdersForSellerDto;
 import won.ecommerce.service.SellerService;
 import won.ecommerce.service.dto.item.ChangeItemInfoRequestDto;
@@ -115,7 +113,7 @@ public class SellerController {
     }
 
     /**
-     * 주문 상세 조회 사용자
+     * 주문 상세 조회 판매자
      */
     @GetMapping("/searchOrderDetail/{userId}/{orderId}")
     public ResponseEntity<?> searchOrderDetail(@PathVariable("userId") Long sellerId, @PathVariable("orderId") Long orderId) {
@@ -146,6 +144,9 @@ public class SellerController {
         }
     }
 
+    /**
+     * 교환환불 신청서 확인
+     */
     @GetMapping("/searchExchangeRefundLog/{userId}")
     public ResponseEntity<?> searchExchangeRefundLog(@PathVariable("userId") Long sellerId, ExchangeRefundLogSearchCondition condition, Pageable pageable) {
         try {

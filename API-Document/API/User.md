@@ -1,157 +1,5 @@
 ## 🙍🏻‍ User ( 사용자 )
 
-<details>
-<summary>메일 전송, 인증 /api/mail</summary>
-
-- 매일 전송
-    - **API** : `/api/mail/sendMail/{userEmail}`
-    - **Method : GET**
-    - **Request**
-  ```jsonc
-  "userEmail" : userEmail 에게 랜덤 인증코드 발송
-  ```
-    - **Response**
-      - 200 OK
-      ```jsonc
-      인증코드가 발송 되었습니다.
-      ```
-      ![mail](../IMG/mail.png)
-
-<br/>
-
-- 매일 인증
-    - **API** : `/api/mail/validateEmail`
-    - **Method : POST**
-    - **Body : raw (json)**
-    - **Request**
-    ```jsonc
-    {
-      "email" : 사용자의 이메일,
-      "authCode" : 인증코드
-    }
-    ```
-    - **Response**
-      - 200 OK
-      ```jsonc
-      {email} 인증 성공
-      ```
-      - 203 *NON_AUTHORITATIVE_INFORMATION*
-      ```jsonc
-      잘못된 인증코드 입니다.
-      ```
-      - 404 *NOT_FOUND*
-      ```jsonc
-      만료된 인증코드 혹은 잘못된 키 입니다.
-      ```
-</details>
-
-<details>
-<summary>메세지 전송, 인증 /api/message</summary>
-
-- 메세지 전송
-    - **API** : `/api/mail/sendMessage/{pNum}`
-    - **Method : GET**
-    - **Request**
-    ```jsonc
-    "pNum" : pNum 에게 랜덤 인증코드 발송
-    ```
-    - **Response**
-        - 200 OK
-      ```jsonc
-      인증코드가 발송 되었습니다.
-      ```
-      ![message](../IMG/message.jpeg)  
-
-<br/>
-
-- 전화번호 인증
-    - **API** : `/api/message/validateMessage`
-    - **Method : POST**
-    - **Body : raw (json)**
-    - **Request**
-    ```jsonc
-    {
-      "pnum" : 사용자의 전화번호,
-      "authCode" : 인증코드
-    }
-    ```
-    - **Response**
-      - 200 OK
-      ```jsonc
-      {pnum} 인증 성공
-      ```
-      - 203 *NON_AUTHORITATIVE_INFORMATION*
-      ```jsonc
-      잘못된 인증코드 입니다.
-      ```
-      - 404 *NOT_FOUND*
-      ```jsonc
-      만료된 인증코드 혹은 잘못된 키 입니다.
-      ```
-      
-</details>
-
-<details>
-<summary>중복 체크 /api/users/check</summary>
-
-- 이메일 중복 체크
-    - **API** : `/api/users/check/duplicationEmail/{userEmail`
-    - **Method : GET**
-    - **Request**
-    ```jsonc
-    "userEmail" : Email 을 통하여 중복 체크
-    ```
-    - **Response**
-      - 200 OK
-      ```jsonc
-      {userEmail} 은 사용가능한 이메일입니다.
-      이메일 인증을 해주세요.
-      ```
-      - 409 *CONFLICT*
-      ```jsonc
-      이미 가입된 이메일입니다.
-      ```
-<br/>
-
-- 닉네임 중복 체크
-    - **API** : `/api/users/check/duplicationNickname/{nickname}`
-    - **Method : GET**
-    - **Request**
-    ```jsonc
-    "nickname" : nickname 을 통하여 중복 체크
-    ```
-    - **Response**
-      - 200 OK
-      ```jsonc
-      {nickname} 은 사용가능한 닉네임입니다.
-      ```
-      - 409 *CONFLICT*
-      ```jsonc
-      다른 사용자가 사용중인 닉네임입니다.
-      ```
-<br/>
-
-- 전화번호 중복 체크
-    - **API** : `/api/users/check/duplicationPNum/{pNum}`
-    - **Method : GET**
-    - **Request**
-  
-    ```jsonc
-    "pNum" : pNum 을 통하여 중복 체크
-    ```
-  
-    - **Response**
-      - 200 OK
-      ```jsonc
-      {pNum} 은 사용가능한 번호입니다.
-      전화번호 인증을 해주세요.
-      ```
-      - 409 *CONFLICT*
-      ```jsonc
-      이미 등록된 휴대폰 번호입니다.
-      ```
-</details>
-
 - 회원가입
     - **API** : `/api/users/join`
     - **Method : POST**
@@ -182,6 +30,9 @@
         - 409 *CONFLICT*
         ```jsonc
         이미 가입된 이메일입니다.
+        ```
+        ```jsonc
+        사용할 수 없는 닉네임입니다.
         ```
         ```jsonc
         다른 사용자가 사용중인 닉네임입니다.
@@ -411,19 +262,19 @@
   
     - **Request**
      
-      ```jsonc
-      "userId" : userId 를 통하여 사용자 확인
-      ```
-      ```jsonc
+        ```jsonc
+        "userId" : userId 를 통하여 사용자 확인
+        ```
+        ```jsonc
         {Params} 동적
         {
-          status : 주문 상태
-          timeGoe : 주문 날짜 이상
-          timeLoe : 주문 날짜 이하
-          size : 페이지 최대 표시 수
-          page : 페이지 번호
+        status : 주문 상태
+        timeGoe : 주문 날짜 이상
+        timeLoe : 주문 날짜 이하
+        size : 페이지 최대 표시 수
+        page : 페이지 번호
         }
-      ```
+        ```
 
     - **Response**
         - 200 OK
@@ -436,9 +287,98 @@
         ```
 <br/>
 
-- 주문 조회
-    - **API** : `/api/users/searchOrders/{userId}`
+- 주문 상세 조회
+    - **API** : `/api/users/searchOrderDetail/{userId}/{orderId}`
     - **Method : GET**
+
+    - **Request**
+
+        ```jsonc
+        "userId" : userId 를 통하여 사용자 확인
+        "orderId" : orderId 를 통하여 주문 존재, 사용자의 주문인지 확인
+        ```
+
+    - **Response**
+        - 200 OK
+        ``` jsonc
+        List<SearchOrderItemsForBuyerDto>
+        [
+            {
+            "orderItmeId" : 주문 상품 번호,
+            "itemId" : 상품 번호,
+            "sellerName" : 판매자 이름,
+            "itemName" : 상품 이름,
+            "price" : 상품 가격,
+            "count" : 주문한 상품 수량,
+            "totalPrice" : 주문 상품 총 가격
+            "orderItemStatus" : 주문 상품 상태
+            }
+        ]
+        ```
+        - 404 *NOT_FOUND*
+        ```
+        가입되지 않은 회원입니다.
+        ```
+        ```
+        잘못된 주문번호 입니다.
+        ```
+        - 406 *NOT_ACCEPTABLE*
+        ```
+        사용자의 주문이 아닙니다.
+        ```
+<br/>
+
+- 교환/환불 신청서 생성
+    - **API** : `/api/users/exchangeRefundLog/create/{userId}`
+    - **Method : POST**
+    - **Body :  raw (json)**
+
+    - **Request**
+
+        ```jsonc
+        "userId" : userId 를 통하여 사용자 확인
+        {
+        "orderItemId" : 주문상품 id,
+        "status" : 교환/환불 종류 "REFUND" or "EXCHANGE",
+        "reason" : 교환/환불 이유
+        }
+        ```
+
+    - **Response**
+        - 200 OK
+        ```
+        교환/환불 신청이 전송되었습니다.
+        ```
+        - 404 *NOT_FOUND*
+        ```
+        가입되지 않은 회원입니다.
+        ```
+        ```
+        잘못된 주문상품번호 입니다.
+        ```
+        - 406 *NOT_ACCEPTABLE*
+        ```
+        사용자의 주문상품이 아닙니다.
+        ```
+        - 409 *CONFLICT*
+        ```
+        교환/환불을 신청할수 있는 상태가 아닙니다. 배송완료 후 신청 해주세요.
+        ```
+        ```
+        이미 전송된 요청입니다.
+        ```
+        ```
+        환불 신청이 전송된 주문입니다. 교환을 원하시면 환불 신청을 취소 해주세요.
+        ```
+        ```
+        교환 신청이 전송된 주문입니다. 환불을 원하시면 교환 신청을 취소 해주세요.
+        ```
+<br/>
+
+- 대기중인 교환/환불 신청 취소
+    - **API** : `/api/users/exchangeRefundLog/cancel/{userId}`
+    - **Method : POST**
+    - **Body : raw(json)**
 
     - **Request**
 
@@ -446,23 +386,28 @@
         "userId" : userId 를 통하여 사용자 확인
         ```
         ```jsonc
-        {Params} 동적
         {
-          status : 주문 상태
-          timeGoe : 주문 날짜 이상
-          timeLoe : 주문 날짜 이하
-          size : 페이지 최대 표시 수
-          page : 페이지 번호
+        "orderItemId" : 주문상품 Id
         }
         ```
 
     - **Response**
         - 200 OK
         ```
-        Page
+        요청이 성공적으로 취소되었습니다.
         ```
         - 404 *NOT_FOUND*
         ```
         가입되지 않은 회원입니다.
+        ```
+        ```
+        잘못된 주문상품번호 입니다.
+        ```
+        ```
+        대기중인 교환/환불 신청을 찾지 못했습니다.
+        ```
+        - 406 *NOT_ACCEPTABLE*
+        ```
+        사용자의 주문상품이 아닙니다.
         ```
 <br/>

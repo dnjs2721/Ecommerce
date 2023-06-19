@@ -131,3 +131,178 @@
       ```jsonc
       이미 처리된 요청입니다.
       ```
+<br/>
+
+- 카테고리 생성
+    - **API** : `/api/admin/createCategory/{adminId}`
+    - **Method : POST**
+    - **Body : raw(json)**
+
+    - **Request**
+
+        ```jsonc
+        "adminId" : adminId 를 통하여 관리자 확인
+        ```
+        ```jsonc
+        {
+        "name" : 카테고리 이름,
+        "parentId" : 부모 카테고리 ID,
+        }
+        ```
+
+    - **Response**
+        - 200 OK
+        ```
+        {상품이름} 의 주문상태가 변경되었습니다.
+        ```
+        - 404 *NOT_FOUND*
+        ```
+        카테고리를 다시 확인해 주세요.
+        ```
+        - 406 *NOT_ACCEPTABLE*
+        ```
+        조회할 권한이 없습니다.
+        ```
+        - 409 *CONFLICT*
+        ```
+        이미 존재하는 카테고리 이름입니다.
+        ```
+<br/>
+
+- 카테고리 내 상품 조회 (자식 카테고리 포함)
+    - **API** : `/api/seller/checkCategoryItem/{adminId}/{categoryId}`
+    - **Method : GET**
+
+    - **Request**
+
+        ```jsonc
+        "adminId" : adminId 를 통하여 판매자 확인
+        "categoryId" : categoryId 를 통하여 카테고리 확인
+        ```
+
+    - **Response**
+        - 200 OK
+        ```
+        List<CategoryItemDto>
+        CategoryItemDto
+        {
+            "sellerId": 판매자 Id,
+            "sellerName": 판매자 이름,
+            "sellerEmail": 판매자 이메일,
+            "categoryName": 카테고리 이름,
+            "itemId": 상품 Id,
+            "itemName": 상품 이름
+        }
+        ```
+        - 404 *NOT_FOUND*
+        ```
+        카테고리를 다시 확인해 주세요.
+        ```
+        ```
+        카테고리에 등록된 상품이 없습니다.
+        ```
+        - 406 *NOT_ACCEPTABLE*
+        ```
+        조회할 권한이 없습니다.
+        ```
+<br/>
+
+- 카테고리 내 상품의 판매자들에게 경고 메일 전송
+    - **API** : `/api/seller/sendMailCategoryWarning/{adminId}/{categoryId}`
+    - **Method : GET**
+
+    - **Request**
+
+        ```jsonc
+        "adminId" : adminId 를 통하여 판매자 확인
+        "categoryId" : categoryId 를 통하여 카테고리 확인
+        ```
+
+    - **Response**
+        - 200 OK
+        ![warning](../IMG/warning.png)
+        ```
+        {판매자 이름들} 에게 메일 전송 완료
+        ```
+        - 404 *NOT_FOUND*
+        ```
+        카테고리를 다시 확인해 주세요.
+        ```
+        ```
+        카테고리에 등록된 상품이 없습니다.
+        ```
+        - 406 *NOT_ACCEPTABLE*
+        ```
+        조회할 권한이 없습니다.
+        ```
+<br/>
+
+- 카테고리 내 상품 카테고리 일괄 변경 후 메일 발송
+    - **API** : `/api/admin/batchChangeItemCategory/{adminId}`
+    - **Method : POST**
+    - **Body : raw(json)**
+
+    - **Request**
+        ```jsonc
+        "adminId" : adminId 를 통하여 관리자 확인
+        ```
+        ```jsonc
+        {
+        "categoryId" : 기존 카테고리 Id,
+        "changeCategoryId" : 변경할 카테고리 Id,
+        }
+        ```
+
+    - **Response**
+        - 200 OK
+        ![notice](../IMG/notice.png)
+        ```
+        [변경된 상품들]
+        [변경전 카테고리 이름] 에서 [변경된 카테고리 이름] 로 변경 완료
+        ```
+        - 404 *NOT_FOUND*
+        ```
+        카테고리를 다시 확인해 주세요.
+        ```
+        ```
+        카테고리에 등록된 상품이 없습니다.
+        ```
+        - 406 *NOT_ACCEPTABLE*
+        ```
+        조회할 권한이 없습니다.
+        ```
+<br/>
+
+- 카테고리 내 상품 카테고리 일괄 변경 후 메일 발송
+    - **API** : `/api/admin/deleteCategory/{adminId}`
+    - **Method : POST**
+    - **Body : raw(json)**
+
+    - **Request**
+        ```jsonc
+        "adminId" : adminId 를 통하여 관리자 확인
+        ```
+        ```jsonc
+        {
+        "categoryId" : 카테고리 Id
+        }
+        ```
+
+    - **Response**
+        - 200 OK
+        ```
+        [카테고리 이름] 이(가) 삭제되었습니다.
+        ```
+        - 404 *NOT_FOUND*
+        ```
+        카테고리를 다시 확인해 주세요.
+        ```
+        - 406 *NOT_ACCEPTABLE*
+        ```
+        조회할 권한이 없습니다.
+        ```
+        - 409 *CONFLICT*
+        ```
+        카테고리 내에 등록된 상품이 있습니다. 변경 혹은 삭제후 다시 시도해 주세요.
+        ```
+<br/>

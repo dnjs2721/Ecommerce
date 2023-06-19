@@ -86,10 +86,7 @@ public class SellerService {
     @Transactional
     public String changeOrderStatus(Long sellerId, ChangeOrderStatusRequestDto request) throws IllegalAccessException {
         checkSeller(sellerId); // NoSuchElementException, IllegalAccessException
-        OrderItem orderItem = ordersService.checkOrderItem(request.getOrderItemId()); // NoSuchElementException
-        if (!orderItem.getSellerId().equals(sellerId)) {
-            throw new IllegalAccessException("사용자의 주문상품이 아닙니다.");
-        }
+        OrderItem orderItem = ordersService.checkSellerOrderItem(sellerId, request.getOrderItemId());// NoSuchElementException
         Item item = itemService.checkItem(orderItem.getItemId()); // NoSuchElementException
 
         return ordersService.changeOrderStatus(item, orderItem, request); // IllegalStateException

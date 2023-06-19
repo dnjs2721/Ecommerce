@@ -183,9 +183,9 @@ public class UserController {
      * 교환/환불 신청 로그 생성
      */
     @PostMapping("/exchangeRefundLog/create/{userId}")
-    public ResponseEntity<String> createExchangeRefundLog(@PathVariable("userId") Long buyerId, @RequestBody @Valid CreateExchangeRefundLogRequestDto requeset) {
+    public ResponseEntity<String> createExchangeRefundLog(@PathVariable("userId") Long buyerId, @RequestBody @Valid CreateExchangeRefundLogRequestDto request) {
         try {
-            userService.createExchangeRefundLog(buyerId, requeset);
+            userService.createExchangeRefundLog(buyerId, request);
             return ResponseEntity.ok().body("교환/환불 신청이 전송되었습니다.");
         } catch (NoSuchElementException e1) {
             return createResponseEntity(e1, NOT_FOUND);
@@ -206,6 +206,8 @@ public class UserController {
             return ResponseEntity.ok().body(exchangeRefundLog);
         } catch (NoSuchElementException e1) {
             return createResponseEntity(e1, NOT_FOUND);
+        } catch (IllegalAccessException e2) {
+            return createResponseEntity(e2, NOT_ACCEPTABLE);
         }
     }
 
@@ -219,6 +221,8 @@ public class UserController {
             return ResponseEntity.ok().body("요청이 성공적으로 취소되었습니다.");
         } catch (NoSuchElementException e1) {
             return createResponseEntity(e1, NOT_FOUND);
+        } catch (IllegalAccessException e2) {
+            return createResponseEntity(e2, NOT_ACCEPTABLE);
         }
     }
 

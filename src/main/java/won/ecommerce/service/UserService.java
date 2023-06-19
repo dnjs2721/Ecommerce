@@ -48,6 +48,7 @@ public class UserService {
     @Transactional
     public Long join(User user) {
         duplicationCheckService.validateDuplicateEmail(user.getEmail());
+        checkIgnoreNickName(user.getNickname());
         duplicationCheckService.validateDuplicateNickname(user.getNickname());
         duplicationCheckService.validateDuplicatePNum(user.getPNum());
         userRepository.save(user);
@@ -279,8 +280,9 @@ public class UserService {
     /**
      * 대기중인 교환/환불 신청 확인
      */
-    public ExchangeRefundLog searchWaitExchangeRefundLog(Long userId, Long orderItemId) {
+    public ExchangeRefundLog searchWaitExchangeRefundLog(Long userId, Long orderItemId) throws IllegalAccessException {
         checkUserById(userId); // NoSuchElementException
+        ordersService.checkBuyerOrderItem(userId, orderItemId);
         return exchangeRefundLogService.searchWaitExchangeRefundLog(userId, orderItemId); // NoSuchElementException
     }
 
@@ -288,9 +290,9 @@ public class UserService {
      * 대기중인 교환/환불 신청 취소
      */
     @Transactional
-    public void cancelExchangeRefund(Long userId, Long orderItemId, LogStatus logStatus) {
+    public void cancelExchangeRefund(Long userId, Long orderItemId, LogStatus logStatus) throws IllegalAccessException {
         ExchangeRefundLog exchangeRefundLog = searchWaitExchangeRefundLog(userId, orderItemId); // NoSuchElementException
-        exchangeRefundLogService.changeLogStatusExchangeRefundLog(exchangeRefundLog.getId(), logStatus); // NoSuchElementException
+        exchangeRefundLog.changeStatus(logStatus);
     }
 
 
@@ -298,16 +300,20 @@ public class UserService {
      * 닉네임 검사
      */
     public String changeUserInfoNickname(String newNickname, String nickname) {
-        String ignoreNickname = "admin";
         if (nickname.equals(newNickname)) {
             throw new IllegalStateException("현재 사용중인 닉네임입니다.");
         }
-        if (newNickname.toUpperCase().matches("(.*)"+ignoreNickname.toUpperCase()+"(.*)")
-                || newNickname.toLowerCase().matches("(.*)"+ignoreNickname.toLowerCase()+"(.*)") ) {
-            throw new IllegalStateException("사용할 수 없는 닉네임입니다.");
-        }
+        checkIgnoreNickName(newNickname); // IllegalStateException
         duplicationCheckService.validateDuplicateNickname(newNickname); // IllegalStateException
         return newNickname;
+    }
+
+    public void checkIgnoreNickName(String nickName) {
+        String ignoreNickname = "admin";
+        if (nickName.toUpperCase().matches("(.*)"+ignoreNickname.toUpperCase()+"(.*)")
+                || nickName.toLowerCase().matches("(.*)"+ignoreNickname.toLowerCase()+"(.*)") ) {
+            throw new IllegalStateException("사용할 수 없는 닉네임입니다.");
+        }
     }
 
     /**
