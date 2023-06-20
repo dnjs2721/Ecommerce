@@ -205,7 +205,7 @@
         ```
     - **Page**
         - page - main(항목 없음)
-          ![ERLog](../IMG/ERLog.png)
+          ![ERLog](../IMG/ERlog.png)
         - page - main
           ![ERLog_2](../IMG/ERLog_2.png)
         - 승인/거부
