@@ -1,7 +1,7 @@
 ## ☑️ DuplicationCheck ( 중복확인 )
 
 - 이메일 중복 체크
-    - **API** : `/api/users/check/duplicationEmail/{userEmail`
+    - **API** : `/api/users/check/duplicationEmail/{userEmail}`
     - **Method : GET**
 
     - **Request**

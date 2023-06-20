@@ -27,14 +27,13 @@ public class PaymentService {
      */
     public void payment(User user, Long orderId, Model model) throws IllegalAccessException {
         OrdersForBuyer order = ordersService.checkBuyerOrder(user.getId(), orderId);
-        if (order.getTotalPrice() == 0) {
+        int totalPrice = order.getTotalPrice();
+        if (totalPrice == 0) {
             throw new IllegalStateException("결제 금액이 0인 주문입니다.");
         }
         if (order.getImpUid() != null) {
             throw new IllegalStateException("이미 처리된 주문입니다.");
         }
-        ordersService.checkImpUid(order);
-        int totalPrice = order.getTotalPrice();
         String itemsName = order.getOrderItemsName().toString();
         model.addAttribute("orderId", order.getId());
         model.addAttribute("itemsName", itemsName);

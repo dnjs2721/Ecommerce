@@ -117,6 +117,9 @@
       </tr>
       </thead>
       <tbody>
+      <tr th:if="${logs.content.isEmpty()}">
+        <td colspan="8" style="text-align: center;">표시할 항목이 없습니다.</td>
+      </tr>
       <!-- Iterate over the list of SearchExchangeRefundLogDto objects -->
       <tr th:each="log : ${logs.content}" th:id="'log-' + ${log.logId}">
         <td>
@@ -181,12 +184,12 @@
       data: { logId: logId, okOrCancel: true},
       success: function (result) {
         alert("성공적으로 처리되었습니다.");
-        window.location.replace("/getExchangeRefundLogs/[(${sellerId})]");
+        window.location.reload();
         // 서버에서 받은 응답을 처리합니다.
       },
       error: function (result) {
         alert("처리 중 오류가 발생했습니다: " + result.responseText);
-        window.location.replace("/getExchangeRefundLogs/[(${sellerId})]");
+        window.location.reload();
       },
     });
   }
@@ -198,12 +201,12 @@
       data: { logId: logId, okOrCancel: false},
       success: function (result) {
         alert("성공적으로 처리되었습니다.");
-        window.location.replace("/getExchangeRefundLogs/[(${sellerId})]");
+        window.location.reload();
         // 서버에서 받은 응답을 처리합니다.
       },
       error: function (result) {
         alert("처리 중 오류가 발생했습니다: " + result.responseText);
-        window.location.replace("/getExchangeRefundLogs/[(${sellerId})]");
+        window.location.reload();
       },
     });
   }

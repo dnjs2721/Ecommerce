@@ -13,6 +13,10 @@
 
 ## [🛒 ShoppingCart API](https://github.com/dnjs2721/Ecommerce/blob/main/API-Document/API/ShoppingCart.md)
 
+## [💳 Order API](https://github.com/dnjs2721/Ecommerce/blob/main/API-Document/API/Order.md)
+
+## [💵 Payment PAGE](https://github.com/dnjs2721/Ecommerce/blob/main/API-Document/PAGE/Payment.md)
+
 *** 
 ## [📧 Mail API](https://github.com/dnjs2721/Ecommerce/blob/main/API-Document/API/Mail.md)
 

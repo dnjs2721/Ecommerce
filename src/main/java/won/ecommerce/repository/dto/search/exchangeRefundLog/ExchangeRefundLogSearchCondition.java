@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 
 @Data
 public class ExchangeRefundLogSearchCondition {
-    private Long userId;
     private ExchangeRefundStatus status;
     private LogStatus logStatus;
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")

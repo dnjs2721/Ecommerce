@@ -268,11 +268,4 @@ public class OrdersService {
             ordersForSeller.setImpUid(impUid);
         }
     }
-
-    // 결제 번호 체크
-    public void checkImpUid(OrdersForBuyer orderForBuyer) {
-        if (orderForBuyer.getImpUid() != null) {
-            throw new IllegalStateException("이미 처리된 주문입니다.");
-        }
-    }
 }

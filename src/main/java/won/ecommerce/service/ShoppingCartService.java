@@ -129,6 +129,9 @@ public class ShoppingCartService {
         List<String> itemsName = new ArrayList<>();
 
         List<ShoppingCartItem> shoppingCartItems = shoppingCart.getShoppingCartItems();
+        if (shoppingCartItems.isEmpty()) {
+            throw new NoSuchElementException("장바구니에 담긴 상품이 없습니다.");
+        }
 
         Map<Item, Integer> itemAndCountMap = createItemAndCountMap(shoppingCartItems, itemsName);
 
