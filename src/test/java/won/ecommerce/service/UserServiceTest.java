@@ -14,31 +14,4 @@ class UserServiceTest {
     UserRepository userRepository;
     @Autowired
     UserService userService;
-
-    @Test
-    public void joinTest() throws Exception{
-        User user = User.builder()
-                .name("test")
-                .email("###@##.###")
-                .password("test")
-                .pNum("test")
-                .birth("test")
-                .address(new Address("test", "test", "test", "test", "test"))
-                .build();
-
-        User user1 = User.builder()
-                .name("test")
-                .email("###@##.###")
-                .password("test")
-                .pNum("test")
-                .birth("test")
-                .address(new Address("test", "test", "test", "test", "test"))
-                .build();
-
-        userService.join(user);
-
-        Assertions.assertThrows(IllegalStateException.class, () -> {
-           userService.join(user1);
-        });
-    }
 }

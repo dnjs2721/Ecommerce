@@ -39,7 +39,6 @@ import static org.springframework.http.HttpStatus.*;
 public class AdminController {
 
     private final AdminService adminService;
-    private final UserService userService;
     private final CategoryService categoryService;
 
     /**
@@ -48,10 +47,8 @@ public class AdminController {
     @PostMapping("/join")
     public ResponseEntity<String> joinAdmin(@RequestBody @Valid JoinRequestDto request) {
         try {
-            User admin = userService.createUser(request);
-            admin.setStatus(UserStatus.ADMIN);
-            Long memberId = userService.join(admin);
-            return ResponseEntity.ok().body(memberId.toString() + " 회원가입 되었습니다.");
+            Long adminId = adminService.adminJoin(request);
+            return ResponseEntity.ok().body(adminId.toString() + " 회원가입 되었습니다.");
         } catch (IllegalStateException e) {
             return createResponseEntity(e, CONFLICT); // 닉네임, 이메일, 휴대폰 번호 중복 예외
         }

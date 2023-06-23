@@ -40,10 +40,8 @@ public class UserController {
     @PostMapping("/join")
     public ResponseEntity<String> joinUser(@RequestBody @Valid JoinRequestDto request) {
         try {
-            User user = userService.createUser(request);
-            user.setStatus(UserStatus.COMMON);
-            Long memberId = userService.join(user);
-            return ResponseEntity.ok().body(memberId.toString() + " 회원가입 되었습니다.");
+            Long userId = userService.join(request);
+            return ResponseEntity.ok().body(userId.toString() + " 회원가입 되었습니다.");
         } catch (IllegalStateException e) {
             return createResponseEntity(e, CONFLICT); // 닉네임, 이메일, 휴대폰 번호 중복 예외
         }

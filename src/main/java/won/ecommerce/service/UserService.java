@@ -46,11 +46,13 @@ public class UserService {
      * 회원가입
      */
     @Transactional
-    public Long join(User user) {
-        duplicationCheckService.validateDuplicateEmail(user.getEmail());
-        checkIgnoreNickName(user.getNickname());
-        duplicationCheckService.validateDuplicateNickname(user.getNickname());
-        duplicationCheckService.validateDuplicatePNum(user.getPNum());
+    public Long join(JoinRequestDto request) {
+        duplicationCheckService.validateDuplicateEmail(request.getEmail());
+        checkIgnoreNickName(request.getNickname());
+        duplicationCheckService.validateDuplicateNickname(request.getNickname());
+        duplicationCheckService.validateDuplicatePNum(request.getPNum());
+        User user = createUser(request);
+        user.setStatus(UserStatus.COMMON);
         userRepository.save(user);
         return user.getId();
     }

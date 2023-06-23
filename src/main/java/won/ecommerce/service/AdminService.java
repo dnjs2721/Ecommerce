@@ -18,6 +18,7 @@ import won.ecommerce.repository.dto.search.statusLog.StatusLogSearchCondition;
 import won.ecommerce.repository.dto.search.user.UserSearchCondition;
 import won.ecommerce.service.dto.category.CategoryCreateRequestDto;
 import won.ecommerce.service.dto.category.CategoryItemMailElementDto;
+import won.ecommerce.service.dto.user.JoinRequestDto;
 
 import java.util.*;
 
@@ -25,10 +26,23 @@ import java.util.*;
 @RequiredArgsConstructor
 public class AdminService {
     private final UserRepository userRepository;
+    private final UserService userService;
+    private final DuplicationCheckService duplicationCheckService;
     private final ChangeStatusLogService changeStatusLogService;
     private final CategoryService categoryService;
     private final EmailService mailService;
     private final ItemService itemService;
+
+    @Transactional
+    public Long adminJoin(JoinRequestDto request) {
+        duplicationCheckService.validateDuplicateEmail(request.getEmail());
+        duplicationCheckService.validateDuplicateNickname(request.getNickname());
+        duplicationCheckService.validateDuplicatePNum(request.getPNum());
+        User admin = userService.createUser(request);
+        admin.setStatus(UserStatus.ADMIN);
+        userRepository.save(admin);
+        return admin.getId();
+    }
 
     /**
      * 사용자 조회 - 관리자
