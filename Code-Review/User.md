@@ -137,6 +137,7 @@
     ```
 - Review
     ```
+    Post 통신을 통해 가입 희망자가 입력한 정보들을 전달 받는다.
     서비스 로직에서 중복(이메일, 휴대폰, 닉네임), 사용불가 닉네임 검사가 이루어진다. 
     이 과정중 예외가 발생하면 예외를 반환하고 그렇지 않은 경우 사용자 정보를 이용하여 사용자를 생성한다.
     ```
@@ -149,5 +150,122 @@
 
 ### 로그인
 - Controller
+  ```java
+  @PostMapping("/login")
+  public ResponseEntity<String> login(@RequestBody @Valid LoginRequestDto request) {
+      try {
+          Long id = userService.login(request.getEmail(), request.getPassword());
+          return ResponseEntity.ok().body(id.toString() + " 로그인 성공");
+      } catch (NoSuchElementException e1) {
+          return createResponseEntity(e1, NOT_FOUND); // 등록된 사용자 없음 예외
+      } catch (IllegalAccessException e2) {
+          return createResponseEntity(e2, UNAUTHORIZED); // 비밀번호 오류 예외
+      }
+  }
+  ```
 
+- LoginRequestDto
+  ```java
+  @Data
+  public class LoginRequestDto {
+    @Email
+    @NotBlank(message = "이메일(필수)")
+    private String email;
+
+    @NotBlank(message = "비밀번호(필수)")
+    private String password;
+  }
+  ```
+
+- Service
+  ```java
+  public Long login(String email, String password) throws IllegalAccessException {
+        User user = checkUserByEmail(email);
+        if (user.getPassword().equals(password)) {
+            return user.getId();
+        } else {
+            throw new IllegalAccessException("잘못된 패스워드 입니다.");
+        }
+  }
+  ```
+
+- Review
+  ```
+  Post 통신을 통해 사용자가 입력한 로그인 정보를 전달 받는다.
+  서비스 로직에서 사용자가 입력한 이메일을 가진 사용자가 있는지 검사하며 사용자가 없으면 예외를 반환한다.
+  동일한 이메일을 가진 사용자 정보의 암호와 로그인 정보의 암호가 일치 하는지 검사한다.
+  암호가 일치하면 사용자의 고유번호(id) 를 반환하고 그렇지 않다면 예외를 반환한다.
+  ```
+
+### 아이디(이메일) 찾기
+- Controller
+  ```java
+  @PostMapping("/findEmail")
+    public ResponseEntity<String> findEmail(@RequestBody @Valid FindEmailRequestDto request) {
+        try {
+            String email = userService.findEmailByNameAndPNum(request.getName(), request.getPNum());
+            return ResponseEntity.ok().body(request.getName() + "님의 아이디(이메일)은 " + email + " 입니다.");
+        } catch (NoSuchElementException e) {
+            return createResponseEntity(e, NOT_FOUND); // 등록된 사용자 없음 예외
+        }
+  }  
+  ```
+
+- FindEmailRequestDto
+  ```java
+  @Data
+  public class FindEmailRequestDto {
+      @NotBlank(message = "이름(필수)")
+      private String name;
   
+      @NotBlank(message = "전화번호(필수)")
+      private String pNum;
+  }
+  ```
+
+- Service
+  ```java
+  public String findEmailByNameAndPNum(String name, String pNum) {
+        String email = userRepository.findEmailByNameAndPNum(name, pNum);
+        if (email == null) {
+            throw new NoSuchElementException("가입되지 않은 회원 입니다. 이름 혹은 전화번호를 확인 해 주세요.");
+        }
+        return email;
+  }  
+  ```
+
+- Repository
+  - UserRepositoryCustom
+    ```java
+    public interface UserRepositoryCustom {
+        String findEmailByNameAndPNum(String name, String pNum);
+    }
+    ```
+  - UserRepositoryCustomImpl
+    ```java
+    public class UserRepositoryImpl implements UserRepositoryCustom{
+    private final JPAQueryFactory queryFactory;
+
+    public UserRepositoryImpl(EntityManager em) {
+        this.queryFactory = new JPAQueryFactory(em);
+    }
+    
+    @Override
+    public String findEmailByNameAndPNum(String name, String pNum) {
+        return queryFactory
+                .select(user.email)
+                .from(user)
+                .where(user.name.eq(name),
+                        user.pNum.eq(pNum))
+                .fetchOne();
+        }
+    }
+    ```
+
+- Review
+  ```
+  Post 통신을 통해 아이디 찾기에 필요한 정보를 전달 받는다.
+  전달받은 정보를 이용하여 이메일을 찾는다. User 전체가 아닌 email 만을 필요로 하기에
+  사용자의 이름과, 전화번호 가 일치하는 사용자의 email 을 선택하는 query 를 작성하여 구현하였다.  
+  해당하는 이메일이 있다면 이메일을 Controller 로 반환하고 없다면 예외를 반환한다.
+  ```
