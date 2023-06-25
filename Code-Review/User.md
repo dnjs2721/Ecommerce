@@ -192,7 +192,7 @@
 - Review
   ```
   Post 통신을 통해 사용자가 입력한 로그인 정보를 전달 받는다.
-  서비스 로직에서 사용자가 입력한 이메일을 가진 사용자가 있는지 검사하며 사용자가 없으면 예외를 반환한다.
+  Service 에서 사용자가 입력한 이메일을 가진 사용자가 있는지 검사하며 사용자가 없으면 예외를 반환한다.
   동일한 이메일을 가진 사용자 정보의 암호와 로그인 정보의 암호가 일치 하는지 검사한다.
   암호가 일치하면 사용자의 고유번호(id) 를 반환하고 그렇지 않다면 예외를 반환한다.
   ```
@@ -265,7 +265,139 @@
 - Review
   ```
   Post 통신을 통해 아이디 찾기에 필요한 정보를 전달 받는다.
-  전달받은 정보를 이용하여 이메일을 찾는다. User 전체가 아닌 email 만을 필요로 하기에
+  Service 에서 전달받은 정보를 이용하여 이메일을 찾는다. User 전체가 아닌 email 만을 필요로 하기에
   사용자의 이름과, 전화번호 가 일치하는 사용자의 email 을 선택하는 query 를 작성하여 구현하였다.  
   해당하는 이메일이 있다면 이메일을 Controller 로 반환하고 없다면 예외를 반환한다.
+  ```
+  
+### 비밀번호 변경
+- Controller
+  ```java
+  @PostMapping("/changePassword")
+    public ResponseEntity<String> changePassword(@RequestBody @Valid ChangePasswordRequestDto request) {
+        try {
+            String email = userService.changePassword(request.getEmail(), request.getPassword(), request.getNewPassword());
+            return ResponseEntity.ok().body(email + " 님의 비밀번호가 성공적으로 변경 되었습니다.");
+        } catch (NoSuchElementException e1) {
+            return createResponseEntity(e1, NOT_FOUND); // 등록된 사용자 없음 예외
+        } catch (IllegalAccessException e2) {
+            return createResponseEntity(e2, UNAUTHORIZED); // 비밀번호 오류 예외
+        } catch (IllegalStateException e3) {
+            return createResponseEntity(e3, CONFLICT); // 동일한 패스워드 예외
+        }
+  }  
+  ```
+
+- ChangePasswordRequestDto
+  ```java
+  @Data
+  public class ChangePasswordRequestDto {
+    @Email
+    @NotBlank(message = "이메일(필수)")
+    private String email;
+    @NotBlank(message = "기존 비밀번호(필수)")
+    private String password;
+    @NotBlank(message = "새 비밀번호(필수)")
+    private String newPassword;
+  }
+  ```
+
+- Service
+  ```java
+   @Transactional
+    public String changePassword(String email, String password, String newPassword) throws IllegalAccessException {
+        User user = checkUserByEmail(email);
+        if (user.getPassword().equals(password)) {
+            if (user.getPassword().equals(newPassword)) {
+                throw new IllegalStateException("현재 사용중인 패스워드와 같습니다.");
+            }
+            user.changePassword(newPassword);
+            return email;
+        } else {
+            throw new IllegalAccessException("잘못된 패스워드 입니다.");
+        }
+  }
+  ```
+
+- Review
+  ```
+  Post 통신을 통해 비밀번호 변경에 필요한 정보를 전달받는다.
+  Service 로직에서 전달받은 정보 중 이메일을 통해 사용자의 유무를 파악하고 등록된 사용자가 없다면 예외를 반환한다.
+  사용자가 있으면 전달 받은 기존 비밀번호와 저장된 비밀번호를 비교검증 한다.
+  일치하지 않으면 예외를 반환하고 현재 비밀번호와 변경할 비밀번호가 같으면 예외를 반환한다.
+  비밀번호 검증을 통과화면 저장된 비밀번호를 변경하고 Controller로 이메일을 반환한다.
+  ```
+
+### 회원 탈퇴
+- Controller
+  ```java
+  @PostMapping("/deleteUser")
+    public ResponseEntity<String> deleteUser(@RequestBody @Valid DeleteUserRequestDto request) {
+        try {
+            String userName = userService.deleteUser(request.getEmail(), request.getPassword());
+            return ResponseEntity.ok().body(userName + " 님 정상적으로 회원탈퇴 되었습니다.");
+        } catch (NoSuchElementException e1) {
+            return createResponseEntity(e1, NOT_FOUND); // 등록된 사용자 없음 예외
+        } catch (IllegalAccessException e2) {
+            return createResponseEntity(e2, UNAUTHORIZED); // 비밀번호 오류 예외
+        }
+  }
+  ```
+
+- DeleteUserRequestDto
+  ```java
+  @Data
+  public class DeleteUserRequestDto {
+    @NotBlank(message = "이메일(필수)")
+    @Email
+    String email;
+    @NotBlank(message = "패스워드(필수)")
+    String password;
+  }
+  ```
+
+- Service
+  ```java
+  @Transactional
+  public String deleteUser(String email, String password) throws IllegalAccessException {
+        User user = checkUserByEmail(email);
+        if (password.equals(user.getPassword())) {
+            shoppingCartService.deleteShoppingCart(user.getShoppingCart());
+            saveDeletedUser(user);패
+            userRepository.delete(user);
+            return user.getName();
+        } else {
+            throw new IllegalAccessException("잘못된 패스워드 입니다.");
+        }
+  }
+  ```
+
+- Service - saveDeletedUser
+  ```java
+  public void saveDeletedUser(User user) {
+        DeletedUser deletedUser = DeletedUser.builder()
+                .userId(user.getId())
+                .userName(user.getName())
+                .userNickname(user.getNickname())
+                .userEmail(user.getEmail())
+                .userPassword(user.getPassword())
+                .userPNum(user.getPNum())
+                .userBirth(user.getBirth())
+                .userAddress(user.getAddress())
+                .userStatus(user.getStatus())
+                .build();
+
+        deletedUserRepository.save(deletedUser);
+    }
+  ```
+
+- Review
+  ```
+  Post 통신을 통해 회원 탈퇴에 필요한 정보를 전달받는다.
+  Service 로직에서 전달받은 정보 중 이메일을 통해 사용자의 유무를 파악하고 등록된 사용자가 없다면 예외를 반환한다.
+  사용자가 있으면 전달 받은 기존 비밀번호와 저장된 비밀번호를 비교검증 한다.
+  비밀번호가 일치하지 않다면 예외를 반환하고 일치한다면 장바구니를 비우고 장바구니를 삭제한다.
+  ```
+  ```
+  회원 탈퇴시 사용자의 정보를 일정기간 저장하기 위하여 사용
   ```
