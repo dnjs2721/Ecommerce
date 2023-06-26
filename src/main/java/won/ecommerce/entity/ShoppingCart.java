@@ -19,7 +19,7 @@ public class ShoppingCart extends BaseTimeEntity{
     private User user;
 
     @OneToMany(mappedBy = "shoppingCart")
-    private final List<ShoppingCartItem> shoppingCartItems = new ArrayList<>();
+    private List<ShoppingCartItem> shoppingCartItems = new ArrayList<>();
 
     public int getTotalPrice() {
         List<ShoppingCartItem> findItems = this.getShoppingCartItems();

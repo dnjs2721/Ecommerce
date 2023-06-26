@@ -23,6 +23,7 @@ import won.ecommerce.service.dto.user.JoinRequestDto;
 import won.ecommerce.repository.user.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -104,6 +105,16 @@ public class UserService {
     public String deleteUser(String email, String password) throws IllegalAccessException {
         User user = checkUserByEmail(email);
         if (password.equals(user.getPassword())) {
+            if (user.getStatus().equals(UserStatus.SELLER)) {
+                List<Item> sellItems = user.getSellItems();
+                List<Long> sellItemIds = new ArrayList<>();
+                for (Item item : sellItems) {
+                    sellItemIds.add(item.getId());
+                }
+                itemService.deleteItem(user, sellItemIds);
+                ordersService.deleteSellerOrder(user);
+            }
+            ordersService.deleteBuyerOrder(user);
             shoppingCartService.deleteShoppingCart(user.getShoppingCart());
             saveDeletedUser(user);
             userRepository.delete(user);

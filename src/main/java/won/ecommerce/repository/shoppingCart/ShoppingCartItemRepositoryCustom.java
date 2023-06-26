@@ -12,4 +12,6 @@ public interface ShoppingCartItemRepositoryCustom{
     Page<SearchShoppingCartDto> searchShoppingCart(Long shoppingCartId, Pageable pageable);
 
     List<ShoppingCartItem> findShoppingCartItemByShoppingCartIdAndIds(Long shoppingCartId, List<Long> shoppingCartItemIds);
+
+    List<ShoppingCartItem> findShoppingCartItemByItemIds(List<Long> itemIds);
 }

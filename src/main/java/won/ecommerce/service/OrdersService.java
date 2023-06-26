@@ -151,6 +151,24 @@ public class OrdersService {
         return orderItem.getItemName();
     }
 
+    public void deleteBuyerOrder(User buyer) {
+        List<OrdersForBuyer> ordersForBuyer = buyer.getOrdersForBuyer();
+        List<Long> orderIds = new ArrayList<>();
+        for (OrdersForBuyer order : ordersForBuyer) {
+            orderIds.add(order.getId());
+        }
+        buyerRepository.deleteAllByIdInBatch(orderIds);
+    }
+
+    public void deleteSellerOrder(User seller) {
+        List<OrdersForSeller> ordersForSeller = seller.getOrdersForSeller();
+        List<Long> orderIds = new ArrayList<>();
+        for (OrdersForSeller order : ordersForSeller) {
+            orderIds.add(order.getId());
+        }
+        sellerRepository.deleteAllByIdInBatch(orderIds);
+    }
+
     // 주문상품 생성 생성 저장 메서드
     public void createOrderItem(Long buyerOrderId, Long sellerOrderId, Long buyerId, Long sellerId, Item item, int count) {
         OrderItem orderItem = OrderItem.builder()

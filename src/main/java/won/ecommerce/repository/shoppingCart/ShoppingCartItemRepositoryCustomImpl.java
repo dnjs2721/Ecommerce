@@ -67,4 +67,13 @@ public class ShoppingCartItemRepositoryCustomImpl implements ShoppingCartItemRep
                         shoppingCartItem.id.in(shoppingCartItemIds))
                 .fetch();
     }
+
+    @Override
+    public List<ShoppingCartItem> findShoppingCartItemByItemIds(List<Long> itemIds) {
+        return queryFactory
+                .select(shoppingCartItem)
+                .from(shoppingCartItem)
+                .where(shoppingCartItem.item.id.in(itemIds))
+                .fetch();
+    }
 }

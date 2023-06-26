@@ -374,21 +374,28 @@
 
 - Service - saveDeletedUser
   ```java
-  public void saveDeletedUser(User user) {
-        DeletedUser deletedUser = DeletedUser.builder()
-                .userId(user.getId())
-                .userName(user.getName())
-                .userNickname(user.getNickname())
-                .userEmail(user.getEmail())
-                .userPassword(user.getPassword())
-                .userPNum(user.getPNum())
-                .userBirth(user.getBirth())
-                .userAddress(user.getAddress())
-                .userStatus(user.getStatus())
-                .build();
-
-        deletedUserRepository.save(deletedUser);
-    }
+  @Transactional
+  public String deleteUser(String email, String password) throws IllegalAccessException {
+      User user = checkUserByEmail(email);
+      if (password.equals(user.getPassword())) {
+          if (user.getStatus().equals(UserStatus.SELLER)) {
+              List<Item> sellItems = user.getSellItems();
+              List<Long> sellItemIds = new ArrayList<>();
+              for (Item item : sellItems) {
+                  sellItemIds.add(item.getId());
+              }
+              itemService.deleteItem(user, sellItemIds);
+              ordersService.deleteSellerOrder(user);
+          }
+          ordersService.deleteBuyerOrder(user);
+          shoppingCartService.deleteShoppingCart(user.getShoppingCart());
+          saveDeletedUser(user);
+          userRepository.delete(user);
+          return user.getName();
+      } else {
+          throw new IllegalAccessException("잘못된 패스워드 입니다.");
+      }
+  }
   ```
 
 - Review

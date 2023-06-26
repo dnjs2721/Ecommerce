@@ -34,7 +34,10 @@ public class ShoppingCartService {
      * 장바구니 삭제
      */
     public void deleteShoppingCart(ShoppingCart shoppingCart) {
-        deleteAllItems(shoppingCart);
+        List<ShoppingCartItem> shoppingCartItems = shoppingCart.getShoppingCartItems();
+        if (!shoppingCartItems.isEmpty()) {
+            deleteShoppingCartItemByList(shoppingCartItems);
+        }
         shoppingCartRepository.delete(shoppingCart);
     }
 
@@ -79,6 +82,7 @@ public class ShoppingCartService {
         }
         deleteShoppingCartItemByList(shoppingCartItems);
     }
+
 
     /**
      * 장바구니 상품 리스트 삭제 List<ShoppingCartItem>
@@ -136,7 +140,7 @@ public class ShoppingCartService {
         Map<Item, Integer> itemAndCountMap = createItemAndCountMap(shoppingCartItems, itemsName);
 
         ordersService.createOrders(user, itemAndCountMap); // 구매자용, 판매자용 주문 생성
-        deleteAllItems(shoppingCart); // 장바구니 비우기
+        deleteShoppingCartItemByList(shoppingCartItems); // 장바구니 비우기
 
         return itemsName;
     }
@@ -191,5 +195,9 @@ public class ShoppingCartService {
             throw new IllegalArgumentException("잘못된 장바구니 상품 정보입니다.");
         }
         return shoppingCartItems;
+    }
+
+    public List<ShoppingCartItem> findShoppingCartItemByItemIds(List<Long> itemIds) {
+        return shoppingCartItemRepository.findShoppingCartItemByItemIds(itemIds);
     }
 }

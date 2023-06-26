@@ -18,4 +18,6 @@ public interface ItemRepositoryCustom {
     void batchUpdateItemCategory(List<Long> itemIds, Category category);
     void changePrice(Long itemId, int price);
     List<Item> findItemBySellerIdAndItemIds(Long sellerId, List<Long> itemIds);
+
+    List<Long> findAllItemIdsBySellerId(Long sellerId);
 }

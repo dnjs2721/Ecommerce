@@ -152,6 +152,15 @@ public class ItemRepositoryCustomImpl implements ItemRepositoryCustom{
                 .fetch();
     }
 
+    @Override
+    public List<Long> findAllItemIdsBySellerId(Long sellerId) {
+        return queryFactory
+                .select(item.id)
+                .from(item)
+                .where(item.seller.id.eq(sellerId))
+                .fetch();
+    }
+
     private BooleanExpression sellerNickNameEq(String sellerNickName) {
         return hasText(sellerNickName) ? user.nickname.like("%" + sellerNickName + "%") : null;
     }

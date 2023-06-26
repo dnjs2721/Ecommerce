@@ -112,6 +112,7 @@ public class ItemService {
         return itemsName;
     }
 
+
     /**
      * 카테고리 내 상품 카테고리 일괄 변경
      */
