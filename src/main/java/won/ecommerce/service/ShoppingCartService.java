@@ -34,10 +34,10 @@ public class ShoppingCartService {
      * 장바구니 삭제
      */
     public void deleteShoppingCart(ShoppingCart shoppingCart) {
-        List<ShoppingCartItem> shoppingCartItems = shoppingCart.getShoppingCartItems();
-        if (!shoppingCartItems.isEmpty()) {
-            deleteShoppingCartItemByList(shoppingCartItems);
-        }
+//        List<ShoppingCartItem> shoppingCartItems = shoppingCart.getShoppingCartItems();
+//        if (!shoppingCartItems.isEmpty()) {
+//            deleteShoppingCartItemByList(shoppingCartItems);
+//        }
         shoppingCartRepository.delete(shoppingCart);
     }
 

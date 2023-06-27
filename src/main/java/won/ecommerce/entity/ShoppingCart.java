@@ -18,7 +18,7 @@ public class ShoppingCart extends BaseTimeEntity{
     @OneToOne(mappedBy = "shoppingCart")
     private User user;
 
-    @OneToMany(mappedBy = "shoppingCart")
+    @OneToMany(mappedBy = "shoppingCart", cascade = CascadeType.REMOVE)
     private List<ShoppingCartItem> shoppingCartItems = new ArrayList<>();
 
     public int getTotalPrice() {

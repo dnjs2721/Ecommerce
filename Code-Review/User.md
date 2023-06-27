@@ -359,52 +359,178 @@
 - Service
   ```java
   @Transactional
-  public String deleteUser(String email, String password) throws IllegalAccessException {
+    public String deleteUser(String email, String password) throws IllegalAccessException {
         User user = checkUserByEmail(email);
         if (password.equals(user.getPassword())) {
+            if (user.getStatus().equals(UserStatus.SELLER)) {
+                List<Item> sellItems = user.getSellItems();
+                List<Long> sellItemIds = new ArrayList<>();
+                for (Item item : sellItems) {
+                    sellItemIds.add(item.getId());
+                }
+                itemService.deleteItem(user, sellItemIds);
+                ordersService.deleteSellerOrder(user);
+            }
+            ordersService.deleteBuyerOrder(user);
             shoppingCartService.deleteShoppingCart(user.getShoppingCart());
-            saveDeletedUser(user);패
+            saveDeletedUser(user);
             userRepository.delete(user);
             return user.getName();
         } else {
             throw new IllegalAccessException("잘못된 패스워드 입니다.");
         }
-  }
+    }
   ```
 
 - Service - saveDeletedUser
   ```java
-  @Transactional
-  public String deleteUser(String email, String password) throws IllegalAccessException {
-      User user = checkUserByEmail(email);
-      if (password.equals(user.getPassword())) {
-          if (user.getStatus().equals(UserStatus.SELLER)) {
-              List<Item> sellItems = user.getSellItems();
-              List<Long> sellItemIds = new ArrayList<>();
-              for (Item item : sellItems) {
-                  sellItemIds.add(item.getId());
-              }
-              itemService.deleteItem(user, sellItemIds);
-              ordersService.deleteSellerOrder(user);
-          }
-          ordersService.deleteBuyerOrder(user);
-          shoppingCartService.deleteShoppingCart(user.getShoppingCart());
-          saveDeletedUser(user);
-          userRepository.delete(user);
-          return user.getName();
-      } else {
-          throw new IllegalAccessException("잘못된 패스워드 입니다.");
-      }
-  }
+  public void saveDeletedUser(User user) {
+        DeletedUser deletedUser = DeletedUser.builder()
+                .userId(user.getId())
+                .userName(user.getName())
+                .userNickname(user.getNickname())
+                .userEmail(user.getEmail())
+                .userPassword(user.getPassword())
+                .userPNum(user.getPNum())
+                .userBirth(user.getBirth())
+                .userAddress(user.getAddress())
+                .userStatus(user.getStatus())
+                .build();
+
+        deletedUserRepository.save(deletedUser);
+    }
   ```
 
 - Review
   ```
   Post 통신을 통해 회원 탈퇴에 필요한 정보를 전달받는다.
   Service 로직에서 전달받은 정보 중 이메일을 통해 사용자의 유무를 파악하고 등록된 사용자가 없다면 예외를 반환한다.
-  사용자가 있으면 전달 받은 기존 비밀번호와 저장된 비밀번호를 비교검증 한다.
-  비밀번호가 일치하지 않다면 예외를 반환하고 일치한다면 장바구니를 비우고 장바구니를 삭제한다.
+  사용자가 있으면 전달 받은 기존 비밀번호와 저장된 비밀번호를 비교 검증 한다. 비밀번호가 일치하지 않다면 예외를 반환하고,
+  막약 탈퇴 하는 사용자가 판매자라면 다음의 로직이 실행된다.
   ```
   ```
-  회원 탈퇴시 사용자의 정보를 일정기간 저장하기 위하여 사용
+  1. 판매자 판매 물품 삭제
+    a. 다른 사용자 장바구니에 등록된 물품 정보 삭제
+    b. 삭제되는 물품 정보를 일정기간 보관을 위해 저장
+    b. 판매자 판매 물품 삭제
+  2. 판매 내역 삭제 (상품별 주문 내역은 남는다.)
+  ```
+  ```
+  판매자 로직이 끝나면 구매자 주문 내역을 삭제하고, 탈퇴하는 사용자의 장바구니를 비우고 삭제한다.
+  그 후 탈퇴 하는 사용자의 정보를 일정기간 보관하기 위해 저장하고 사용자를 삭제한다.
+  정상적으로 끝났을 경우 Controller 에 사용자의 이름을 전달한다.
+  ```
+
+- Note
+  ```
+  회원을 바로 삭제 하려고 하면 외래 키 무결성을 위반한다.
+  기본적으로 사용자에 대한 장바구니, 장바구니 물품, 주문목록, 판매자일경우 추가로 판매상품, 판매내역이 있다.
+  이를 해결하기 위하여 JPA의 cascade = CascadeType.REMOVE 을 사용 할 수 있지만 장바구니-장바구니 상품을 제외하고 사용하지 않았다.
+  cascade 를 사용하여 영속성 전이 특성을 부여하면 User 엔티티 삭제만으로 연관된 엔티티를 편하게 삭제할 수 있지만
+  연관되는 엔티티의 수 만큼 select, delete 쿼리가 발생된다. 
+  최대 : 1(사용자) + 1(장바구니) + 장바구니 물품의 수 + 주문목록의 수 + 판매상품의 수 + 장바구니에 등록된 판매상품의 수 + 판매내역의 수
+  이를 방지하기 위하여 cascade 를 사용하지 않고 외래 키 무결성 위반을 해결하였다.
+  자세한 내용은 Service[ShoppingCart, Item, Orders] 참조.
+  ```
+
+### 정보 수정 (닉네임. 주소)
+- Controller
+  ```java
+  @PostMapping("/changeUserInfo")
+    public ResponseEntity<String> changeUserInfo(@RequestBody @Valid ChangeUserInfoRequestDto request) {
+        try {
+            userService.changeUserInfo(request);
+            return ResponseEntity.ok().body("정보를 성공적으로 변경하였습니다.");
+        } catch (IllegalStateException | IllegalArgumentException e1) {
+            return createResponseEntity(e1, CONFLICT); // 닉네임 중복, 사용불가 닉네임, 잘못된 주소형태 예외
+        } catch (NoSuchElementException e2) {
+            return createResponseEntity(e2, NOT_FOUND); // 등록된 사용자 없음 예외
+        } catch (IllegalAccessException e3) {
+            return createResponseEntity(e3, UNAUTHORIZED); // 비밀번호 오류 예외
+        }
+    }
+  ```
+
+- ChangeUserInfoRequestDto
+  ```java
+  @Data
+  public class ChangeUserInfoRequestDto {
+    @NotBlank(message = "이메일(필수)")
+    @Email
+    String email;
+    @NotBlank(message = "패스워드(필수)")
+    String password;
+    String nickname;
+    String region;
+    String city;
+    String street;
+    String detail;
+    String zipcode;
+  }
+  ```
+
+- Service
+  ```java
+  @Transactional
+  public void changeUserInfo(ChangeUserInfoRequestDto request) throws IllegalAccessException {
+      User user = checkUserByEmail(request.getEmail()); // NoSuchElementException
+      if (request.getPassword().equals(user.getPassword())) {
+          Address address = changeUserInfoAddress(request.getRegion(), request.getCity(), request.getStreet(), request.getDetail(), request.getZipcode()); // IllegalArgumentException, 주소 형태 확인
+          if (request.getNickname() != null) {
+              String newNickname = changeUserInfoNickname(request.getNickname(), user.getNickname()); // IllegalStateException,닉네임 사용가능 유무 확인
+              user.changeNickname(newNickname);
+          }
+          if (address != null) user.changeAddress(address);
+      } else {
+          throw new IllegalAccessException("잘못된 패스워드 입니다.");
+      }
+  }
+  ```
+
+- Service - changeUserInfoAddress
+  ```java
+  public Address changeUserInfoAddress(String region, String city, String street, String detail, String zipcode) {
+        if (isBlank(region) && isBlank(city) && isBlank(street) && isBlank(detail) && isBlank(zipcode)) {
+            return null;
+        } else if (isNotBlank(region) && isNotBlank(city) && isNotBlank(street) && isNotBlank(detail) && isNotBlank(zipcode)) {
+            return new Address(region, city, street, detail, zipcode);
+        } else {
+            throw new IllegalArgumentException("잘못된 주소형태 입니다.");
+        }
+    }
+  ```
+
+- Service - changeUserInfoNickname
+  ```java
+  public String changeUserInfoNickname(String newNickname, String nickname) {
+        if (nickname.equals(newNickname)) {
+            throw new IllegalStateException("현재 사용중인 닉네임입니다.");
+        }
+        checkIgnoreNickName(newNickname); // IllegalStateException
+        duplicationCheckService.validateDuplicateNickname(newNickname); // IllegalStateException
+        return newNickname;
+    }
+  ```
+
+- Service - checkIgnoreNickName
+  ```java
+  public void checkIgnoreNickName(String nickName) {
+        String ignoreNickname = "admin";
+        if (nickName.toUpperCase().matches("(.*)"+ignoreNickname.toUpperCase()+"(.*)")
+                || nickName.toLowerCase().matches("(.*)"+ignoreNickname.toLowerCase()+"(.*)") ) {
+            throw new IllegalStateException("사용할 수 없는 닉네임입니다.");
+        }
+    }
+  ```
+
+- Review
+  ```
+  Post 통신을 통해 정보 수정에 필요한 정보를 전달받는다.
+  Service 로직에서 전달받은 정보 중 이메일을 통해 사용자의 유무를 파악하고 등록된 사용자가 없다면 예외를 반환한다.
+  사용자가 있으면 전달 받은 기존 비밀번호와 저장된 비밀번호를 비교 검증 한다. 비밀번호가 일치하지 않다면 예외를 반환한다.
+  받아 온 정보 중 주소 관련 정보가 없다면 주소는 변경되지 않으며 주소 정보는 있지만 완전하지 않다면 예외를 반환하고
+  정보의 주소가 완전하다면 사용자의 정보를 수정한다.
+  닉네임의 경우 받아 온 정보 중 닉네임이 있다면 닉네임 검증이 먼저 이루어진다.
+  현재 사용중인 닉네임, 다른 사용자가 사용중인 닉네임, 닉네임 중 admin(대소문자 구분 없이) 이 포함되어 있다면 예외를 반환한다.
+  정상적인 닉네임이라면 닉네임을 수정한다.
   ```

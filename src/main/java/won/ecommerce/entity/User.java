@@ -28,7 +28,7 @@ public class User extends BaseTimeEntity {
     private UserStatus status;
     @OneToMany(mappedBy = "seller")
     private final List<Item> sellItems = new ArrayList<>();
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @JoinColumn(name = "shoppingCartId")
     private ShoppingCart shoppingCart;
     @OneToMany(mappedBy = "buyer")
