@@ -534,3 +534,261 @@
   현재 사용중인 닉네임, 다른 사용자가 사용중인 닉네임, 닉네임 중 admin(대소문자 구분 없이) 이 포함되어 있다면 예외를 반환한다.
   정상적인 닉네임이라면 닉네임을 수정한다.
   ```
+  
+### 일반 사용자 - 판매자 변경 요청 전송
+- Controller
+  ```java
+  @GetMapping("/createChangeStatusLog/{userId}")
+    public ResponseEntity<String> createChangeStatusLog(@PathVariable("userId") Long userId) {
+        try {
+            Long logId = userService.createChangeStatusLog(userId);
+            return ResponseEntity.ok().body("[" + logId + "]" + " 요청이 전송되었습니다.");
+        } catch (NoSuchElementException e1) {
+            return createResponseEntity(e1, NOT_FOUND); // 등록된 사용자 없음 예외
+        } catch (IllegalStateException e2) {
+            return createResponseEntity(e2, CONFLICT); // 이미 등록된 요청 예외
+        }
+    }
+  ```
+
+- Service
+  ```java
+  @Transactional
+    public Long createChangeStatusLog(long userId) {
+        User user = checkUserById(userId);
+        return changeStatusLogService.createChangeStatusLog(user);
+    }
+  ```
+
+- Review
+  ```
+  Get 통신을 통해 사용자의 고유번호를 전달받는다.
+  Service 로직에서 전달받은 고유번호를 통해 사용자의 유무를 파악하고 등록된 사용자가 없다면 예외를 반환한다.
+  사용자가 존재한다면 사용자의 현재 권한을 확인하고 현재 권한 변경 신청을 한 상태인지 검증한다.
+  이미 신청한 상태이면 예외를 반환하고 그렇지 않다면 사용자 <-> 판매자 신청서를 생성하고 저장한다.
+  자세한 내용은 ChangeStatusLogService 에서 확인
+  ```
+
+### 상품 조회
+- Controller
+  ```java
+   @GetMapping("/searchItem")
+    public ResponseEntity<?> searchItem(ItemSearchFromCommonCondition condition, SortCondition sortCondition, Pageable pageable) {
+        Page<SearchItemFromCommonDto> findItems = userService.searchItems(condition, sortCondition, pageable);
+        return ResponseEntity.ok().body(findItems);
+    }
+  ```
+
+- ItemSearchFromCommonCondition
+  ```java
+  @Data
+  public class ItemSearchFromCommonCondition {
+    private String sellerNickName;
+    private String itemName;
+    private Integer priceGoe;
+    private Integer priceLoe;
+    private Long categoryId;
+  }
+  ```
+
+- SortCondition
+  ```java
+  @Data
+  public class SortCondition {
+    private String orderName1;
+    private String orderDirect1;
+    private String orderName2;
+    private String orderDirect2;
+    private String orderName3;
+    private String orderDirect3;
+  }
+  ```
+
+- Service
+  ```java 
+  public Page<SearchItemFromCommonDto> searchItems(ItemSearchFromCommonCondition condition, SortCondition sortCondition, Pageable pageable) {
+        return itemService.searchItemFromCommon(condition, sortCondition, pageable);
+    }
+  ```
+
+- itemService.searchItemFromCommon()
+  ```java
+  public Page<SearchItemFromCommonDto> searchItemFromCommon(ItemSearchFromCommonCondition condition, SortCondition sortCondition, Pageable pageable) {
+        return itemRepository.searchItemPageFromCommon(condition, sortCondition,pageable);
+  }
+  ```
+  
+- SearchItemFromCommonDto
+  ```java
+  @Data
+  public class SearchItemFromCommonDto {
+    private SellerInfoDto seller;
+    private String category;
+    private String itemName;
+    private int price;
+
+    @QueryProjection
+    public SearchItemFromCommonDto(SellerInfoDto seller, String category, String itemName, int price) {
+        this.seller = seller;
+        this.category = category;
+        this.itemName = itemName;
+        this.price = price;
+    }
+  }
+  ```
+- SellerInfoDto
+  ```java
+  @Data
+  public class SellerInfoDto {
+     private String sellerNickname;
+     private String sellerEmail;
+     private String sellerPNum;
+  
+     @QueryProjection
+     public SellerInfoDto(String sellerNickname, String sellerEmail, String sellerPNum) {
+         this.sellerNickname = sellerNickname;
+         this.sellerEmail = sellerEmail;
+         this.sellerPNum = sellerPNum;
+     }
+  }
+  ```
+
+- ItemRepositoryCustom
+  ```java
+  Page<SearchItemFromCommonDto> searchItemPageFromCommon(ItemSearchFromCommonCondition condition, SortCondition sortCondition, Pageable pageable);
+  ```
+
+- ItemRepositoryCustomImpl
+  ```java
+  @Override
+  public Page<SearchItemFromCommonDto> searchItemPageFromCommon(ItemSearchFromCommonCondition condition, SortCondition sortCondition, Pageable pageable) {
+      List<SearchItemFromCommonDto> content = queryFactory
+              .select(new QSearchItemFromCommonDto(
+                      new QSellerInfoDto(
+                              user.nickname,
+                              user.email,
+                              user.pNum),
+                      category.name,
+                      item.name,
+                      item.price
+              ))
+              .from(item)
+              .leftJoin(item.seller, user)
+              .leftJoin(item.category, category)
+              .where(item.stockQuantity.goe(1),
+                      itemNameEq(condition.getItemName()),
+                      sellerNickNameEq(condition.getSellerNickName()),
+                      priceGoe(condition.getPriceGoe()),
+                      priceLoe(condition.getPriceLoe()),
+                      categoryEQ(condition.getCategoryId()))
+              .orderBy(createOrderSpecifier(sortCondition).toArray(OrderSpecifier[]::new))
+              .offset(pageable.getOffset())
+              .limit(pageable.getPageSize())
+              .fetch();
+
+      JPAQuery<Long> countQuery = queryFactory
+              .select(item.count())
+              .from(item)
+              .leftJoin(item.seller, user)
+              .leftJoin(item.category, category)
+              .where(item.stockQuantity.goe(1),
+                      itemNameEq(condition.getItemName()),
+                      sellerNickNameEq(condition.getSellerNickName()),
+                      priceGoe(condition.getPriceGoe()),
+                      priceLoe(condition.getPriceLoe()),
+                      categoryEQ(condition.getCategoryId()));
+
+      return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+  }
+  
+  private BooleanExpression sellerNickNameEq(String sellerNickName) {
+        return hasText(sellerNickName) ? user.nickname.like("%" + sellerNickName + "%") : null;
+  }
+  
+  private BooleanExpression categoryEQ(Long categoryId) {
+        return categoryId != null ? item.category.id.eq(categoryId) : null;
+  }
+  
+  private BooleanExpression priceLoe(Integer priceLoe) {
+        return priceLoe != null ? item.price.loe(priceLoe) : null;
+  }
+
+  private BooleanExpression priceGoe(Integer priceGoe) {
+        return priceGoe != null ? item.price.goe(priceGoe) : null;
+  }
+  
+  private BooleanExpression itemNameEq(String itemName) {
+        return hasText(itemName) ? item.name.like("%"+itemName+"%") : null;
+  }
+  
+  public List<OrderSpecifier<?>> createOrderSpecifier(SortCondition orderCondition) {
+        List<OrderSpecifier<?>> orderSpecifiers = new ArrayList<>();
+
+        checkOrderCondition(orderSpecifiers, orderCondition.getOrderName1(), orderCondition.getOrderDirect1());
+        checkOrderCondition(orderSpecifiers, orderCondition.getOrderName2(), orderCondition.getOrderDirect2());
+        checkOrderCondition(orderSpecifiers, orderCondition.getOrderName3(), orderCondition.getOrderDirect3());
+        return orderSpecifiers;
+  }
+  
+  public void checkOrderCondition(List<OrderSpecifier<?>> orderSpecifiers,String orderName, String orderDirect) {
+        if (hasText(orderName)) {
+            if (orderName.equals("price")) {
+                if (hasText(orderDirect) && orderDirect.equals("ASC")) {
+                    orderSpecifiers.add(new OrderSpecifier<>(Order.ASC, item.price));
+                } else {
+                    orderSpecifiers.add(new OrderSpecifier<>(Order.DESC, item.price));
+                }
+            } else if (orderName.equals("name")) {
+                if (hasText(orderDirect) && orderDirect.equals("ASC")) {
+                    orderSpecifiers.add(new OrderSpecifier<>(Order.ASC, item.name));
+                } else {
+                    orderSpecifiers.add(new OrderSpecifier<>(Order.DESC, item.name));
+                }
+            }
+        }
+  }
+  ```
+
+- Review
+  ```
+  /searchItem?{Params} 형태로 검색조건(ItemSearchFromCommonCondition), 정렬조건(SortCondition), 페이지 정보(Pageable) 를 전달받는다.
+  상품 검색은 회원이 아닌 사용자도 검색을 할 수 있기에 회원 검증 로직을 포함하지 않는다.
+  검색 결과는 SearchItemFromCommonDto 정보로 이루어진 페이지이다.
+  Params 가 없을때는 재고가 1개 이상인 모든 상품들을 검색한다. 
+  아래는 Params 에 들어갈 수 있는 값의 종류이다.
+  Params
+    - sellerNickName : 판매자 닉네임
+    - itemName : 상품 이름
+    - priceGoe : 상품 가격(이상)
+    - priceLoe : 상품 가격(이하)
+    - cateGroyId : 카테고리 고유번호
+    - orderName1 : 정렬조건 1
+    - orderDirect1 : 1의 오름, 내림 차순
+    - orderName2 : 정렬조건 2
+    - orderDirect2 : 2의 오름, 내림 차순
+    - orderName3 : 정렬조건 3
+    - orderDirect3 : 3의 오름, 내림 차순
+    - page : 페이지 번호
+    - size : 한페이지에 표시할 정보의 수
+  ```
+  ```
+  ItemRepositoryCustomImpl
+  Params 의 값을 동적으로 처리하기 위하여 querydsl 을 통하여 쿼리를 작성하였다.
+  
+  검색조건을 통해 검색된 정보는 SearchItemFromCommonDto 로 변환되며 판매자 관련 정보(SellerInfoDto) 가 포함되어 있다.
+  검색은 기본적으로 상품의 재고가 1개 이상인 제품들을 검색하며 상품이름, 판매자 닉네임, 가격범위, 카테고리 설정이 가능하다.
+  각각 itemNameEq, sellerNickNameEq, [priceGoe, priceLoe], categoryEQ 메서드로 구현하였다.
+  위 메서드들은 해당하는 Params 값이 있다면 쿼리의 where 절에 조건을 추가하고 없다면 null 을 반환하여 where 절에 추가하지 않는다.
+  상품이름과 판매자 닉네임은 like 문을 사용하였으며, priceGoe 와 Loe 둘 다 사용하면 Between 효과를 볼 수 있다.
+  
+  위 조건들을 통해 검색된 정보들은 정렬조건을 통해 정렬된다.
+  정렬은 createOrderSpecifier, checkOrderCondition 메서드로 구현하였으며 가격과 상품이름을 기준으로 할 수 있다.
+  정렬 순서는 기본적으로 내림차순으로 정렬되며 오름차순으로 변경이 가능하다.
+  정렬조건이 2개 이상일 경우 orderName 뒤 숫자의 우선순위를 가진다.
+  
+  검색조건과 정렬조건을 통해 필터링된 정보들은 페이지 형태를 가지며 page, size 로 페이지 번호와 정보의 수를 조정해 사용자에게 표시된다.
+  
+  위 쿼리는 PageableExecutionUtils.getPage() 를 사용하여 count 쿼리가 생략 가능한 경우 생략해서 처리한다.
+    - 페이지가 시작이면서 컨텐츠 사이즈가 페이지 사이즈보다 작을 때
+    - 마지막 페이지 일 때 (offset + 컨텐츠 사이즈를 더해서 전체 사이즈를 구한다.)
+  ```
