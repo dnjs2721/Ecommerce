@@ -8,7 +8,7 @@
 - DevTool : Intelli J
 - TestTool : PostMan, DBeaver
 - JDK : open-jdk:19
-- External API : CoolSMS(Message), PortOne(Payment)
+- External API : CoolSMS(Message), PortOne(Payment) 
 ----
 >### 구현  
 ### 관리자
