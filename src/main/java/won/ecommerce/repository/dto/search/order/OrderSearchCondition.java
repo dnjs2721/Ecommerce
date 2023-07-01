@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 
 @Data
 public class OrderSearchCondition {
-    private String status;
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime timeGoe;
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
