@@ -1,18 +1,22 @@
 package won.ecommerce.repository.item;
 
+import com.querydsl.core.dml.UpdateClause;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.querydsl.jpa.impl.JPAUpdateClause;
 import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
+import retrofit2.http.PUT;
 import won.ecommerce.entity.Category;
 import won.ecommerce.entity.Item;
 import won.ecommerce.repository.dto.search.item.SortCondition;
 import won.ecommerce.repository.dto.search.item.*;
+import won.ecommerce.service.dto.item.ChangeItemInfoRequestDto;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -127,19 +131,28 @@ public class ItemRepositoryCustomImpl implements ItemRepositoryCustom{
     }
 
     @Override
-    public void changePrice(Long itemId, int price) {
-        queryFactory
+    public void changeItemInfo(ChangeItemInfoRequestDto request) {
+        JPAUpdateClause itemInfo = queryFactory
                 .update(item)
-                .set(item.price, price)
-                .where(item.id.eq(itemId))
-                .execute();
+                .where(item.id.eq(request.getItemId()));
 
-        queryFactory
-                .update(shoppingCartItem)
-                .set(shoppingCartItem.itemPrice, price)
-                .set(shoppingCartItem.totalItemPrice, shoppingCartItem.itemCount.multiply(price))
-                .where(shoppingCartItem.item.id.eq(itemId))
-                .execute();
+        if (request.getChangePrice() != null) {
+            itemInfo.set(item.price, request.getChangePrice());
+            queryFactory
+                    .update(shoppingCartItem)
+                    .set(shoppingCartItem.itemPrice, request.getChangePrice())
+                    .set(shoppingCartItem.totalItemPrice, shoppingCartItem.itemCount.multiply(request.getChangePrice()))
+                    .where(shoppingCartItem.item.id.eq(request.getItemId()))
+                    .execute();
+        }
+        if (request.getChangeStockQuantity() != null) {
+            itemInfo.set(item.stockQuantity, request.getChangeStockQuantity());
+        }
+        if (request.getChangeCategoryId() != null) {
+            itemInfo.set(item.category.id, request.getChangeCategoryId());
+        }
+
+        itemInfo.execute();
     }
 
     @Override

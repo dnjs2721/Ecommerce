@@ -71,8 +71,8 @@ public class SellerController {
     @PostMapping("/changeItemInfo/{sellerId}")
     public ResponseEntity<String> changeItemInfo(@PathVariable("sellerId") Long sellerId, @RequestBody @Valid ChangeItemInfoRequestDto request) {
         try {
-            Item item = sellerService.changeItemInfo(sellerId, request);
-            return ResponseEntity.ok().body(item.getName() + "의 정보가 변경되었습니다.");
+            String itemName = sellerService.changeItemInfo(sellerId, request);
+            return ResponseEntity.ok().body(itemName + "의 정보가 변경되었습니다.");
         } catch (IllegalAccessException e1) {
             return createResponseEntity(e1, NOT_ACCEPTABLE);
         } catch (NoSuchElementException e2) {

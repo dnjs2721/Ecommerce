@@ -9,6 +9,7 @@ import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
 import won.ecommerce.repository.dto.search.item.ItemSearchFromCommonCondition;
 import won.ecommerce.repository.dto.search.item.SearchItemDto;
 import won.ecommerce.repository.dto.search.item.SearchItemFromCommonDto;
+import won.ecommerce.service.dto.item.ChangeItemInfoRequestDto;
 
 import java.util.List;
 
@@ -16,7 +17,7 @@ public interface ItemRepositoryCustom {
     Page<SearchItemDto> searchItemPage(Long sellerId, ItemSearchCondition condition, Pageable pageable);
     Page<SearchItemFromCommonDto> searchItemPageFromCommon(ItemSearchFromCommonCondition condition, SortCondition sortCondition, Pageable pageable);
     void batchUpdateItemCategory(List<Long> itemIds, Category category);
-    void changePrice(Long itemId, int price);
+    void changeItemInfo(ChangeItemInfoRequestDto request);
     List<Item> findItemBySellerIdAndItemIds(Long sellerId, List<Long> itemIds);
 
     List<Long> findAllItemIdsBySellerId(Long sellerId);

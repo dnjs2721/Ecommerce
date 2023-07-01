@@ -50,8 +50,8 @@ public class SellerService {
      * 상품 정보 변경
      */
     @Transactional
-    public Item changeItemInfo(Long sellerId ,ChangeItemInfoRequestDto request) throws IllegalAccessException {
-        User seller = checkSeller(sellerId); // NoSuchElementException 가입되지 않은 회원 에외, IllegalAccessException 판매자 아닐 때 예외
+    public String changeItemInfo(Long sellerId ,ChangeItemInfoRequestDto request) throws IllegalAccessException {
+        checkSeller(sellerId); // NoSuchElementException 가입되지 않은 회원 에외, IllegalAccessException 판매자 아닐 때 예외
         return itemService.changeItemInfo(sellerId, request); // NoSuchElementException 존재하지 않는 상품. IllegalAccessException 판매자의 상품이 아닐 떄 예외`
     }
 
