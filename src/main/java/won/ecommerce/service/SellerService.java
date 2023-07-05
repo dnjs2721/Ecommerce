@@ -68,7 +68,7 @@ public class SellerService {
      * 주문 조회 판매자
      */
     public Page<SearchOrdersForSellerDto> searchOrdersForSeller(Long sellerId, OrderSearchCondition condition, Pageable pageable) throws IllegalAccessException {
-        User seller = checkSeller(sellerId);
+        checkSeller(sellerId);
         return ordersService.searchOrdersForSeller(sellerId, condition, pageable);
     }
 
@@ -76,7 +76,7 @@ public class SellerService {
      * 주문 상세 조회 판매자
      */
     public List<SearchOrderItemForSellerDto> searchOrderDetailForSeller(Long sellerId, Long orderId) throws IllegalAccessException {
-        User seller = checkSeller(sellerId); //NoSuchElementException
+        checkSeller(sellerId); //NoSuchElementException
         return ordersService.searchOrderDetailForSeller(sellerId, orderId);
     }
 

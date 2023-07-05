@@ -14,6 +14,8 @@ import org.springframework.data.support.PageableExecutionUtils;
 import retrofit2.http.PUT;
 import won.ecommerce.entity.Category;
 import won.ecommerce.entity.Item;
+import won.ecommerce.entity.QShoppingCartItem;
+import won.ecommerce.entity.ShoppingCartItem;
 import won.ecommerce.repository.dto.search.item.SortCondition;
 import won.ecommerce.repository.dto.search.item.*;
 import won.ecommerce.service.dto.item.ChangeItemInfoRequestDto;
@@ -166,11 +168,11 @@ public class ItemRepositoryCustomImpl implements ItemRepositoryCustom{
     }
 
     @Override
-    public List<Long> findAllItemIdsBySellerId(Long sellerId) {
+    public List<ShoppingCartItem> getShoppingCartItem(List<Long> itemIds) {
         return queryFactory
-                .select(item.id)
-                .from(item)
-                .where(item.seller.id.eq(sellerId))
+                .select(shoppingCartItem)
+                .from(shoppingCartItem)
+                .where(shoppingCartItem.item.id.in(itemIds))
                 .fetch();
     }
 

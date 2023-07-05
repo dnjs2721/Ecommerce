@@ -96,11 +96,10 @@ public class ItemService {
             throw new IllegalArgumentException("잘못된 상품 정보입니다.");
         }
         List<String> itemsName = new ArrayList<>();
-        List<ShoppingCartItem> shoppingCartItems = new ArrayList<>();
         for (Item item : findItems) {
-            shoppingCartItems.addAll(item.getShoppingCartItems());
             itemsName.add(item.getName());
         }
+        List<ShoppingCartItem> shoppingCartItems = itemRepository.getShoppingCartItem(itemIds);
         if (!shoppingCartItems.isEmpty()) {
             shoppingCartService.deleteShoppingCartItemByList(shoppingCartItems);
         }

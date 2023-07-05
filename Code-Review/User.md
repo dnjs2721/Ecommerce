@@ -964,6 +964,14 @@
         checkBuyerOrder(buyerId, orderId);
         return buyerRepository.searchOrderItemsForBuyer(orderId);
   }
+  
+  public OrdersForBuyer checkBuyerOrder(Long buyerId, Long orderId) throws IllegalAccessException {
+        OrdersForBuyer orderForBuyer = getOrderForBuyer(orderId);
+        if (!orderForBuyer.getBuyer().getId().equals(buyerId)) {
+            throw new IllegalAccessException("사용자의 주문이 아닙니다");
+        }
+        return orderForBuyer;
+  }
   ```
   
 - SearchOrderItemsForBuyerDto

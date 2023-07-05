@@ -86,7 +86,6 @@ public class OrderSearchRepositoryImpl implements OrderSearchRepository{
                 .select(ordersForSeller.count())
                 .from(ordersForSeller)
                 .where(ordersForSeller.seller.id.eq(sellerId),
-
                         orderTimeGoeForSeller(condition.getTimeGoe()),
                         orderTimeLoeForSeller(condition.getTimeLoe()));
 

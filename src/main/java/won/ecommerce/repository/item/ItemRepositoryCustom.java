@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import won.ecommerce.entity.Category;
 import won.ecommerce.entity.Item;
+import won.ecommerce.entity.ShoppingCartItem;
 import won.ecommerce.repository.dto.search.item.SortCondition;
 import won.ecommerce.repository.dto.search.item.ItemSearchCondition;
 import won.ecommerce.repository.dto.search.item.ItemSearchFromCommonCondition;
@@ -19,6 +20,5 @@ public interface ItemRepositoryCustom {
     void batchUpdateItemCategory(List<Long> itemIds, Category category);
     void changeItemInfo(ChangeItemInfoRequestDto request);
     List<Item> findItemBySellerIdAndItemIds(Long sellerId, List<Long> itemIds);
-
-    List<Long> findAllItemIdsBySellerId(Long sellerId);
+    List<ShoppingCartItem> getShoppingCartItem(List<Long> itemIds);
 }

@@ -412,3 +412,607 @@
   이 때 가격이 변경이 될때는 해당 상품에 대한 장바구니 상품들의 상품당 가격, 주문 상품 전체 가격이 함께 변경된다.
   모든 작업이 끝난 후 변경된 상품의 이름을 반환한다.
   ```
+  
+### 상품 삭제
+- Controller
+  ```java
+  @PostMapping("/deleteItem/{sellerId}")
+  public ResponseEntity<String> deleteItem(@PathVariable("sellerId") Long sellerId, @RequestBody DeleteItemRequestDto request) {
+      try {
+          List<String> itemsName = sellerService.deleteItem(sellerId, request.getItemIds());
+          return ResponseEntity.ok().body(itemsName.toString() + " 이(가) 삭제되었습니다.");
+      } catch (IllegalAccessException e1) {
+          return createResponseEntity(e1, NOT_ACCEPTABLE);
+      } catch (NoSuchElementException e2) {
+          return createResponseEntity(e2, NOT_FOUND);
+      } catch (IllegalArgumentException e3) {
+          return createResponseEntity(e3, CONFLICT);
+      }
+  }
+  ```
+
+- DeleteItemRequestDto
+  ```java
+  @Data
+  public class DeleteItemRequestDto {
+    List<Long> itemIds = new ArrayList<>();
+  }
+  ```
+
+- Service
+  ```java
+  @Transactional
+  public List<String> deleteItem(Long sellerId, List<Long> itemIds) throws IllegalAccessException {
+      User seller = checkSeller(sellerId);
+      return itemService.deleteItem(seller, itemIds);
+  }
+  ```
+
+- Service - itemService.deleteItem
+  ```java
+  public List<String> deleteItem(User seller, List<Long> itemIds){
+        List<Item> findItems = itemRepository.findItemBySellerIdAndItemIds(seller.getId(), itemIds);
+        if (itemIds.isEmpty() || (findItems.size() != itemIds.size())) {
+            throw new IllegalArgumentException("잘못된 상품 정보입니다.");
+        }
+        List<String> itemsName = new ArrayList<>();
+        List<ShoppingCartItem> shoppingCartItems = new ArrayList<>();
+        for (Item item : findItems) {
+            shoppingCartItems.addAll(item.getShoppingCartItems());
+            itemsName.add(item.getName());
+        }
+        if (!shoppingCartItems.isEmpty()) {
+            shoppingCartService.deleteShoppingCartItemByList(shoppingCartItems);
+        }
+        saveDeletedItem(seller, findItems);
+        itemRepository.deleteAllByIdInBatch(itemIds);
+        return itemsName;
+  }
+  ```
+
+- Service - shoppingCartService.deleteShoppingCartItemByList
+  ```java
+  public void deleteShoppingCartItemByList(List<ShoppingCartItem> shoppingCartItems) {
+        List<Long> shoppingCartItemIds = new ArrayList<>();
+        for (ShoppingCartItem shoppingCartItem : shoppingCartItems) {
+            shoppingCartItemIds.add(shoppingCartItem.getId());
+        }
+        shoppingCartItemRepository.deleteAllByIdInBatch(shoppingCartItemIds);
+  }
+  ```
+
+- ItemRepositoryCustom
+  ```java
+  public interface ItemRepositoryCustom {
+    List<Item> findItemBySellerIdAndItemIds(Long sellerId, List<Long> itemIds);
+    List<ShoppingCartItem> getShoppingCartItem(List<Long> itemIds);
+  }
+  ```
+
+- ItemRepositoryCustomImpl
+  ```java
+  @Override
+  public List<Item> findItemBySellerIdAndItemIds(Long sellerId, List<Long> itemIds) {
+      return queryFactory
+              .select(item)
+              .from(item)
+              .where(item.seller.id.eq(sellerId),
+                      item.id.in(itemIds))
+              .fetch();
+  }
+  
+  @Override
+  public List<ShoppingCartItem> getShoppingCartItem(List<Long> itemIds) {
+      return queryFactory
+              .select(shoppingCartItem)
+              .from(shoppingCartItem)
+              .where(shoppingCartItem.item.id.in(itemIds))
+              .fetch();
+  }
+  ```
+
+- Review
+  ```
+  Post 통신을 통해 상품 삭제에 필요한 정보를 받아온다. - 판매자 고유번호, 상품 고유번호(List)
+  전달받은 정보 중 sellerId 를 통해 사용자의 존재, 판매자 권한을 확인한다. 만약 사용자가 존재하지 않거나 판매자가 아닌경우 예외를 반환한다.
+    
+  상품 고유번호가 없거나, 전달받은 상품 고유번호와 판매자 고유번호가 일치하는 상품이 전달받은 상품 고유번호의 갯수와 맞지 않는 경우 예외를 반환한다.
+  이를 통해 전달 받은 상품이 판매자의 상품인지 검사한다.
+  판매자의 상품인지 검사가 완료되었으면 결과 반환을 위해 상품의 이름을 List 형태로 생성한다.
+    
+  삭제될 상품이 다른 사용자의 장바구니에 존재하면 안되기에 삭제될 상품에 대한 장바구니 상품들을 삭제한다.
+    
+  삭제되는 상품의 정보를 일정기간 보관하기 위해 저장하고 상품을 삭제한다.
+  정상적으로 끝났을 경우 Controller 에 삭제된 상품의 이름을 전달한다.
+  ```
+
+### 주문 조회
+- Controller
+  ```java
+  @GetMapping("/searchOrders/{userId}")
+  public ResponseEntity<?> searchOrdersForSeller(@PathVariable("userId") Long sellerId, OrderSearchCondition condition, Pageable pageable) {
+      try {
+          Page<SearchOrdersForSellerDto> content = sellerService.searchOrdersForSeller(sellerId, condition, pageable);
+          return ResponseEntity.ok().body(content);
+      } catch (IllegalAccessException e1) {
+          return createResponseEntity(e1, NOT_ACCEPTABLE);
+      } catch (NoSuchElementException e2) {
+          return createResponseEntity(e2, NOT_FOUND);
+      }
+  }
+  ```
+
+- OrderSearchCondition
+  ```java
+  @Data
+  public class OrderSearchCondition {
+    @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime timeGoe;
+    @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime timeLoe;
+  }
+  ```
+
+- Service
+  ```java
+  public Page<SearchOrdersForSellerDto> searchOrdersForSeller(Long sellerId, OrderSearchCondition condition, Pageable pageable) throws IllegalAccessException {
+        checkSeller(sellerId);
+        return ordersService.searchOrdersForSeller(sellerId, condition, pageable);
+  }
+  ```
+
+- Service - ordersService.searchOrdersForSeller
+  ```java
+  public Page<SearchOrdersForSellerDto> searchOrdersForSeller(Long sellerId, OrderSearchCondition condition, Pageable pageable) {
+        return sellerRepository.searchOrdersForSeller(sellerId, condition, pageable);
+  }
+  ```
+
+- SearchOrdersForSellerDto
+  ```java
+  @Data
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public class SearchOrderItemForSellerDto {
+      Long orderItemId;
+      Long itemId;
+      String itemName;
+      int price;
+      int count;
+      int totalPrice;
+      OrderItemStatus orderItemStatus;
+      String cancelReason;
+  
+      @QueryProjection
+      public SearchOrderItemForSellerDto(Long orderItemId, Long itemId, String itemName, int price, int count, int totalPrice, OrderItemStatus orderItemStatus, String cancelReason) {
+          this.orderItemId = orderItemId;
+          this.itemId = itemId;
+          this.itemName = itemName;
+          this.price = price;
+          this.count = count;
+          this.totalPrice = totalPrice;
+          this.orderItemStatus = orderItemStatus;
+          this.cancelReason = cancelReason;
+      }
+  }
+  ```
+
+- OrderSearchRepository
+  ```java
+  public interface OrderSearchRepository {
+    Page<SearchOrdersForSellerDto> searchOrdersForSeller(Long sellerId, OrderSearchCondition condition, Pageable pageable);
+  }
+  ```
+
+- OrderSearchRepositoryImpl
+  ```java
+  @Override
+  public Page<SearchOrdersForSellerDto> searchOrdersForSeller(Long sellerId, OrderSearchCondition condition, Pageable pageable) {
+      List<SearchOrdersForSellerDto> content = queryFactory
+              .select(new QSearchOrdersForSellerDto(
+                      ordersForSeller.id,
+                      ordersForSeller.buyerName,
+                      ordersForSeller.buyerPNum,
+                      ordersForSeller.buyerAddress,
+                      ExpressionUtils.as(
+                              JPAExpressions
+                                      .select(orderItem.totalPrice.sum())
+                                      .from(orderItem)
+                                      .where(orderItem.sellerOrderId.eq(ordersForSeller.id),
+                                              orderItem.orderItemStatus.ne(OrderItemStatus.CANCEL)), "orderPrice"),
+                      ordersForSeller.createdDate))
+              .from(ordersForSeller)
+              .where(ordersForSeller.seller.id.eq(sellerId),
+                      orderTimeGoeForSeller(condition.getTimeGoe()),
+                      orderTimeLoeForSeller(condition.getTimeLoe()))
+              .offset(pageable.getOffset())
+              .limit(pageable.getPageSize())
+              .fetch();
+
+      JPAQuery<Long> countQuery = queryFactory
+              .select(ordersForSeller.count())
+              .from(ordersForSeller)
+              .where(ordersForSeller.seller.id.eq(sellerId),
+                      orderTimeGoeForSeller(condition.getTimeGoe()),
+                      orderTimeLoeForSeller(condition.getTimeLoe()));
+
+      return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+  }
+  
+  private BooleanExpression orderTimeGoeForSeller(LocalDateTime timeGoe) {
+        return timeGoe != null ? ordersForSeller.createdDate.goe(timeGoe) : null;
+  }
+  private BooleanExpression orderTimeLoeForSeller(LocalDateTime timeLoe) {
+      return timeLoe != null ? ordersForSeller.createdDate.loe(timeLoe) : null;
+  }
+  ```
+
+- Review
+  ```
+  GET 통신을 통해 /searchOrders/{userId}?{Params} 형태로 사용자 고윺번호(userId), 검색조건(OrderSearchCondition), 페이지 정보(Pageable) 를 전달받는다.
+  전달받은 사용자의 고유번호를 통해 사용자의 존재, 판매자 권한을 확인한다. 만약 사용자가 존재하지 않거나 판매자가 아닌경우 예외를 반환한다.
+  검색 결과는 SearchOrdersForSellerDto 정보로 이루어진 페이지이다.
+  아래는 Params 에 들어갈 수 있는 값의 종류이다.
+  Params
+    - timeGoe : 주문 시간(이상)
+    - timeLoe : 주문 시간(이하)
+    - page : 페이지 번호
+    - size : 한페이지에 표시할 정보의 수
+  ```
+  ```
+  OrderSearchRepositoryImpl
+  Params 의 값을 동적으로 처리하기 위하여 querydsl 을 통하여 쿼리를 작성하였다.
+  검색조건을 통해 검색된 정보는 SearchOrdersForSellerDto 로 변환된다.
+  전달받은 사용자의 고유번호를 통해 사용자의 주문들을 페이지 형태로 반환한다. 이때 주문 시간 범위 설정이 가능하다.
+  주문 시간 범위는 orderTimeGoeForSeller, orderTimeLoeForSeller 메서드로 구현하였으며
+  해당하는 Params 값이 있다면 쿼리의 where 절에 조건을 추가하고 없다면 null 을 반환하여 where 절에 추가하지 않는다.
+  Goe 와 Loe 둘 다 사용하면 Between 효과를 볼 수 있다.
+  
+  검색결과에는 주문의 고유번호, 구매자 이름, 구매자 전화번호, 구매자 주소, 해당 주문의 전체 가격, 주문 시간을 가지고 있다.
+  해당 주문의 전체 가격은 서브쿼리로 구현하였다. 해당 주문의 고유번호를 가지고 있는 주문 상품들 중 주문 상품 상태가 CANCEL인 것들을 제외하고 전체가격을 계산한다.
+  
+  검색조건을 통해 필터링 된 정보들은 page, size 로 페이지 번호와 정보의 수를 조정해 사용자에게 표시된다.
+  
+  위 쿼리는 PageableExecutionUtils.getPage() 를 사용하여 count 쿼리가 생략 가능한 경우 생략해서 처리한다.
+  - 페이지가 시작이면서 컨텐츠 사이즈가 페이지 사이즈보다 작을 때
+  - 마지막 페이지 일 때 (offset + 컨텐츠 사이즈를 더해서 전체 사이즈를 구한다.)
+  ```
+
+### 주문 상세 조회
+- Controller
+  ```java
+  @GetMapping("/searchOrderDetail/{userId}/{orderId}")
+  public ResponseEntity<?> searchOrderDetail(@PathVariable("userId") Long sellerId, @PathVariable("orderId") Long orderId) {
+      try {
+          List<SearchOrderItemForSellerDto> items = sellerService.searchOrderDetailForSeller(sellerId, orderId);
+          return ResponseEntity.ok().body(items);
+      } catch (NoSuchElementException e1) {
+          return createResponseEntity(e1, NOT_FOUND);
+      } catch (IllegalAccessException e2) {
+          return createResponseEntity(e2, NOT_ACCEPTABLE);
+      }
+  }
+  ```
+
+- Service
+  ```java
+  public List<SearchOrderItemForSellerDto> searchOrderDetailForSeller(Long sellerId, Long orderId) throws IllegalAccessException {
+        User seller = checkSeller(sellerId); //NoSuchElementException
+        return ordersService.searchOrderDetailForSeller(sellerId, orderId);
+  }
+  ```
+
+- Service - ordersService.searchOrderDetailForSeller
+  ```java
+  public List<SearchOrderItemForSellerDto> searchOrderDetailForSeller(Long sellerId, Long orderId) throws IllegalAccessException {
+        checkSellerOrder(sellerId, orderId);
+        return sellerRepository.searchOrderItemsForSeller(orderId);
+  }
+  
+  public void checkSellerOrder(Long sellerId, Long orderId) throws IllegalAccessException {
+        OrdersForSeller ordersForSeller = getOrdersForSeller(orderId);
+        if (!ordersForSeller.getSeller().getId().equals(sellerId)) {
+            throw new IllegalAccessException("사용자의 주문이 아닙니다.");
+        }
+  }
+  ```
+
+- SearchOrderItemForSellerDto
+  ```java
+  @Data
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public class SearchOrderItemForSellerDto {
+      Long orderItemId;
+      Long itemId;
+      String itemName;
+      int price;
+      int count;
+      int totalPrice;
+      OrderItemStatus orderItemStatus;
+      String cancelReason;
+  
+      @QueryProjection
+      public SearchOrderItemForSellerDto(Long orderItemId, Long itemId, String itemName, int price, int count, int totalPrice, OrderItemStatus orderItemStatus, String cancelReason) {
+          this.orderItemId = orderItemId;
+          this.itemId = itemId;
+          this.itemName = itemName;
+          this.price = price;
+          this.count = count;
+          this.totalPrice = totalPrice;
+          this.orderItemStatus = orderItemStatus;
+          this.cancelReason = cancelReason;
+      }
+  }
+  ```
+
+- OrderSearchRepository
+  ```java
+  public interface OrderSearchRepository {
+    List<SearchOrderItemForSellerDto> searchOrderItemsForSeller(Long orderId);
+  }
+  ```
+
+- OrderSearchRepositoryImpl
+  ```java
+  @Override
+  public List<SearchOrderItemForSellerDto> searchOrderItemsForSeller(Long orderId) {
+      return queryFactory
+              .select(new QSearchOrderItemForSellerDto(
+                      orderItem.id,
+                      orderItem.itemId,
+                      orderItem.itemName,
+                      orderItem.price,
+                      orderItem.count,
+                      orderItem.totalPrice,
+                      orderItem.orderItemStatus,
+                      orderItem.comment
+                      ))
+              .from(orderItem)
+              .where(orderItem.sellerOrderId.eq(orderId))
+              .fetch();
+  }
+  ```
+
+- Review
+  ```
+  GET 통신을 통해 /searchOrderDetail/{userId}/{orderId} 형태로 사용자 고유번호(userId), 주문 고유번호(orderId) 를 전달 받는다.
+  전달받은 사용자 고유번호를 통해 사용자의 존재, 판매자 권한을 확인한다. 만약 사용자가 존재하지 않거나 판매자가 아닌경우 예외를 반환한다.
+  사용자가 존재하고, 판매자라면 주문 고유번호를 통해 주문의 존재와 주문이 사용자의 것인지 확인한다.
+  만약 주문이 없거나 사용자의 주문이 아닌 경우 예외를 반환한다. 주문이 존재하고 사용자의 주문이 맞다면 해당 주문에 대해 상세 정보를 반환한다.
+  ```
+  ```
+  OrderSearchRepositoryImpl
+  전달 받은 주문의 고유 번호를 통해 주문의 상세 정보를 반환한다. 주문의 상세 정보는 SearchOrderItemForSellerDto 의 형태로 반환된다.
+  주문의 상세 정보는 주문상품의 고유번호, 상품의 고유번호, 상품의 이름, 상품 가격, 주문 수량, 주문 상품의 총 가격, 주문 상품의 상태, 코멘트 를 담고있다.
+  이 때 comment 는 상품을 취소 하는 이유이며 취소 상태가 아닐 경우 표시되지 않는다.
+  ```
+
+### 주문 상품 상태 변경
+- Controller
+  ```java
+  @PostMapping("/changeOrderStatus/{userId}")
+  public ResponseEntity<String> changeOrderStatus(@PathVariable("userId") Long sellerId, @RequestBody @Valid ChangeOrderStatusRequestDto request) {
+      try {
+          String itemName = sellerService.changeOrderStatus(sellerId, request);
+          return ResponseEntity.ok().body(itemName + " 의 주문상태가 변경되었습니다.");
+      } catch (NoSuchElementException e1) {
+          return createResponseEntity(e1, NOT_FOUND);
+      } catch (IllegalAccessException e2) {
+          return createResponseEntity(e2, NOT_ACCEPTABLE);
+      } catch (IllegalStateException e3) {
+          return createResponseEntity(e3, CONFLICT);
+      }
+  }
+  ```
+
+- ChangeOrderStatusRequestDto
+  ```java
+  @Data
+  public class ChangeOrderStatusRequestDto {
+    @NotNull(message = "주문상품 ID")
+    Long orderItemId;
+    OrderItemStatus orderItemStatus;
+    String comment;
+  }
+  ```
+
+- Service
+  ```java
+  @Transactional
+  public String changeOrderStatus(Long sellerId, ChangeOrderStatusRequestDto request) throws IllegalAccessException {
+      checkSeller(sellerId); // NoSuchElementException, IllegalAccessException
+      OrderItem orderItem = ordersService.checkSellerOrderItem(sellerId, request.getOrderItemId());// NoSuchElementException
+      Item item = itemService.checkItem(orderItem.getItemId()); // NoSuchElementException
+
+      return ordersService.changeOrderStatus(item, orderItem, request); // IllegalStateException
+  }
+  ```
+
+- Service - ordersService.changeOrderStatus
+  ```java
+  public String changeOrderStatus(Item item, OrderItem orderItem, ChangeOrderStatusRequestDto request){
+        OrderItemStatus orderItemStatus = request.getOrderItemStatus();
+        if (orderItemStatus.equals(CANCEL)) {
+            orderItem.setComment("판매자에 의한 취소 " + request.getComment());
+            item.increaseStockQuantity(orderItem.getCount());
+        } else if (orderItemStatus.equals(WAITING_FOR_PAYMENT)) {
+            throw new IllegalStateException("해당 단계로 변경할 수 없습니다.");
+        }
+        orderItem.changeStatus(orderItemStatus);
+
+        return orderItem.getItemName();
+  }
+  ```
+
+- Review
+  ```
+  Post 통신을 통해 주문 상품 상태 변경에 필요한 정보를 전달 받는다.
+  전달받은 사용자 고유번호를 통해 사용자의 존재, 판매자 권한을 확인한다. 만약 사용자가 존재하지 않거나 판매자가 아닌경우 예외를 반환한다.
+  사용자가 존재하고, 판매자라면 주문 상품 고유번호와 사용자 고유번호를 통해 주문 상품 존재와 주문 상품이 사용자의 것인지 확인한다.
+  만약 주문 상품이 존재하지 않거나 사용자의 주문 상품이 아니라면 예외를 반환한다.
+  주문 상품 확인을 한 뒤 주문 상품 정보 중 상품 고유번호를 통해 상품 존재를 확인한다. 만약 상품이 존재하지 않다면 예외를 반환한다.
+  상품존재까지 확인이 끝났다면 주문 상품 상태를 변경한다.
+  주문 상품 상태를 취소로 변경할 때는 이유를 설정하며, 결제대기 상태로는 변경이 불가능하다.
+  ```
+
+### 교환/환불 신청서 확인
+- Controller
+  ```java
+  @GetMapping("/searchExchangeRefundLog/{userId}")
+  public ResponseEntity<?> searchExchangeRefundLog(@PathVariable("userId") Long sellerId, ExchangeRefundLogSearchCondition condition, Pageable pageable) {
+      try {
+          Page<SearchExchangeRefundLogDto> searchLogs = sellerService.searchExchangeRefundLog(sellerId, condition, pageable);
+          return ResponseEntity.ok().body(searchLogs);
+      } catch (IllegalAccessException e1) {
+          return createResponseEntity(e1, NOT_ACCEPTABLE);
+      } catch (NoSuchElementException e2) {
+          return createResponseEntity(e2, NOT_FOUND);
+      }
+  }
+  ```
+
+- ExchangeRefundLogSearchCondition
+  ```java
+  @Data
+  public class ExchangeRefundLogSearchCondition {
+    private ExchangeRefundStatus status;
+    private LogStatus logStatus;
+    @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime timeGoe;
+    @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime timeLoe;
+  }
+  ```
+
+- Service
+  ```java
+  public Page<SearchExchangeRefundLogDto> searchExchangeRefundLog(Long sellerId, ExchangeRefundLogSearchCondition condition, Pageable pageable) throws IllegalAccessException {
+        checkSeller(sellerId);
+        return exchangeRefundLogService.searchExchangeRefundLog(sellerId, condition, pageable);
+  }
+  ```
+
+- Service - exchangeRefundLogService.searchExchangeRefundLog
+  ```java
+  public Page<SearchExchangeRefundLogDto> searchExchangeRefundLog(Long sellerId, ExchangeRefundLogSearchCondition condition, Pageable pageable) {
+        return exchangeRefundRepository.searchExchangeRefundLog(sellerId, condition, pageable);
+  }
+  ```
+
+- SearchExchangeRefundLogDto
+  ```java
+  @Data
+  public class SearchExchangeRefundLogDto {
+    @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime createdDate;
+    private Long logId;
+    private Long userId;
+    private Long orderItemId;
+    private String reason;
+    private ExchangeRefundStatus status;
+    private LogStatus logStatus;
+    private LocalDateTime processingTime;
+
+    @QueryProjection
+    public SearchExchangeRefundLogDto(LocalDateTime createdDate, Long logId, Long userId, Long orderItemId, String reason, ExchangeRefundStatus status, LogStatus logStatus, LocalDateTime processingTime) {
+        this.createdDate = createdDate;
+        this.logId = logId;
+        this.userId = userId;
+        this.orderItemId = orderItemId;
+        this.reason = reason;
+        this.status = status;
+        this.logStatus = logStatus;
+        this.processingTime = processingTime;
+    }
+  }
+  ```
+
+- ExchangeRefundRepositoryCustom
+  ```java
+  public interface ExchangeRefundRepositoryCustom {
+    Page<SearchExchangeRefundLogDto> searchExchangeRefundLog(Long sellerId, ExchangeRefundLogSearchCondition condition, Pageable pageable);
+  }
+  ```
+
+- ExchangeRefundRepositoryCustomImpl
+  ```java
+  @Override
+  public Page<SearchExchangeRefundLogDto> searchExchangeRefundLog(Long sellerId, ExchangeRefundLogSearchCondition condition, Pageable pageable) {
+      List<SearchExchangeRefundLogDto> content = queryFactory
+              .select(new QSearchExchangeRefundLogDto(
+                      exchangeRefundLog.createdDate,
+                      exchangeRefundLog.id,
+                      exchangeRefundLog.userId,
+                      exchangeRefundLog.orderItemId,
+                      exchangeRefundLog.reason,
+                      exchangeRefundLog.status,
+                      exchangeRefundLog.logStatus,
+                      exchangeRefundLog.processingTime
+              ))
+              .from(exchangeRefundLog)
+              .where(exchangeRefundLog.sellerId.eq(sellerId),
+                      createdDateGoe(condition.getTimeGoe()),
+                      createdDateLoe(condition.getTimeLoe()),
+                      statusEq(condition.getStatus()),
+                      logStatusEq(condition.getLogStatus()))
+              .offset(pageable.getOffset())
+              .limit(pageable.getPageSize())
+              .fetch();
+
+      JPAQuery<Long> countQuery = queryFactory
+              .select(exchangeRefundLog.count())
+              .from(exchangeRefundLog)
+              .where(exchangeRefundLog.sellerId.eq(sellerId),
+                      createdDateGoe(condition.getTimeGoe()),
+                      createdDateLoe(condition.getTimeLoe()),
+                      statusEq(condition.getStatus()),
+                      logStatusEq(condition.getLogStatus()));
+
+      return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+  }
+
+  private BooleanExpression createdDateGoe(LocalDateTime timeGoe) {
+      return timeGoe != null ? exchangeRefundLog.createdDate.goe(timeGoe) : null;
+  }
+  private BooleanExpression createdDateLoe(LocalDateTime timeLoe) {
+      return timeLoe != null ? exchangeRefundLog.createdDate.loe(timeLoe) : null;
+  }
+  private BooleanExpression statusEq(ExchangeRefundStatus status) {
+      return status != null ? exchangeRefundLog.status.eq(status) : null;
+  }
+  private BooleanExpression logStatusEq(LogStatus logStatus) {
+      return logStatus != null ? exchangeRefundLog.logStatus.eq(logStatus) : null;
+  }
+  ```
+
+- Review
+  ```
+  GET 통신을 통해 /searchExchangeRefundLog/{userId}?{Params} 형태로 사용자 고윺번호(userId), 검색조건(ExchangeRefundLogSearchCondition), 페이지 정보(Pageable) 를 전달받는다.
+  전달받은 사용자의 고유번호를 통해 사용자의 존재, 판매자 권한을 확인한다. 만약 사용자가 존재하지 않거나 판매자가 아닌경우 예외를 반환한다.
+  검색 결과는 SearchExchangeRefundLogDto 정보로 이루어진 페이지이다.
+  아래는 Params 에 들어갈 수 있는 값의 종류이다.
+  Params
+    - status : 신청 종류
+    - logStatus : 신청서 상태
+    - timeGoe : 신청 시간(이상)
+    - timeLoe : 신청 시간(이하)
+    - page : 페이지 번호
+    - size : 한페이지에 표시할 정보의 수
+  ```
+  ```
+  ExchangeRefundRepositoryCustomImpl
+  Params 의 값을 동적으로 처리하기 위하여 querydsl 을 통하여 쿼리를 작성하였다.
+  검색조건을 통해 검색된 정보는 SearchExchangeRefundLogDto 로 변환된다.
+  전달받은 사용자의 고유번호를 통해 사용자의 교환/환불 신청들을 페이지 형태로 반환한다. 
+  이때 교환/환불 종류, 신청 상태, 신청 시간 범위 설정이 가능하다.
+  각각 statusEq, logStatusEq, createdDateGoe, createdDateLoe 메서드로 구현하였으며
+  해당하는 Params 값이 있다면 쿼리의 where 절에 조건을 추가하고 없다면 null 을 반환하여 where 절에 추가하지 않는다.
+  Goe 와 Loe 둘 다 사용하면 Between 효과를 볼 수 있다.
+  
+  검색결과에는 신청시간, 신청 고유번호, 신청자 고유번호, 신청 주문 상품 고유번호, 이유, 종류, 상태, 처리시간을 가지고 있다.
+  
+  검색조건을 통해 필터링 된 정보들은 page, size 로 페이지 번호와 정보의 수를 조정해 사용자에게 표시된다.
+  
+  위 쿼리는 PageableExecutionUtils.getPage() 를 사용하여 count 쿼리가 생략 가능한 경우 생략해서 처리한다.
+  - 페이지가 시작이면서 컨텐츠 사이즈가 페이지 사이즈보다 작을 때
+  - 마지막 페이지 일 때 (offset + 컨텐츠 사이즈를 더해서 전체 사이즈를 구한다.)
+  ```
