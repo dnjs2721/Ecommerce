@@ -10,6 +10,11 @@
 - JDK : open-jdk:19
 - External API : CoolSMS(Message), PortOne(Payment) 
 ----
+> ### Entity Relationship Diagram
+<p align="center">
+    <img  alt="ERD" src="./Code-Review/ERD.png"/>
+</p>
+
 >### 구현  
 ### 관리자
 1. 회원가입 ✅
