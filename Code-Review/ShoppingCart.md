@@ -121,3 +121,65 @@
   만약 동일한 상품이 없다면 사용자의 장바구니, 상품, 수량을 이용해 장바구니 상품을 생성하고 저장한다.
   동일한 상품이 있다면 장바구니 상품의 수량에 전달받은 수량만큼 더한 뒤 저장한다.
   ```
+
+## 장바구니 상품 수량 변경
+- Controller
+  ```java
+  @PostMapping("/changeShoppingCartItemCount/{userId}")
+  public ResponseEntity<String> changeShoppingCartItemCount(@PathVariable("userId") Long userId, @RequestBody @Valid ChangeShoppingCartItemCountRequestDto request) {
+      try {
+          String itemName = userService.changeShoppingCartItemCount(userId, request.getShoppingCartItemId(), request.getChangCount());
+          return ResponseEntity.ok().body(itemName + " 수량 변경 완료.");
+      } catch (NoSuchElementException e1) { // 사용자 없음, 장바구니 상품 없음 예외
+          return createResponseEntity(e1, NOT_FOUND);
+      } catch (IllegalAccessException e2) { // 사용자의 장바구니 상품이 아님
+          return createResponseEntity(e2, NOT_ACCEPTABLE);
+      }
+  }
+  ```
+
+- ChangeShoppingCartItemCountRequestDto
+  ```java
+  @Data
+  public class ChangeShoppingCartItemCountRequestDto {
+    @NotNull(message = "쇼핑 카트 상품 Id")
+    Long shoppingCartItemId;
+
+    @NotNull(message = "변경할 수량")
+    Integer changCount;
+  }
+  ```
+
+- Service
+  ```java
+  @Transactional
+  public String changeShoppingCartItemCount(Long userId, Long shoppingCartItemId, int changeCount) throws IllegalAccessException {
+      User user = checkUserById(userId); // NoSuchElementException
+      return shoppingCartService.changeCount(user.getShoppingCart().getId(), shoppingCartItemId, changeCount);
+  }
+  ```
+
+- Service - shoppingCartService.changeCount
+  ```java
+  public String changeCount(Long shoppingCartId, Long shoppingCartItemId, int changeCount) throws IllegalAccessException {
+        Optional<ShoppingCartItem> optionalShoppingCartItem = shoppingCartItemRepository.findById(shoppingCartItemId);
+        if (optionalShoppingCartItem.isEmpty()) {
+            throw new NoSuchElementException("잘못된 장바구니 상품입니다.");
+        }
+        ShoppingCartItem shoppingCartItem = optionalShoppingCartItem.get();
+        if (!shoppingCartItem.getShoppingCart().getId().equals(shoppingCartId)) {
+            throw new IllegalAccessException("사용자의 장바구니 상품이 아닙니다.");
+        }
+        shoppingCartItem.changeItemCount(changeCount);
+
+        return shoppingCartItem.getItem().getName();
+  }
+  ```
+
+- Review
+  ```
+  Post 통신을 통해 장바구니 상품 수량 변경에 필요한 정보를 전달받습니다.
+  전달받은 장바구니 상품 고유번호, 장바구니 고유번호를 통해 장바구니 상품의 존재 여부와 해당 장바구니의 상품인지에 대한 검사가 이루어진다.
+  장바구니 상품이 존재하고, 해당 장바구니의 상품일 경우 전달받은 수량 값으로 변경한다.
+  ```
+
