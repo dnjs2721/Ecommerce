@@ -187,6 +187,7 @@ public class UserService {
         User user = checkUserById(userId);
         return shoppingCartService.deleteShoppingCartItemByListIds(user, shoppingCartItemIds);
     }
+
     /**
      * 장바구니 비우기
      */
@@ -202,7 +203,7 @@ public class UserService {
      */
     public int getShoppingCartTotalPrice(Long userId) {
         User user = checkUserById(userId); //NoSuchElementException
-        return shoppingCartService.getTotalPrice(user.getShoppingCart());
+        return user.getShoppingCart().getTotalPrice();
     }
 
     /**

@@ -111,13 +111,6 @@ public class ShoppingCartService {
     }
 
     /**
-     * 장바구니 전체 가격 조회
-     */
-    public int getTotalPrice(ShoppingCart shoppingCart) {
-        return shoppingCart.getTotalPrice();
-    }
-
-    /**
      * 장바구니 전체 상품 조회
      */
     public Page<SearchShoppingCartDto> getShoppingCartItems(Long shoppingCartId, Pageable pageable) {
