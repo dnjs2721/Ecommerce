@@ -11,3 +11,5 @@
 ## [🙍🏻‍♂️ Seller](https://github.com/dnjs2721/Ecommerce/blob/main/Code-Review/Seller.md)
 
 ## [🛒 ShoppingCart](https://github.com/dnjs2721/Ecommerce/blob/main/Code-Review/ShoppingCart.md)
+
+## [👨🏻‍💻 Admin](https://github.com/dnjs2721/Ecommerce/blob/main/Code-Review/Admin.md)

@@ -40,8 +40,8 @@ public class ChangeStatusLog extends BaseTimeEntity{
         this.logStat = logStat;
     }
 
-    public void changeStatus(User user, String stat, Long adminId, String cancelReason) {
-        if (stat.equals("OK")) {
+    public void changeStatus(User user, LogStatus stat, Long adminId, String cancelReason) {
+        if (stat.equals(OK)) {
             user.setStatus(this.getRequestStat());
             this.logStat = OK;
         } else {

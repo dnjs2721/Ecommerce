@@ -11,8 +11,6 @@ import java.time.LocalDateTime;
 
 @Data
 public class SearchUsersDto {
-    @Id
-    @GeneratedValue
     private Long id;
     private UserStatus status;
     private String email;

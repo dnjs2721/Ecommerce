@@ -6,10 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import won.ecommerce.entity.Category;
-import won.ecommerce.entity.ChangeStatusLog;
-import won.ecommerce.entity.User;
-import won.ecommerce.entity.UserStatus;
+import won.ecommerce.entity.*;
 import won.ecommerce.repository.dto.search.categoryItem.CategoryItemDto;
 import won.ecommerce.repository.user.UserRepository;
 import won.ecommerce.repository.dto.search.statusLog.SearchStatusLogDto;
@@ -64,7 +61,7 @@ public class AdminService {
      * COMMON-SELLER, SELLER-COMMON 변경
      */
     @Transactional
-    public void changeStatus(Long logId, Long adminId, String stat, String reason) throws IllegalAccessException {
+    public void changeStatus(Long logId, Long adminId, LogStatus stat, String reason) throws IllegalAccessException {
         ChangeStatusLog findLog = changeStatusLogService.checkChangeStatusLog(logId);
         checkAdmin(adminId);
 
