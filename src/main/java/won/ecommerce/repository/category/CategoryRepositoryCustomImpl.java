@@ -23,10 +23,7 @@ public class CategoryRepositoryCustomImpl implements CategoryRepositoryCustom{
     }
 
     @Override
-    public List<CategoryItemDto> categoryItem(List<Long> subCategoryIds, Long categoryId) {
-        List<Long> ids = new ArrayList<>(List.copyOf(subCategoryIds));
-        ids.add(categoryId);
-
+    public List<CategoryItemDto> categoryItem(Long categoryId) {
         return queryFactory
                 .select(new QCategoryItemDto(
                         user.id,
@@ -39,7 +36,7 @@ public class CategoryRepositoryCustomImpl implements CategoryRepositoryCustom{
                 .from(item)
                 .leftJoin(item.seller, user)
                 .leftJoin(item.category, category)
-                .where(item.category.id.in(ids))
+                .where(item.category.id.eq(categoryId).or(item.category.parent.id.eq(categoryId)))
                 .orderBy(user.id.asc())
                 .fetch();
     }

@@ -13,7 +13,6 @@ public class CategoryItemDto {
     String itemName;
 
     @QueryProjection
-
     public CategoryItemDto(Long sellerId, String sellerName, String sellerEmail, String categoryName, Long itemId, String itemName) {
         this.sellerId = sellerId;
         this.sellerName = sellerName;

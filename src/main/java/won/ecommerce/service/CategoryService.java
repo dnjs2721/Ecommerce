@@ -3,7 +3,6 @@ package won.ecommerce.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import won.ecommerce.entity.Category;
 import won.ecommerce.repository.category.CategoryRepository;
 import won.ecommerce.repository.dto.search.categoryItem.CategoryItemDto;
@@ -35,9 +34,7 @@ public class CategoryService {
      * 카테고리 상품 체크
      */
     public  List<CategoryItemDto> checkCategoryItem(Category category) {
-        List<Long> childIds = checkChildCategories(category); // 자식 카테고리 있는지 검사
-
-        List<CategoryItemDto> categoryItems = categoryRepository.categoryItem(childIds, category.getId());  // 자신의 카테고리 id 추가, 자식 카테고리가 없다면 자신의 카테고리만 검색
+        List<CategoryItemDto> categoryItems = categoryRepository.categoryItem(category.getId());
         // sellerId, sellerName, sellerEmail
         // categoryName
         // itemId, itemName
@@ -77,7 +74,7 @@ public class CategoryService {
         Category category = checkCategory(categoryId); // NoSuchElementException 카테고리 존재 확인
         List<Long> childIds = checkChildCategories(category);
 
-        List<CategoryItemDto> categoryItems = categoryRepository.categoryItem(childIds, categoryId); // 자신의 카테고리 id 추가, 자식 카테고리가 없다면 자신의 카테고리만 검색
+        List<CategoryItemDto> categoryItems = categoryRepository.categoryItem(categoryId);
         if (!categoryItems.isEmpty()) {
             throw new IllegalStateException("카테고리 내에 등록된 상품이 있습니다. 변경 혹은 삭제후 다시 시도해 주세요.");
         }

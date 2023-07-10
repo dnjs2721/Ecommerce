@@ -459,10 +459,203 @@
 
 - Review
 
-  |                            종류                            |                         설명                         |
-  |:--------------------------------------------------------:|:--------------------------------------------------:|
-  |                        Controller                        |   Post 통신을 통해 처리할 요청 고유번호와 요청 처리에 필요한 정보를 전달받는다.   |
-  |                  ChangeStatusRequestDto                  |                    요청처리에 필요한 정보                    |
-  | Service<br/> changeStatusLogService.checkChangeStatusLog |       전달받은 요청 고유번호를 통해 요청의 존재와 처리 유무를 검증한다.        |
-  |          Service<br/> adminService.changeStatus          | 전달받은 adminId 를 통해 관리자 검증<br/> 요청한 사용자의 존재 검증<br/>  |
-  |                ChangeStatus.changeStatus                 | 요청상태를 전달받은 stat 으로 변경하고 처리시간과 처리한 관리자 고유번호를 기록한다.  |
+  |                            종류                            |                        설명                         |
+  |:-------------------------------------------------:|:--------------------------------------------------:|
+  |                        Controller                        |  Post 통신을 통해 처리할 요청 고유번호와 요청 처리에 필요한 정보를 전달받는다.   |
+  |                  ChangeStatusRequestDto                  |                   요청처리에 필요한 정보                    |
+  | Service<br/> changeStatusLogService.checkChangeStatusLog |       전달받은 요청 고유번호를 통해 요청의 존재와 처리 유무를 검증한다.       |
+  |          Service<br/> adminService.changeStatus          | 전달받은 adminId 를 통해 관리자 검증<br/> 요청한 사용자의 존재 검증<br/> |
+  |                ChangeStatus.changeStatus                 | 요청상태를 전달받은 stat 으로 변경하고 처리시간과 처리한 관리자 고유번호를 기록한다. |
+
+### 카테고리 생성
+- Controller
+  ```java
+  @PostMapping("/createCategory/{adminId}")
+  public ResponseEntity<String> createCategory(@PathVariable("adminId") Long id, @RequestBody @Valid CategoryCreateRequestDto request) {
+      try {
+          adminService.createCategory(id, request);
+          return ResponseEntity.ok().body(request.getName() + " 카테고리가 생성 되었습니다.");
+      } catch (IllegalAccessException e1) {
+          return createResponseEntity(e1, NOT_ACCEPTABLE); // IllegalAccessException 권한 없음
+      } catch (NoSuchElementException e2) {
+          return createResponseEntity(e2, NOT_FOUND); // NoSuchElementException 부모 카테고리 없음
+      } catch (IllegalStateException e3) {
+          return createResponseEntity(e3, CONFLICT); // IllegalStateException 중복된 카테고리 이름
+      }
+  }
+  ```
+
+- CategoryCreateRequestDto
+  ```java
+  @Data
+  public class CategoryCreateRequestDto {
+    @NotBlank(message = "카테고리 이름(필수)")
+    String name;
+    Long parentId;
+  }
+  ```
+
+- Service
+  - adminService.createCategory
+    ```java
+    @Transactional
+    public void createCategory(Long adminId, CategoryCreateRequestDto request) throws IllegalAccessException {
+        checkAdmin(adminId); // IllegalAccessException 권한 없음
+        categoryService.createCategory(request); //NoSuchElementException 부모 카테고리 없음, IllegalStateException 중복된 카테고리 이름
+    }
+    ```
+  
+  - categoryService.createCategory
+    ```java
+    public void createCategory(CategoryCreateRequestDto request) {
+        checkDuplicateCategory(request.getName()); // IllegalStateException 중복된 카테고리 이름
+        Category category = new Category(request.getName());
+        if (request.getParentId() != null) {
+            Category parentCategory = checkCategory(request.getParentId()); // NoSuchElementException 부모 카테고리 없음
+            category.addParentCategory(parentCategory);
+        }
+        categoryRepository.save(category);
+    }
+    ```
+  
+  - categoryService.checkDuplicateCategory
+    ```java
+    public void checkDuplicateCategory(String categoryName) {
+        Optional<Category> findCategory = categoryRepository.findByName(categoryName);
+        if (findCategory.isPresent()) {
+            throw new IllegalStateException("이미 존재하는 카테고리 이름입니다.");
+        }
+    }
+    ```
+  
+  - categoryService.checkCategory
+    ```java
+    public Category checkCategory(Long id) {
+        Optional<Category> findCategory = categoryRepository.findById(id);
+        if (findCategory.isEmpty()) {
+            throw new NoSuchElementException("카테고리를 다시 확인해 주세요.");
+        }
+        return findCategory.get();
+    }
+    ```
+
+- Review
+
+  |     종류     |                   상세                   |                                            설명                                             |
+  |:----------:|:--------------------------------------:|:-----------------------------------------------------------------------------------------:|
+  | Controller |  POST<br/> /createCategory/{adminId}   |                       Post 통신을 통해 사용자 고유번호와 카테고리 생성에 필요힌 정보를 전달받는다.                       |
+  |    Dto     |        CategoryCreateRequestDto        |    카테고리 생성에 필요한 정보<br/> [카테고리 이름, 부모 카테고리 고유번호]<br/> 부모 카테고리 고유번호가 없을 경우 최상위 카테고리로 생성     |
+  |  Service   |      adminService.createCategory       |              전달받은 사용자 고유번호를 통해 관리자 검증<br/> categoryService.createCategory 호출              |
+  |  Service   | categoryService.checkDuplicateCategory |                                  동일한 이름을 가진 카테고리가 있는지 검증                                  |
+  |  Service   |     categoryService.checkCategory      |                                전달받은 부모 카테고리 고유번호가 유효한지 검증                                 |
+  |  Service   |    categoryService.createCategory      | 카테고리 중복 검증 후 카테고리를 생성한다.<br/> 만약 부모 카테고리 정보가 전달되었다면 부모 카테고리 검증 후 생성한 카테고리의 부모를 설정하고 저장한다. |
+
+### 카테고리 내 상품 조회 (카테고리 삭제를 위한 기능)
+- Controller
+  ```java
+  @GetMapping("/checkCategoryItem/{adminId}/{categoryId}")
+  public ResponseEntity<?> checkCategoryItem(@PathVariable("adminId") Long adminId, @PathVariable("categoryId") Long categoryId) {
+      try {
+          Category category = categoryService.checkCategory(categoryId);
+          List<CategoryItemDto> find = adminService.checkCategoryItem(adminId, category);
+          return ResponseEntity.ok().body(find);
+      } catch (NoSuchElementException e1) {
+          return createResponseEntity(e1, NOT_FOUND); // NoSuchElementException 자신, 자식 모두 등록된 상품이 없을때
+      } catch (IllegalAccessException e2) {
+          return createResponseEntity(e2, NOT_ACCEPTABLE); // IllegalAccessException 권한 없음
+      }
+  }  
+  ```
+
+- CategoryItemDto
+  ```java
+  @Data
+  public class CategoryItemDto {
+      Long sellerId;
+      String sellerName;
+      String sellerEmail;
+      String categoryName;
+      Long itemId;
+      String itemName;
+  
+      @QueryProjection
+      public CategoryItemDto(Long sellerId, String sellerName, String sellerEmail, String categoryName, Long itemId, String itemName) {
+          this.sellerId = sellerId;
+          this.sellerName = sellerName;
+          this.sellerEmail = sellerEmail;
+          this.categoryName = categoryName;
+          this.itemId = itemId;
+          this.itemName = itemName;
+      }
+  } 
+  ```
+
+- Service
+  - adminService.checkCategoryItem
+    ```java
+    public List<CategoryItemDto> checkCategoryItem(Long adminId, Category category) throws IllegalAccessException {
+        checkAdmin(adminId); // IllegalAccessException 권한 없음
+        return categoryService.checkCategoryItem(category); // NoSuchElementException 자신, 자식 모두 등록된 상품이 없을때
+    }
+    ```
+  
+  - categoryService.checkCategoryItem
+    ```java
+    public  List<CategoryItemDto> checkCategoryItem(Category category) {
+        List<CategoryItemDto> categoryItems = categoryRepository.categoryItem(category.getId());
+        // sellerId, sellerName, sellerEmail
+        // categoryName
+        // itemId, itemName
+        // 이 담긴 Dto 를 상품 갯수만큼의 size 를 가진 List 로 반환
+
+        if (!categoryItems.isEmpty()) {
+            return categoryItems;
+        } else {
+            throw new NoSuchElementException("카테고리에 등록된 상품이 없습니다.");  // 자신, 자식 모두 등록된 상품이 없다면
+        }
+    }
+    ```
+  
+- Repository
+  - CategoryRepositoryCustom
+    ```java
+    public interface CategoryRepositoryCustom {
+        List<CategoryItemDto> categoryItem(Long categoryId);
+    }
+    ```
+  - CategoryRepositoryCustomImpl
+    ```java
+    @Override
+    public List<CategoryItemDto> categoryItem(Long categoryId) {
+        return queryFactory
+                .select(new QCategoryItemDto(
+                        user.id,
+                        user.name,
+                        user.email,
+                        category.name,
+                        item.id,
+                        item.name
+                ))
+                .from(item)
+                .leftJoin(item.seller, user)
+                .leftJoin(item.category, category)
+                .where(item.category.id.eq(categoryId).or(item.category.parent.id.eq(categoryId)))
+                .orderBy(user.id.asc())
+                .fetch();
+    }
+    ```
+
+- Review
+
+|     종류     |                         상세                         |                                   설명                                   |
+|:----------:|:--------------------------------------------------:|:----------------------------------------------------------------------:|
+| Controller | GET<br/> /checkCategoryItem/{adminId}/{categoryId} |  GET 통신을 통해 사용자 고유번호와 카테고리 고유번호를 전달받는다.<br/> 카테고리 고유번호를 통해 카테고리 존제 검증  |
+|    Dto     |                  CategoryItemDto                   | 카테고리 내 상품 정보<br/> [판매자 고유번호, 판매자 이름, 판매가 이메일, 카테고리 이름, 상품 고유번호, 상품 이름] |
+|  Service   |           adminService.checkCategoryItem           |   전달받은 사용자 고유번호를 통해 관리자 검증<br/> categoryService.checkCategoryItem 호출   |
+|  Service   |         categoryService.checkCategoryItem          |                   categoryRepository.categoryItem 호출                   |
+  
+  - categoryRepository.categoryItem
+    ```
+    상품들이 속한 카테고리의 고유번호 혹은 속한 카테고리의 부모 카테고리 고유번호가 전달받은 카테고리 고유번호와 같은 상품들을 검색한다.
+    검색된 정보는 CategoryItemDto 로 변환되며 판매자의 고유번호를 기준으로 오름차순 정렬된다.
+    ```
