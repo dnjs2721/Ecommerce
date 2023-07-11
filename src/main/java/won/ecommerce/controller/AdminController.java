@@ -25,9 +25,11 @@ import won.ecommerce.service.AdminService;
 import won.ecommerce.service.CategoryService;
 import won.ecommerce.service.UserService;
 import won.ecommerce.service.dto.category.CategoryCreateRequestDto;
+import won.ecommerce.service.dto.category.CategoryItemMailElementDto;
 import won.ecommerce.service.dto.user.JoinRequestDto;
 
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import static org.springframework.http.HttpStatus.*;
@@ -129,8 +131,7 @@ public class AdminController {
     @GetMapping("/checkCategoryItem/{adminId}/{categoryId}")
     public ResponseEntity<?> checkCategoryItem(@PathVariable("adminId") Long adminId, @PathVariable("categoryId") Long categoryId) {
         try {
-            Category category = categoryService.checkCategory(categoryId);
-            List<CategoryItemDto> find = adminService.checkCategoryItem(adminId, category);
+            List<CategoryItemDto> find = adminService.checkCategoryItem(adminId, categoryId);
             return ResponseEntity.ok().body(find);
         } catch (NoSuchElementException e1) {
             return createResponseEntity(e1, NOT_FOUND); // NoSuchElementException 자신, 자식 모두 등록된 상품이 없을때
@@ -145,8 +146,7 @@ public class AdminController {
     @GetMapping("/sendMailCategoryWarning/{adminId}/{categoryId}")
     public ResponseEntity<?> sendMailCategoryWarning(@PathVariable("adminId") Long adminId, @PathVariable("categoryId") Long categoryId) throws MessagingException {
         try {
-            Category category = categoryService.checkCategory(categoryId);
-            List<String> sellerNames = adminService.sendMailByCategoryItem(adminId, category);
+            List<String> sellerNames = adminService.sendMailByCategoryItem(adminId, categoryId);
             return ResponseEntity.ok().body(sellerNames.toString() + " 에게 메일 전송 완료");
         } catch (NoSuchElementException e1) {
             return createResponseEntity(e1, NOT_FOUND); // NoSuchElementException 자신, 자식 모두 등록된 상품이 없을때

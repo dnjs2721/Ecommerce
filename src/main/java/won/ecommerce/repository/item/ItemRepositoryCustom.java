@@ -17,7 +17,7 @@ import java.util.List;
 public interface ItemRepositoryCustom {
     Page<SearchItemDto> searchItemPage(Long sellerId, ItemSearchCondition condition, Pageable pageable);
     Page<SearchItemFromCommonDto> searchItemPageFromCommon(ItemSearchFromCommonCondition condition, SortCondition sortCondition, Pageable pageable);
-    void batchUpdateItemCategory(List<Long> itemIds, Category category);
+    void batchUpdateItemCategory(Long beforeCategoryId, Long changeCategoryId);
     void changeItemInfo(ChangeItemInfoRequestDto request);
     List<Item> findItemBySellerIdAndItemIds(Long sellerId, List<Long> itemIds);
     List<ShoppingCartItem> getShoppingCartItem(List<Long> itemIds);

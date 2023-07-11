@@ -556,8 +556,7 @@
   @GetMapping("/checkCategoryItem/{adminId}/{categoryId}")
   public ResponseEntity<?> checkCategoryItem(@PathVariable("adminId") Long adminId, @PathVariable("categoryId") Long categoryId) {
       try {
-          Category category = categoryService.checkCategory(categoryId);
-          List<CategoryItemDto> find = adminService.checkCategoryItem(adminId, category);
+          List<CategoryItemDto> find = adminService.checkCategoryItem(adminId, categoryId);
           return ResponseEntity.ok().body(find);
       } catch (NoSuchElementException e1) {
           return createResponseEntity(e1, NOT_FOUND); // NoSuchElementException 자신, 자식 모두 등록된 상품이 없을때
@@ -593,8 +592,9 @@
 - Service
   - adminService.checkCategoryItem
     ```java
-    public List<CategoryItemDto> checkCategoryItem(Long adminId, Category category) throws IllegalAccessException {
+    public List<CategoryItemDto> checkCategoryItem(Long adminId, Long categoryId) throws IllegalAccessException {
         checkAdmin(adminId); // IllegalAccessException 권한 없음
+        Category category = categoryService.checkCategory(categoryId);
         return categoryService.checkCategoryItem(category); // NoSuchElementException 자신, 자식 모두 등록된 상품이 없을때
     }
     ```
@@ -647,15 +647,237 @@
 
 - Review
 
-|     종류     |                         상세                         |                                   설명                                   |
-|:----------:|:--------------------------------------------------:|:----------------------------------------------------------------------:|
-| Controller | GET<br/> /checkCategoryItem/{adminId}/{categoryId} |  GET 통신을 통해 사용자 고유번호와 카테고리 고유번호를 전달받는다.<br/> 카테고리 고유번호를 통해 카테고리 존제 검증  |
-|    Dto     |                  CategoryItemDto                   | 카테고리 내 상품 정보<br/> [판매자 고유번호, 판매자 이름, 판매가 이메일, 카테고리 이름, 상품 고유번호, 상품 이름] |
-|  Service   |           adminService.checkCategoryItem           |   전달받은 사용자 고유번호를 통해 관리자 검증<br/> categoryService.checkCategoryItem 호출   |
-|  Service   |         categoryService.checkCategoryItem          |                   categoryRepository.categoryItem 호출                   |
-  
+  |     종류     |                         상세                         |                                              설명                                               |
+  |:----------:|:---------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------:|
+  | Controller | GET<br/> /checkCategoryItem/{adminId}/{categoryId} |                          GET 통신을 통해 사용자 고유번호와 카테고리 고유번호를 전달받는다.<br/>                          |
+  |    Dto     |                  CategoryItemDto                   |            카테고리 내 상품 정보<br/> [판매자 고유번호, 판매자 이름, 판매가 이메일, 카테고리 이름, 상품 고유번호, 상품 이름]             |
+  |  Service   |           adminService.checkCategoryItem           | 사용자 고유번호를 통해 관리자 검증<br/>  카테고리 고유번호를 통해 카테고리 존제 검증 <br/> categoryService.checkCategoryItem 호출 |
+  |  Service   |         categoryService.checkCategoryItem          |                              categoryRepository.categoryItem 호출                               |
+    
   - categoryRepository.categoryItem
     ```
     상품들이 속한 카테고리의 고유번호 혹은 속한 카테고리의 부모 카테고리 고유번호가 전달받은 카테고리 고유번호와 같은 상품들을 검색한다.
     검색된 정보는 CategoryItemDto 로 변환되며 판매자의 고유번호를 기준으로 오름차순 정렬된다.
+    ```
+
+### 카테고리 내 상품의 판매자들에게 경고 메일 전송
+- Controller
+  ```java
+  @GetMapping("/sendMailCategoryWarning/{adminId}/{categoryId}")
+    public ResponseEntity<?> sendMailCategoryWarning(@PathVariable("adminId") Long adminId, @PathVariable("categoryId") Long categoryId) throws MessagingException {
+        try {
+            List<String> sellerNames = adminService.sendMailByCategoryItem(adminId, categoryId);
+            return ResponseEntity.ok().body(sellerNames.toString() + " 에게 메일 전송 완료");
+        } catch (NoSuchElementException e1) {
+            return createResponseEntity(e1, NOT_FOUND); // NoSuchElementException 자신, 자식 모두 등록된 상품이 없을때
+        } catch (IllegalAccessException e2) {
+            return createResponseEntity(e2, NOT_ACCEPTABLE); // IllegalAccessException 권한 없음
+        }
+    }
+  ```
+
+- Service
+  - adminService.sendMailByCategoryItem
+    ```java
+    @Transactional(readOnly = true)
+    public List<String> sendMailByCategoryItem(Long adminId, Long categoryId) throws IllegalAccessException, MessagingException {
+        checkAdmin(adminId);
+        Category category = categoryService.checkCategory(categoryId);
+        List<CategoryItemMailElementDto> elementDto = categoryService.categoryItemMailElement(categoryId);
+
+        List<String> sellerNames = new ArrayList<>();
+        for (CategoryItemMailElementDto element : elementDto) {
+            String sellerName = element.getSellerName();
+            mailService.sendCategoryWarningMail(element.getSellerEmail(), category.getName(), sellerName, element.getItemsName());
+            sellerNames.add(sellerName);
+        }
+
+        return sellerNames;
+    }
+    ```
+  - categoryService.categoryItemMailElement
+    ```java
+    public List<CategoryItemMailElementDto> categoryItemMailElement(Long categoryId) {
+        List<CategoryItemMailElementDto> elementDto = categoryRepository.categoryItemMailElement(categoryId);
+        if (!elementDto.isEmpty()) {
+            return elementDto;
+        } else {
+            throw new NoSuchElementException("카테고리에 등록된 상품이 없습니다.");  // 자신, 자식 모두 등록된 상품이 없다면
+        }
+    }
+    ```
+
+- CategoryItemMailElementDto
+  ```java
+  @Data
+  public class CategoryItemMailElementDto {
+      Long sellerId;
+      String sellerName;
+      String sellerEmail;
+      List<String> itemsName = new ArrayList<>();
+  
+      @QueryProjection
+      public CategoryItemMailElementDto(Long sellerId, String sellerName, String sellerEmail, List<String> itemsName) {
+          this.sellerId = sellerId;
+          this.sellerName = sellerName;
+          this.sellerEmail = sellerEmail;
+          this.itemsName = itemsName;
+      }
+  }
+  ```
+
+- Repository
+  - CategoryRepositoryCustom
+    ```java
+    public interface CategoryRepositoryCustom {
+        List<CategoryItemMailElementDto> categoryItemMailElement(Long categoryId);
+    }
+    ```
+  - CategoryRepositoryCustomImpl
+    ```java
+    public class CategoryRepositoryCustomImpl implements CategoryRepositoryCustom{
+
+    private final JPAQueryFactory queryFactory;
+
+    public CategoryRepositoryCustomImpl(EntityManager em) {
+        this.queryFactory = new JPAQueryFactory(JPQLTemplates.DEFAULT, em);
+    }
+    
+    @Override
+    public List<CategoryItemMailElementDto> categoryItemMailElement(Long categoryId) {
+        return queryFactory
+                .selectFrom(item)
+                .leftJoin(item.seller, user)
+                .leftJoin(item.category, category)
+                .where(item.category.id.eq(categoryId).or(item.category.parent.id.eq(categoryId)))
+                .orderBy(user.id.asc())
+                .transform(groupBy(user.id).list(new QCategoryItemMailElementDto(
+                        user.id,
+                        user.name,
+                        user.email,
+                        list(Projections.constructor(String.class, item.name))
+                )));
+        }   
+    }
+    ```
+
+- Review
+
+  |     종류     |                            상세                             |                                                            설명                                                             |
+  |:----------:|:---------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------:|
+  | Controller | GET<br/> /sendMailCategoryWarning/{adminId}/{categoryId}  |                                        GET 통신을 통해 사용자 고유번호와 카테고리 고유번호를 전달받는다.<br/>                                        |
+  |    Dto     |                CategoryItemMailElementDto                 |                                카테고리 내 판매자별 상품 정보<br/> [판매자 고유번호, 판매자 이름, 판매가 이메일, 상품 이름들]                                 |
+  |  Service   |            adminService.sendMailByCategoryItem            | 사용자 고유번호를 통해 관리자 검증<br/>  카테고리 고유번호를 통해 카테고리 존제 검증 <br/> categoryService.categoryItemMailElement 호출<br/> 판매자 단위로 경고 메일 전송 |
+  |  Service   |             categoryService.checkCategoryItem             |                               categoryRepository.categoryItemMailElement 호출 <br/> 카테고리에 등록된 상품이 없을 경우 예외                  |
+
+  - categoryRepository.categoryItemMailElement
+    ```
+    전달받은 카테고리에 속한 상품을 검색한다.
+    querydsl 의 trasform groupBy 기능을 이용하여 판매자 고유번호를 기준으로 판매자 정보와 해당 카테고리 내의 판매자 상품들의 이름을 반환한다.
+    ```
+  - querydsl 의 transform
+    ```
+    결과 값을 불러온 후 메모리에서 원하는 자료형으로 변환할 수 있는 기능
+    SpringBoot 3 버전 부터는 JPQLTemplates.DEFAULT 설정이 필요하다.
+    ```
+
+### 카테고리 내 상품 카테고리 일괄 변경 후 메일 발송
+- Controller
+  ```java
+  PostMapping("/batchChangeItemCategory/{adminId}")
+  public ResponseEntity<?> batchChangeItemCategory(@PathVariable("adminId") Long adminId, @RequestBody @Valid BatchChangeItemCategoryRequestDto request) throws MessagingException {
+      try {
+          Category category = categoryService.checkCategory(request.getCategoryId());
+          Category changeCategory = categoryService.checkCategory(request.getChangeCategoryId());
+          List<String> changeItemList = adminService.batchChangeItemCategory(adminId, category, changeCategory);
+          return ResponseEntity.ok().body(changeItemList.toString() + "\n[" + category.getName() + "] 에서 [" + changeCategory.getName() + "] 로 변경 완료");
+      } catch (NoSuchElementException e1) {
+          return createResponseEntity(e1, NOT_FOUND); // NoSuchElementException 자신, 자식 모두 등록된 상품이 없을때, 카테고리가 없을 때
+      } catch (IllegalAccessException e2) {
+          return createResponseEntity(e2, NOT_ACCEPTABLE); // IllegalAccessException 권한 없음
+      }
+  }
+  ```
+
+- BatchChangeItemCategoryRequestDto
+  ```java
+  @Data
+  public class BatchChangeItemCategoryRequestDto {
+      @NotNull(message = "기존 카테고리 Id (필수)")
+      Long categoryId;
+  
+      @NotNull(message = "변경할 카테고리 Id (필수)")
+      Long changeCategoryId;
+  }
+  ```
+
+- Service
+  - adminService.batchChangeItemCategory
+    ```java
+    @Transactional
+    public List<String> batchChangeItemCategory(Long adminId, Category category, Category changeCategory) throws IllegalAccessException, MessagingException {
+        // 관리자 권한 확인 IllegalAccessException 권한 없음,
+        checkAdmin(adminId);
+        //NoSuchElementException 자신, 자식 모두 등록된 상품이 없을때
+        List<CategoryItemMailElementDto> elementDto = categoryService.categoryItemMailElement(category.getId());
+        itemService.batchChangeItemCategory(category.getId(), changeCategory.getId());
+
+        List<String> itemNames = new ArrayList<>();
+        for (CategoryItemMailElementDto element : elementDto) {
+            String sellerName = element.getSellerName();
+            List<String> elementItemsName = element.getItemsName();
+            // 판매자에게 경고 메일 전송
+            mailService.sendCategoryNoticeMail(element.getSellerEmail(), category.getName(), changeCategory.getName(), sellerName, elementItemsName);
+            itemNames.addAll(elementItemsName);
+        }
+
+        return itemNames;
+    }
+    ```
+  - itemService.batchChangeItemCategory
+    ```java
+    public void batchChangeItemCategory(Long categoryId, Long changeCategoryId) {
+        itemRepository.batchUpdateItemCategory(categoryId, changeCategoryId);
+    }
+    ```
+
+- Repository
+  - ItemRepositoryCustom
+    ```java
+    public interface ItemRepositoryCustom {
+      void batchUpdateItemCategory(Long beforeCategoryId, Long changeCategoryId);
+    }
+    ```
+  - ItemRepositoryCustomImpl
+    ```java
+    @Override
+    public void batchUpdateItemCategory(Long categoryId, Long changeCategoryId) {
+        List<Long> itemIds = queryFactory
+                .select(item.id)
+                .from(item)
+                .leftJoin(item.category, category)
+                .where(category.id.eq(categoryId).or(category.parent.id.eq(categoryId)))
+                .fetch();
+
+        queryFactory
+                .update(item)
+                .set(item.category.id, changeCategoryId)
+                .where(item.id.in(itemIds))
+                .execute();
+    }
+    ```
+
+- Review
+
+|     종류     |                      상세                      |                                                        설명                                                         |
+|:----------:|:--------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------:|
+| Controller | POST<br/> /batchChangeItemCategory/{adminId} |               POST 통신을 통해 사용자 고유번호와 카테고리 변경에 필요한 정보를 전달받는다.<br/>    카테고리 고유번호를 통해 카테고리 존제 검증                      |
+|    Dto     |      BatchChangeItemCategoryRequestDto       |                                카테고리 변경에 필요한 정보<br/> [변경전 카테고리 고유번호, 변경후 카테고리 고유번호]                                |
+|  Service   |     adminService.batchChangeItemCategory     | 사용자 고유번호를 통해 관리자 검증<br/> 변경전 카테고리에 속한 상품을 검색한다.<br/> itemService.batchChangeItemCategory 호출<br/> 판매자 단위로 안내 메일 전송 |
+|  Service   |     itemService.batchChangeItemCategory      |                                     itemRepository.batchUpdateItemCategory 호출                                     |
+
+  - itemRepository.batchUpdateItemCategory
+    ```
+    변경전 카테고리에 속한 상품들의 고유번호를 검색한다.
+    해당 상품들의 카테고리를 변경후 카테고리로 변경한다.
     ```

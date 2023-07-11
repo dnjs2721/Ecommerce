@@ -84,38 +84,55 @@ public class AdminService {
     /**
      * 카테고리 상품 조회
      */
-    public List<CategoryItemDto> checkCategoryItem(Long adminId, Category category) throws IllegalAccessException {
+    public List<CategoryItemDto> checkCategoryItem(Long adminId, Long categoryId) throws IllegalAccessException {
         checkAdmin(adminId); // IllegalAccessException 권한 없음
+        Category category = categoryService.checkCategory(categoryId);
         return categoryService.checkCategoryItem(category); // NoSuchElementException 자신, 자식 모두 등록된 상품이 없을때
     }
 
     /**
      * 카테고리 상품의 판매자에게 경고 메일 전송
      */
-    public List<String> sendMailByCategoryItem(Long adminId, Category category) throws IllegalAccessException, MessagingException {
-        // 관리자 권한 확인과, 자신, 자식에 등록된 상품을 조회한다.
-        // IllegalAccessException 권한 없음, NoSuchElementException 자신, 자식 모두 등록된 상품이 없을때
-        List<CategoryItemDto> findItems = checkCategoryItem(adminId, category);
+//    public List<String> sendMailByCategoryItem(Long adminId, Long categoryId) throws IllegalAccessException, MessagingException {
+//        Category category = categoryService.checkCategory(categoryId);
+//        // 관리자 권한 확인과, 자신, 자식에 등록된 상품을 조회한다.
+//        // IllegalAccessException 권한 없음, NoSuchElementException 자신, 자식 모두 등록된 상품이 없을때
+//        List<CategoryItemDto> findItems = checkCategoryItem(adminId, category);
+//
+//        // db 에서 가지고 온 데이터를 가공
+//        Map<Long, CategoryItemMailElementDto> elementMap = categoryService.categoryItemMailElement(findItems);
+//
+//        Set<Long> sellerIds = elementMap.keySet();
+//        // 판매자 이름을 담기위한 List
+//        List<String> sellerNames = new ArrayList<>();
+//
+//        // Key 들(판매자 id)를 통해 반복문 실행
+//        for (Long sellerId : sellerIds) {
+//            CategoryItemMailElementDto element = elementMap.get(sellerId); // 판매자 id 를 통해 해당하는 Value(Dto) 를 가지고 온다.
+//            String sellerName = element.getSellerName();
+//            String sellerEmail = element.getSellerEmail();
+//            // 판매자에게 경고 메일 전송
+//            mailService.sendCategoryWarningMail(sellerEmail, category.getName(), sellerName, element.getItemsName());
+//            // 메일 발송한 사용자 이름 저장
+//            sellerNames.add(sellerName);
+//        }
+//
+//        // 사용자 이름 반환
+//        return sellerNames;
+//    }
+    @Transactional(readOnly = true)
+    public List<String> sendMailByCategoryItem(Long adminId, Long categoryId) throws IllegalAccessException, MessagingException {
+        checkAdmin(adminId);
+        Category category = categoryService.checkCategory(categoryId);
+        List<CategoryItemMailElementDto> elementDto = categoryService.categoryItemMailElement(categoryId);
 
-        // db 에서 가지고 온 데이터를 가공
-        Map<Long, CategoryItemMailElementDto> elementMap = categoryService.categoryItemMailElement(findItems);
-
-        // Key 들(판매자 id)를 통해 반복문 실행
-        Set<Long> sellerIds = elementMap.keySet();
-        // 판매자 이름을 담기위한 List
         List<String> sellerNames = new ArrayList<>();
-
-        for (Long sellerId : sellerIds) {
-            CategoryItemMailElementDto element = elementMap.get(sellerId); // 판매자 id 를 통해 해당하는 Value(Dto) 를 가지고 온다.
+        for (CategoryItemMailElementDto element : elementDto) {
             String sellerName = element.getSellerName();
-            String sellerEmail = element.getSellerEmail();
-            // 판매자에게 경고 메일 전송
-            mailService.sendCategoryWarningMail(sellerEmail, category.getName(), sellerName, element.getItemsName());
-            // 메일 발송한 사용자 이름 저장
+            mailService.sendCategoryWarningMail(element.getSellerEmail(), category.getName(), sellerName, element.getItemsName());
             sellerNames.add(sellerName);
         }
 
-        // 사용자 이름 반환
         return sellerNames;
     }
 
@@ -124,24 +141,19 @@ public class AdminService {
      */
     @Transactional
     public List<String> batchChangeItemCategory(Long adminId, Category category, Category changeCategory) throws IllegalAccessException, MessagingException {
-        // 관리자 권한 확인과, 자신, 자식에 등록된 상품을 조회한다.
-        // IllegalAccessException 권한 없음, NoSuchElementException 자신, 자식 모두 등록된 상품이 없을때
-        List<CategoryItemDto> findItems = checkCategoryItem(adminId, category);
+        // 관리자 권한 확인 IllegalAccessException 권한 없음,
+        checkAdmin(adminId);
+        //NoSuchElementException 자신, 자식 모두 등록된 상품이 없을때
+        List<CategoryItemMailElementDto> elementDto = categoryService.categoryItemMailElement(category.getId());
+        itemService.batchChangeItemCategory(category.getId(), changeCategory.getId());
 
-        List<String> itemNames = itemService.batchChangeItemCategory(findItems, changeCategory);
-
-        // db 에서 가지고 온 데이터를 가공
-        Map<Long, CategoryItemMailElementDto> elementMap = categoryService.categoryItemMailElement(findItems);
-
-        // Key 들(판매자 id)를 통해 반복문 실행
-        Set<Long> sellerIds = elementMap.keySet();
-
-        for (Long sellerId : sellerIds) {
-            CategoryItemMailElementDto element = elementMap.get(sellerId); // 판매자 id 를 통해 해당하는 Value(Dto) 를 가지고 온다.
+        List<String> itemNames = new ArrayList<>();
+        for (CategoryItemMailElementDto element : elementDto) {
             String sellerName = element.getSellerName();
-            String sellerEmail = element.getSellerEmail();
+            List<String> elementItemsName = element.getItemsName();
             // 판매자에게 경고 메일 전송
-            mailService.sendCategoryNoticeMail(sellerEmail, category.getName(), changeCategory.getName(), sellerName, itemNames);
+            mailService.sendCategoryNoticeMail(element.getSellerEmail(), category.getName(), changeCategory.getName(), sellerName, elementItemsName);
+            itemNames.addAll(elementItemsName);
         }
 
         return itemNames;

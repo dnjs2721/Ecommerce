@@ -34,11 +34,11 @@ public class CategoryService {
      * 카테고리 상품 체크
      */
     public  List<CategoryItemDto> checkCategoryItem(Category category) {
-        List<CategoryItemDto> categoryItems = categoryRepository.categoryItem(category.getId());
         // sellerId, sellerName, sellerEmail
         // categoryName
         // itemId, itemName
         // 이 담긴 Dto 를 상품 갯수만큼의 size 를 가진 List 로 반환
+        List<CategoryItemDto> categoryItems = categoryRepository.categoryItem(category.getId());
 
         if (!categoryItems.isEmpty()) {
             return categoryItems;
@@ -50,21 +50,29 @@ public class CategoryService {
     /**
      * 카테고리 상품 메일 전송 Element
      */
-    public Map<Long, CategoryItemMailElementDto> categoryItemMailElement(List<CategoryItemDto> categoryItems) {
-        // Map 을 통해 sellerId 를 기준으로 데이터 가공
-        Map<Long, CategoryItemMailElementDto> sellerInfoAndItemName = new HashMap<>();
-        for (CategoryItemDto categoryItem : categoryItems) {
-            Long sellerId = categoryItem.getSellerId();
-            // 만약 Key 에 sellerId 가 없다면 새로운 Key 를 생성하고 판매자 이름과, 이메일, 상품 이름을 가진 Dto 를 Value 로 설정
-            if (!sellerInfoAndItemName.containsKey(sellerId)) {
-                sellerInfoAndItemName.put(sellerId, new CategoryItemMailElementDto(
-                        categoryItem.getSellerName(), categoryItem.getSellerEmail(), categoryItem.getItemName()));
-            } else { // Key 에 이미 sellerId 가 있다면 상품 이름 리스트에 현재 상품의 이름을 추가한다.
-                sellerInfoAndItemName.get(sellerId).getItemsName().add(categoryItem.getItemName());
-            }
+//    public Map<Long, CategoryItemMailElementDto> categoryItemMailElement(List<CategoryItemDto> categoryItems) {
+//        // Map 을 통해 sellerId 를 기준으로 데이터 가공
+//        Map<Long, CategoryItemMailElementDto> sellerInfoAndItemName = new HashMap<>();
+//        for (CategoryItemDto categoryItem : categoryItems) {
+//            Long sellerId = categoryItem.getSellerId();
+//            // 만약 Key 에 sellerId 가 없다면 새로운 Key 를 생성하고 판매자 이름과, 이메일, 상품 이름을 가진 Dto 를 Value 로 설정
+//            if (!sellerInfoAndItemName.containsKey(sellerId)) {
+//                sellerInfoAndItemName.put(sellerId, new CategoryItemMailElementDto(
+//                        categoryItem.getSellerName(), categoryItem.getSellerEmail(), categoryItem.getItemName()));
+//            } else { // Key 에 이미 sellerId 가 있다면 상품 이름 리스트에 현재 상품의 이름을 추가한다.
+//                sellerInfoAndItemName.get(sellerId).getItemsName().add(categoryItem.getItemName());
+//            }
+//        }
+//        // 판매자 Id 를 기준으로 가공된 데이터를 반환
+//        return sellerInfoAndItemName;
+//    }
+    public List<CategoryItemMailElementDto> categoryItemMailElement(Long categoryId) {
+        List<CategoryItemMailElementDto> elementDto = categoryRepository.categoryItemMailElement(categoryId);
+        if (!elementDto.isEmpty()) {
+            return elementDto;
+        } else {
+            throw new NoSuchElementException("카테고리에 등록된 상품이 없습니다.");  // 자신, 자식 모두 등록된 상품이 없다면
         }
-        // 판매자 Id 를 기준으로 가공된 데이터를 반환
-        return sellerInfoAndItemName;
     }
 
     /**

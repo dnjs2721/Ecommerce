@@ -3,6 +3,7 @@ package won.ecommerce.repository.item;
 import com.querydsl.core.dml.UpdateClause;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -26,6 +27,7 @@ import java.util.List;
 
 import static org.springframework.util.StringUtils.*;
 import static won.ecommerce.entity.QCategory.*;
+import static won.ecommerce.entity.QCategory.category;
 import static won.ecommerce.entity.QItem.*;
 import static won.ecommerce.entity.QShoppingCartItem.*;
 import static won.ecommerce.entity.QUser.*;
@@ -124,10 +126,17 @@ public class ItemRepositoryCustomImpl implements ItemRepositoryCustom{
     }
 
     @Override
-    public void batchUpdateItemCategory(List<Long> itemIds, Category category) {
+    public void batchUpdateItemCategory(Long categoryId, Long changeCategoryId) {
+        List<Long> itemIds = queryFactory
+                .select(item.id)
+                .from(item)
+                .leftJoin(item.category, category)
+                .where(category.id.eq(categoryId).or(category.parent.id.eq(categoryId)))
+                .fetch();
+
         queryFactory
                 .update(item)
-                .set(item.category, category)
+                .set(item.category.id, changeCategoryId)
                 .where(item.id.in(itemIds))
                 .execute();
     }
