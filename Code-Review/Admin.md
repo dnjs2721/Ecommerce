@@ -869,15 +869,98 @@
 
 - Review
 
-|     종류     |                      상세                      |                                                        설명                                                         |
-|:----------:|:--------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------:|
-| Controller | POST<br/> /batchChangeItemCategory/{adminId} |               POST 통신을 통해 사용자 고유번호와 카테고리 변경에 필요한 정보를 전달받는다.<br/>    카테고리 고유번호를 통해 카테고리 존제 검증                      |
-|    Dto     |      BatchChangeItemCategoryRequestDto       |                                카테고리 변경에 필요한 정보<br/> [변경전 카테고리 고유번호, 변경후 카테고리 고유번호]                                |
-|  Service   |     adminService.batchChangeItemCategory     | 사용자 고유번호를 통해 관리자 검증<br/> 변경전 카테고리에 속한 상품을 검색한다.<br/> itemService.batchChangeItemCategory 호출<br/> 판매자 단위로 안내 메일 전송 |
-|  Service   |     itemService.batchChangeItemCategory      |                                     itemRepository.batchUpdateItemCategory 호출                                     |
+  |     종류     |                      상세                      |                                                        설명                                                         |
+  |:----------:|:--------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------:|
+  | Controller | POST<br/> /batchChangeItemCategory/{adminId} |               POST 통신을 통해 사용자 고유번호와 카테고리 변경에 필요한 정보를 전달받는다.<br/>    카테고리 고유번호를 통해 카테고리 존제 검증                      |
+  |    Dto     |      BatchChangeItemCategoryRequestDto       |                                카테고리 변경에 필요한 정보<br/> [변경전 카테고리 고유번호, 변경후 카테고리 고유번호]                                |
+  |  Service   |     adminService.batchChangeItemCategory     | 사용자 고유번호를 통해 관리자 검증<br/> 변경전 카테고리에 속한 상품을 검색한다.<br/> itemService.batchChangeItemCategory 호출<br/> 판매자 단위로 안내 메일 전송 |
+  |  Service   |     itemService.batchChangeItemCategory      |                                     itemRepository.batchUpdateItemCategory 호출                                     |
 
   - itemRepository.batchUpdateItemCategory
     ```
     변경전 카테고리에 속한 상품들의 고유번호를 검색한다.
-    해당 상품들의 카테고리를 변경후 카테고리로 변경한다.
+    해당 상품들의 카테고리를 '변경후 카테고리'로 변경한다.
     ```
+    
+### 카테고리 삭제
+- Controller
+  ```java
+  @PostMapping("/deleteCategory/{adminId}")
+  public ResponseEntity<String> deleteCategory(@PathVariable("adminId") Long adminId, @RequestBody @Valid DeleteCategoryRequestDto request) {
+      try {
+          String deleteCategoryName = adminService.deleteCategory(adminId, request.getCategoryId());
+          return ResponseEntity.ok().body(deleteCategoryName + " 이(가) 삭제되었습니다.");
+      } catch (IllegalAccessException e1) {
+          return createResponseEntity(e1, NOT_ACCEPTABLE);
+      } catch (IllegalStateException e2) {
+          return createResponseEntity(e2, CONFLICT);
+      } catch (NoSuchElementException e3) {
+          return createResponseEntity(e3, NOT_FOUND);
+      }
+  }
+  ```
+
+- DeleteCategoryRequestDto
+  ```java
+  @Data
+  public class DeleteCategoryRequestDto {
+    @NotNull(message = "카테고리 Id (필수)")
+    Long categoryId;
+  }
+  ```
+
+- Service
+  - adminService.deleteCategory
+    ```java
+    @Transactional
+    public String deleteCategory(Long adminId, Long categoryId) throws IllegalAccessException {
+        checkAdmin(adminId); // IllegalAccessException
+        return categoryService.deleteCategory(categoryId);
+        // NoSuchElementException 카테고리 존재 확인
+        // IllegalStateException 카테고리 내에 등록된 상품 존재
+    }
+    ```
+  
+  - categoryService.deleteCategory
+    ```java
+    public String deleteCategory(Long categoryId) {
+        Category category = checkCategory(categoryId); // NoSuchElementException 카테고리 존재 확인
+        
+        List<CategoryItemDto> categoryItems = categoryRepository.categoryItem(categoryId);
+        if (!categoryItems.isEmpty()) {
+            throw new IllegalStateException("카테고리 내에 등록된 상품이 있습니다. 변경 혹은 삭제후 다시 시도해 주세요.");
+        }
+
+        List<Long> childIds = checkChildCategories(category);
+        
+        if (!childIds.isEmpty()) { // 외래키 제약조건을 해결하기 위해 자식 카테고리가 있다면 자식 카테고리부터 일괄 삭제
+            categoryRepository.deleteAllByIdInBatch(childIds);
+        }
+
+        categoryRepository.deleteById(categoryId); // 카테고리 삭제
+
+        return category.getName();
+    }
+    ```
+  
+  - categoryService.checkChildCategories
+    ```java
+    public List<Long> checkChildCategories(Category category) {
+        List<Category> child = category.getChild();
+        List<Long> childIds = new ArrayList<>();
+        for (Category childCategory : child) {
+            childIds.add(childCategory.getId());
+        }
+        return childIds;
+    }
+    ```
+
+- Review
+
+  |     종류     |                  상세                  |                                                         설명                                                         |
+  |:------------------------------------:|:------------------------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------------------------:|
+  | Controller | POST<br/> /deleteCategory/{adminId}  |                                   POST 통신을 통해 사용자 고유번호와 카테고리 삭제에 필요한 정보를 전달받는다.                                    |
+  |    Dto     |       DeleteCategoryRequestDto       |                                          카테고리 삭제에 필요한 정보 : 삭제할 카테고리 고유번호                                           |
+  |  Service   |     adminService.deleteCategory      |                                 사용자 고유번호를 통해 관리자 검증<br/> 카테고리 고유번호를 통해 카테고리 존제 검증                                  |
+  |  Service   |    categoryService.deleteCategory    | 카테고리 고유번호를 통해 카테고리 존제 검증<br/> 카테고리에 (자식 카테고리 포함) 등록된 상품이 있는지 검증<br/> 자식 카테고리가 있는지 검증 후 있다면 자식 카테고리 삭제<br/> 카테고리 삭제 |
+  |  Service   | categoryService.checkChildCategories |                                                  자식 카테고리 고유번호를 반환                                                  |

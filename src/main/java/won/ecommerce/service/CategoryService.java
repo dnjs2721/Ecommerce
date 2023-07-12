@@ -80,12 +80,13 @@ public class CategoryService {
      */
     public String deleteCategory(Long categoryId) {
         Category category = checkCategory(categoryId); // NoSuchElementException 카테고리 존재 확인
-        List<Long> childIds = checkChildCategories(category);
 
         List<CategoryItemDto> categoryItems = categoryRepository.categoryItem(categoryId);
         if (!categoryItems.isEmpty()) {
             throw new IllegalStateException("카테고리 내에 등록된 상품이 있습니다. 변경 혹은 삭제후 다시 시도해 주세요.");
         }
+
+        List<Long> childIds = checkChildCategories(category);
 
         if (!childIds.isEmpty()) { // 외래키 제약조건을 해결하기 위해 자식 카테고리가 있다면 자식 카테고리부터 일괄 삭제
             categoryRepository.deleteAllByIdInBatch(childIds);

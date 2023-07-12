@@ -59,12 +59,11 @@ public class OrdersService {
 
             List<Map<Item, Integer>> sellerItemsAndCount = sellerAndItem.get(seller); // 주문 상품 리스트에서 판매자것만 리스트로 가져온다.
             for (Map<Item, Integer> sellerItemAndCount : sellerItemsAndCount) { // 주문 상품 중 판매자 것만 순회
-                Set<Item> sellerItems = sellerItemAndCount.keySet(); // 맵의 keySet 을 통해 item 을 받아온다 Set 이지만 하나밖에 없다.
-                for (Item sellerItem : sellerItems) { // for 문 이지만 item 은 하나밖에 없다.
-                    int shoppingCartItemCount = sellerItemAndCount.get(sellerItem); // 상품 수량을 가지고 온다.
-                    int stockQuantity = sellerItem.getStockQuantity();
+                Set<Item> sellerItem = sellerItemAndCount.keySet(); // 맵의 keySet 을 통해 sellerItem 을 받아온다.
+                for (Item item : sellerItem) {
+                    int shoppingCartItemCount = sellerItemAndCount.get(item); // 상품 수량을 가지고 온다.
 
-                    sellerItem.decreaseStockQuantity(shoppingCartItemCount);
+                    item.decreaseStockQuantity(shoppingCartItemCount);
                     // 주문상품 생성
                     // 구매자의 주문 id 와 판매자의 주문 id 를 갖는다.
                     // 한 주문에 대하여
@@ -72,7 +71,7 @@ public class OrdersService {
                     //      판매자의 주문 id 를 통해 판매자는 자신의 상품에 대한 주문을 조회 가능하다.
                     // 판매자 혹은 구매자가 회원 탈퇴 하여도 주문 상품 내역은 남는다. 상품 삭제도 동일
                     // buyerId, sellerId, itemId 를 통해 탈퇴 혹은 삭제 한 객체의 정보 조회 가능 (DeletedUser, DeletedItem)
-                    createOrderItem(orderForBuyer.getId(), orderForSeller.getId(), buyer.getId(), seller.getId(), sellerItem, shoppingCartItemCount);
+                    createOrderItem(orderForBuyer.getId(), orderForSeller.getId(), buyer.getId(), seller.getId(), item, shoppingCartItemCount);
                 }
             }
         }

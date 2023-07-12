@@ -6,10 +6,13 @@
     <img  alt="ERD" src="./ERD.png"/>
 </p>
 
+## [👨🏻‍💻 Admin](https://github.com/dnjs2721/Ecommerce/blob/main/Code-Review/Admin.md)
+
 ## [🙍🏻 User](https://github.com/dnjs2721/Ecommerce/blob/main/Code-Review/User.md)
 
 ## [🙍🏻‍♂️ Seller](https://github.com/dnjs2721/Ecommerce/blob/main/Code-Review/Seller.md)
 
 ## [🛒 ShoppingCart](https://github.com/dnjs2721/Ecommerce/blob/main/Code-Review/ShoppingCart.md)
 
-## [👨🏻‍💻 Admin](https://github.com/dnjs2721/Ecommerce/blob/main/Code-Review/Admin.md)
+## [💳 Order](https://github.com/dnjs2721/Ecommerce/blob/main/Code-Review/Order.md)
+

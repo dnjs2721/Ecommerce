@@ -123,13 +123,12 @@ public class ShoppingCartService {
     public List<String> orderAllItemAtShoppingCart(User user) {
         ShoppingCart shoppingCart = user.getShoppingCart();
 
-        List<String> itemsName = new ArrayList<>();
-
         List<ShoppingCartItem> shoppingCartItems = shoppingCart.getShoppingCartItems();
         if (shoppingCartItems.isEmpty()) {
             throw new NoSuchElementException("장바구니에 담긴 상품이 없습니다.");
         }
 
+        List<String> itemsName = new ArrayList<>();
         Map<Item, Integer> itemAndCountMap = createItemAndCountMap(shoppingCartItems, itemsName);
 
         ordersService.createOrders(user, itemAndCountMap); // 구매자용, 판매자용 주문 생성

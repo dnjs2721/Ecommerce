@@ -1,5 +1,7 @@
 package won.ecommerce.repository.shoppingCart;
 
+import com.querydsl.core.types.Projections;
+import com.querydsl.jpa.JPQLTemplates;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
@@ -12,6 +14,7 @@ import won.ecommerce.repository.dto.search.shoppingCart.SearchShoppingCartDto;
 
 import java.util.List;
 
+import static com.querydsl.core.group.GroupBy.groupBy;
 import static won.ecommerce.entity.QItem.*;
 import static won.ecommerce.entity.QShoppingCart.*;
 import static won.ecommerce.entity.QShoppingCartItem.shoppingCartItem;
@@ -22,7 +25,7 @@ public class ShoppingCartItemRepositoryCustomImpl implements ShoppingCartItemRep
     private final JPAQueryFactory queryFactory;
 
     public ShoppingCartItemRepositoryCustomImpl(EntityManager em) {
-        this.queryFactory = new JPAQueryFactory(em);
+        this.queryFactory = new JPAQueryFactory(JPQLTemplates.DEFAULT, em);
     }
 
     @Override
