@@ -293,12 +293,12 @@
 
 - Review
 
-|     종류     |                       상세                       |                                                                  설명                                                                   |
-|:----------:|:----------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------------:|
-| Controller |    GET<br/> /allItemAtShoppingCart/{userId}    |                                                      GET 통신을 통해 사용자 고유번호를 전달받는다.                                                      |
-|  Service   |     userService.orderAllItemAtShoppingCart     |                             사용지 고유번호를 통해 사용자 존재 검증<br/> shoppingCartService.orderAllItemAtShoppingCart 호출                             |
-|  Service   | shoppingCartService.orderAllItemAtShoppingCart | 사용자의 장바구니 상품을 검색<br/> 장바구니 상품 정보를 재가공(shoppingCartService.createItemAndCountMap)<br/> 주문 생성(ordersService.createOrders)<br/> 장바구니 비우기 |
-|  Service   |   shoppingCartService.createItemAndCountMap    |                           사용자의 장바구니에 담긴 상품의 재고를 체크하고 재고가 충분하다면<br/> Map<Key : 상품, Value : 주문수량> 형태로 가공하여 반환                           |
+  |     종류     |                       상세                       |                                                                  설명                                                                   |
+  |:----------:|:----------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------------:|
+  | Controller |    GET<br/> /allItemAtShoppingCart/{userId}    |                                                      GET 통신을 통해 사용자 고유번호를 전달받는다.                                                      |
+  |  Service   |     userService.orderAllItemAtShoppingCart     |                             사용지 고유번호를 통해 사용자 존재 검증<br/> shoppingCartService.orderAllItemAtShoppingCart 호출                             |
+  |  Service   | shoppingCartService.orderAllItemAtShoppingCart | 사용자의 장바구니 상품을 검색<br/> 장바구니 상품 정보를 재가공(shoppingCartService.createItemAndCountMap)<br/> 주문 생성(ordersService.createOrders)<br/> 장바구니 비우기 |
+  |  Service   |   shoppingCartService.createItemAndCountMap    |                           사용자의 장바구니에 담긴 상품의 재고를 체크하고 재고가 충분하다면<br/> Map<Key : 상품, Value : 주문수량> 형태로 가공하여 반환                           |
 
   - ordersService.createOrders
     ```
@@ -315,3 +315,123 @@
         - 상품과 주문수량의 리스트를 순회하며 상품의 재고를 다시 검증하고, 재고가 충분하다면 상품의 재고를 감소시킨 뒤
           구매자 주문서, 판매자 주문서, 구매자 고유번호, 판매자 고유번호, 상품, 수량을 이용하여 주문상품을 생성한다.
     ```
+  
+### 장바구니 상품 선택 주문
+- Controller
+  ```java
+  @PostMapping("/selectItemAtShoppingCart/{userId}")
+  public ResponseEntity<String> orderSelectItemAtShoppingCart(@PathVariable("userId") Long userId, @RequestBody SelectItemAtShoppingCartRequestDto request) {
+      try {
+          List<String> itemsName = userService.orderSelectItemAtShoppingCart(userId, request.getShoppingCartItemIds());
+          return ResponseEntity.ok().body("상품 " + itemsName.toString() + " 이 주문되었습니다. 상태(결제대기)");
+      } catch (NoSuchElementException e1) {
+          return createResponseEntity(e1, NOT_FOUND);
+      } catch (IllegalArgumentException | NotEnoughStockException e2) {
+          return createResponseEntity(e2, CONFLICT);
+      }
+  }
+  ```
+
+- SelectItemAtShoppingCartRequestDto
+  ```java
+  @Data
+  public class SelectItemAtShoppingCartRequestDto {
+    List<Long> shoppingCartItemIds = new ArrayList<>();
+  }
+  ```
+
+- Service
+  - userService.orderSelectItemAtShoppingCart
+    ```java
+    @Transactional
+    public List<String> orderSelectItemAtShoppingCart(Long userId, List<Long> shoppingCartItemId) {
+        User user = checkUserById(userId);
+        return shoppingCartService.orderSelectItemAtShoppingCart(user, shoppingCartItemId);
+    }
+    ```
+  - shoppingCartService.orderSelectItemAtShoppingCart
+    ```java
+    public List<String> orderSelectItemAtShoppingCart(User user, List<Long> shoppingCartItemIds) {
+
+        List<ShoppingCartItem> shoppingCartItems = findShoppingCartItemByShoppingCartIdAndIds(user, shoppingCartItemIds);
+
+        List<String> itemsName = new ArrayList<>();
+
+        Map<Item, Integer> itemAndCountMap = createItemAndCountMap(shoppingCartItems, itemsName);
+
+        ordersService.createOrders(user, itemAndCountMap);
+        shoppingCartItemRepository.deleteAllByIdInBatch(shoppingCartItemIds);
+
+        return itemsName;
+    }
+    ```
+
+ 
+- Review
+
+  |     종류     |                               상세                                |                                                      설명                                                       |
+  |:----------:|:---------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------:|
+  | Controller |          POST<br/> /selectItemAtShoppingCart/{userId}           |                                   Post 통신을 통해 사용자 고유번호와 주문에 필요한 정보를 전달받는다.                                    |
+  |    Dto     |               SelectItemAtShoppingCartRequestDto                |                                         주문에 필요한 정보 : 장바구니 상품 고유번호 리스트                                         |
+  |  Service   |            userService.orderSelectItemAtShoppingCart            |               사용자 고유번호를 통해 사용자 존재 검증<br/> shoppingCartService.orderSelectItemAtShoppingCart 호출                |
+  |  Service   |        shoppingCartService.orderSelectItemAtShoppingCart        | 전달받은 장바구니 상품들이 사용자의 상품인지 검증<br/> 장바구니 상품 정보를 재가공<br/> 재가공한 정보를 이용해 구매자, 판매자, 상품 주문서 생성<br/> 장바구니에서 해당 상품들 삭제  |
+
+### 단건주문 
+- Controller
+  ```java
+  @PostMapping("/singleItem/{userId}")
+  public ResponseEntity<String> orderSingleItem(@PathVariable("userId") Long userId, @RequestBody @Valid OrderSingleItemRequestDto request) {
+      try {
+          String itemName = userService.orderSingleItem(userId, request.getItemId(), request.getItemCount());
+          return ResponseEntity.ok().body(itemName + " 이(가) 주문되었습니다. 상태(결재대기)");
+      } catch (NoSuchElementException e1) {
+          return createResponseEntity(e1, NOT_FOUND);
+      } catch (NotEnoughStockException e2) {
+          return createResponseEntity(e2, CONFLICT);
+      }
+  }
+  ```
+
+- OrderSingleItemRequestDto
+  ```java
+  @Data
+  public class OrderSingleItemRequestDto {
+    @NotNull(message = "상품 Id")
+    Long itemId;
+    @NotNull(message = "상품 수량")
+    Integer itemCount;
+  }
+  ```
+
+- Service
+  - userService.orderSingleItem
+    ```java
+    @Transactional
+    public String orderSingleItem(Long buyerId, Long itemId, int itemCount) {
+        User buyer = checkUserById(buyerId); // NoSuchElementException
+        Item item = itemService.checkItem(itemId); // NoSuchElementException
+        return ordersService.orderSingleItem(buyer, item, itemCount);
+    }
+    ```
+  
+  - ordersService.orderSingleItem
+    ```java
+    public String orderSingleItem(User buyer, Item item, int itemCount) {
+        item.decreaseStockQuantity(itemCount); // NotEnoughStockException
+        User seller = item.getSeller();
+        OrdersForBuyer orderForBuyer = createOrderForBuyer(buyer);
+        OrdersForSeller orderForSeller = createOrderForSeller(seller, buyer);
+        createOrderItem(orderForBuyer.getId(), orderForSeller.getId(), buyer.getId(), seller.getId(), item, itemCount);
+
+        return item.getName();
+    }
+    ```
+
+- Review
+
+  |     종류     |           상세                   |                                              설명                                              |
+  |:----------:|:------------------------------:|:--------------------------------------------------------------------------------------------:|
+  | Controller | POST<br/> /singleItem/{userId} |                           Post 통신을 통해 사용자 고유번호와 주문에 필요한 정보를 전달받는다.                           |
+  |    Dto     |   OrderSingleItemRequestDto    |                                 주문에 필요한 정보 : 상품 고유번호, 주문 수량                                  |
+  |  Service   |  userService.orderSingleItem   | 사용자 고유번호를 통해 사용자 존재 검증<br/> 상품 고유번호를 통해 상품 존재 검증<br/> shoppingCartService.orderSingleItem 호출 |
+  |  Service   | ordersService.orderSingleItem  |                              상품 재고 감소<br/> 구매자, 판매자, 상품 주문서 생성                               |
